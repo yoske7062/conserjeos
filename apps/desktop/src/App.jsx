@@ -39,7 +39,7 @@ export default function App() {
       <div className="h-screen flex items-center justify-center bg-base">
         <div className="flex flex-col items-center gap-4">
           <div className="w-10 h-10 border-2 border-accent border-t-transparent rounded-full animate-spin" />
-          <span className="text-muted text-sm">Cargando ConserjeOS…</span>
+          <span className="text-muted text-sm">Cargando Portia…</span>
         </div>
       </div>
     );

@@ -30,7 +30,7 @@ export default function Sidebar({ page, setPage, perfil, turnoActivo }) {
           }}>
             <span style={{ fontFamily:'Material Symbols Outlined', fontSize:18, color:'#0B0B0B' }}>apartment</span>
           </div>
-          <span style={{ fontSize:15, fontWeight:700, color:'#F5F5F5' }}>ConserjeOS</span>
+          <span style={{ fontSize:15, fontWeight:700, color:'#F5F5F5' }}>Portia</span>
         </div>
         <p style={{ fontSize:11, color:'#636363', paddingLeft:44 }}>{edificio}</p>
       </div>

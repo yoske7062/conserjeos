@@ -34,7 +34,7 @@ export default function Login() {
             }}>
               <span style={{ fontFamily:'Material Symbols Outlined', fontSize:22, color:'#0B0B0B' }}>apartment</span>
             </div>
-            <span style={{ fontSize:18, fontWeight:700, color:'#F5F5F5' }}>ConserjeOS</span>
+            <span style={{ fontSize:18, fontWeight:700, color:'#F5F5F5' }}>Portia</span>
           </div>
 
           <p style={{ fontSize:12, fontWeight:600, color:'#00FF88', letterSpacing:'0.1em', marginBottom:16, textTransform:'uppercase' }}>

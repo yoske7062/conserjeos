@@ -1,5 +1,5 @@
 -- ============================================================
--- ConserjeOS — Schema PostgreSQL para Supabase
+-- Portia — Schema PostgreSQL para Supabase
 -- ============================================================
 -- Ejecutar en el SQL Editor de Supabase en orden.
 

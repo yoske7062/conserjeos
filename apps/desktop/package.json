@@ -1,7 +1,7 @@
 {
-  "name": "conserjeos-desktop",
+  "name": "portia-desktop",
   "version": "1.0.0",
-  "description": "ConserjeOS — Control operacional de conserjerías",
+  "description": "Portia — Tu edificio. Todo en orden.",
   "main": "main.cjs",
   "scripts": {
     "dev": "concurrently \"vite\" \"wait-on http://localhost:5173 && electron .\"",
@@ -12,8 +12,8 @@
     "dist:win": "npm run build && electron-builder --win --x64"
   },
   "build": {
-    "appId": "cl.conserjeos.desktop",
-    "productName": "ConserjeOS",
+    "appId": "cl.portia.desktop",
+    "productName": "Portia",
     "files": [
       "main.cjs",
       "preload.cjs",
