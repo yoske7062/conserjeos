@@ -1,0 +1,53 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * { box-sizing: border-box; }
+  body {
+    background-color: #0f1117;
+    color: #f1f5f9;
+    font-family: 'Inter', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    user-select: none;
+  }
+  /* Scrollbar oscura */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: #1a1d27; }
+  ::-webkit-scrollbar-thumb { background: #2a2d3e; border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: #6366f1; }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-accent hover:bg-indigo-500 text-white font-semibold py-3 px-6 rounded-xl
+           transition-all duration-150 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed;
+  }
+  .btn-ghost {
+    @apply bg-transparent hover:bg-surface text-slate-300 hover:text-white font-medium py-2.5 px-4
+           rounded-xl border border-border transition-all duration-150 active:scale-95;
+  }
+  .btn-danger {
+    @apply bg-urgent hover:bg-red-400 text-white font-semibold py-3 px-6 rounded-xl
+           transition-all duration-150 active:scale-95;
+  }
+  .card {
+    @apply bg-surface border border-border rounded-2xl p-5;
+  }
+  .input {
+    @apply w-full bg-base border border-border rounded-xl px-4 py-3 text-white placeholder-muted
+           focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-all;
+  }
+  .label {
+    @apply block text-sm font-medium text-slate-400 mb-1.5;
+  }
+  .badge-urgente {
+    @apply inline-flex items-center gap-1 bg-red-500/15 text-urgent text-xs font-semibold px-2.5 py-1 rounded-full;
+  }
+  .badge-incidente {
+    @apply inline-flex items-center gap-1 bg-amber-500/15 text-warning text-xs font-semibold px-2.5 py-1 rounded-full;
+  }
+  .badge-informativo {
+    @apply inline-flex items-center gap-1 bg-blue-500/15 text-info text-xs font-semibold px-2.5 py-1 rounded-full;
+  }
+}

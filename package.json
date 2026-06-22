@@ -1,0 +1,17 @@
+{
+  "name": "conserjeos",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "desktop": "npm run dev --workspace=apps/desktop"
+  },
+  "devDependencies": {
+    "turbo": "^2.3.3"
+  }
+}
