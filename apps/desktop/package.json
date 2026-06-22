@@ -2,7 +2,7 @@
   "name": "conserjeos-desktop",
   "version": "1.0.0",
   "description": "ConserjeOS — Control operacional de conserjerías",
-  "main": "main.js",
+  "main": "main.cjs",
   "scripts": {
     "dev": "concurrently \"vite\" \"wait-on http://localhost:5173 && electron .\"",
     "vite": "vite",
@@ -15,8 +15,8 @@
     "appId": "cl.conserjeos.desktop",
     "productName": "ConserjeOS",
     "files": [
-      "main.js",
-      "preload.js",
+      "main.cjs",
+      "preload.cjs",
       "dist/**/*"
     ],
     "win": {

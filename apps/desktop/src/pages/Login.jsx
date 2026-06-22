@@ -2,10 +2,11 @@ import { useState } from 'react';
 import { supabase } from '../lib/supabase';
 
 export default function Login() {
-  const [email, setEmail] = useState('');
+  const [email, setEmail]       = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [error, setError]       = useState('');
+  const [loading, setLoading]   = useState(false);
+  const [showPwd, setShowPwd]   = useState(false);
 
   async function handleLogin(e) {
     e.preventDefault();
@@ -17,61 +18,68 @@ export default function Login() {
   }
 
   return (
-    <div className="h-screen flex bg-base">
+    <div style={{ display:'flex', height:'100vh', background:'#0B0B0B' }}>
+
       {/* Panel izquierdo — branding */}
-      <div className="hidden lg:flex flex-col justify-between w-[420px] bg-surface border-r border-border p-10">
+      <div style={{
+        width: 420, background:'#161616', borderRight:'1px solid #2E2E2E',
+        padding: 40, display:'flex', flexDirection:'column', justifyContent:'space-between'
+      }}>
         <div>
-          <div className="flex items-center gap-3 mb-12">
-            <div className="w-10 h-10 bg-accent rounded-xl flex items-center justify-center">
-              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                  d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-              </svg>
+          {/* Logo */}
+          <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:48 }}>
+            <div style={{
+              width:40, height:40, background:'#00FF88', borderRadius:10,
+              display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0
+            }}>
+              <span style={{ fontFamily:'Material Symbols Outlined', fontSize:22, color:'#0B0B0B' }}>apartment</span>
             </div>
-            <span className="text-xl font-bold text-white tracking-tight">ConserjeOS</span>
+            <span style={{ fontSize:18, fontWeight:700, color:'#F5F5F5' }}>ConserjeOS</span>
           </div>
 
-          <h2 className="text-3xl font-bold text-white mb-3 leading-snug">
+          <p style={{ fontSize:12, fontWeight:600, color:'#00FF88', letterSpacing:'0.1em', marginBottom:16, textTransform:'uppercase' }}>
+            App de Conserjería
+          </p>
+          <h2 style={{ fontSize:28, fontWeight:700, color:'#F5F5F5', lineHeight:1.3, marginBottom:16 }}>
             Control total de tu conserjería
           </h2>
-          <p className="text-muted text-base leading-relaxed">
+          <p style={{ fontSize:15, color:'#A8A8A8', lineHeight:1.6 }}>
             Registra novedades, visitas y encomiendas en tiempo real. Sin papel, sin pérdida de información.
           </p>
+
+          <div style={{ display:'flex', flexDirection:'column', gap:16, marginTop:40 }}>
+            {[
+              ['campaign',   'Libro de novedades digital'],
+              ['group',      'Control de visitas con trazabilidad'],
+              ['inventory_2','Gestión de encomiendas'],
+              ['analytics',  'Dashboard para el administrador'],
+            ].map(([icon, text]) => (
+              <div key={text} style={{ display:'flex', alignItems:'center', gap:14 }}>
+                <div style={{
+                  width:38, height:38, background:'#1F1F1F', borderRadius:9,
+                  display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0,
+                  border:'1px solid #2E2E2E'
+                }}>
+                  <span style={{ fontFamily:'Material Symbols Outlined', fontSize:20, color:'#00FF88' }}>{icon}</span>
+                </div>
+                <span style={{ fontSize:14, color:'#A8A8A8' }}>{text}</span>
+              </div>
+            ))}
+          </div>
         </div>
 
-        <div className="space-y-4">
-          {[
-            { icon: '📋', text: 'Libro de novedades digital' },
-            { icon: '👤', text: 'Control de visitas con trazabilidad' },
-            { icon: '📦', text: 'Gestión de encomiendas' },
-            { icon: '📊', text: 'Dashboard para el administrador' },
-          ].map(({ icon, text }) => (
-            <div key={text} className="flex items-center gap-3 text-slate-400">
-              <span className="text-xl">{icon}</span>
-              <span className="text-sm">{text}</span>
-            </div>
-          ))}
-        </div>
+        <p style={{ fontSize:12, color:'#636363', borderTop:'1px solid #2E2E2E', paddingTop:16 }}>
+          ¿Eres administrador? Accede desde el panel web.
+        </p>
       </div>
 
       {/* Panel derecho — formulario */}
-      <div className="flex-1 flex items-center justify-center p-8">
-        <div className="w-full max-w-sm">
-          {/* Logo mobile */}
-          <div className="flex items-center gap-3 mb-10 lg:hidden">
-            <div className="w-9 h-9 bg-accent rounded-xl flex items-center justify-center">
-              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                  d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-              </svg>
-            </div>
-            <span className="text-lg font-bold text-white">ConserjeOS</span>
-          </div>
+      <div style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'center', padding:40 }}>
+        <div style={{ width:'100%', maxWidth:360 }}>
+          <h1 style={{ fontSize:26, fontWeight:700, color:'#F5F5F5', marginBottom:6 }}>Bienvenido</h1>
+          <p style={{ fontSize:14, color:'#A8A8A8', marginBottom:36 }}>Ingresa tus credenciales para comenzar el turno</p>
 
-          <h1 className="text-2xl font-bold text-white mb-1">Bienvenido</h1>
-          <p className="text-muted text-sm mb-8">Ingresa tus credenciales para comenzar el turno</p>
-
-          <form onSubmit={handleLogin} className="space-y-5">
+          <form onSubmit={handleLogin} style={{ display:'flex', flexDirection:'column', gap:20 }}>
             <div>
               <label className="label">Email</label>
               <input
@@ -84,48 +92,66 @@ export default function Login() {
                 autoFocus
               />
             </div>
+
             <div>
               <label className="label">Contraseña</label>
-              <input
-                type="password"
-                className="input"
-                placeholder="••••••••"
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                required
-              />
+              <div style={{ position:'relative' }}>
+                <input
+                  type={showPwd ? 'text' : 'password'}
+                  className="input"
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  required
+                  style={{ paddingRight:50 }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPwd(v => !v)}
+                  style={{
+                    position:'absolute', right:14, top:'50%', transform:'translateY(-50%)',
+                    background:'none', border:'none', cursor:'pointer', color:'#636363', padding:0
+                  }}
+                >
+                  <span style={{ fontFamily:'Material Symbols Outlined', fontSize:20 }}>
+                    {showPwd ? 'visibility_off' : 'visibility'}
+                  </span>
+                </button>
+              </div>
             </div>
 
             {error && (
-              <div className="flex items-center gap-2 bg-red-500/10 border border-red-500/30 text-urgent text-sm rounded-xl px-4 py-3">
-                <svg className="w-4 h-4 shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                </svg>
-                {error}
+              <div style={{
+                display:'flex', alignItems:'center', gap:10,
+                background:'rgba(255,68,68,0.08)', borderLeft:'4px solid #FF4444',
+                borderRadius:'0 10px 10px 0', padding:'12px 16px'
+              }}>
+                <span style={{ fontFamily:'Material Symbols Outlined', fontSize:18, color:'#FF4444', flexShrink:0 }}>error</span>
+                <span style={{ fontSize:14, color:'#FF7070' }}>{error}</span>
               </div>
             )}
 
-            <button
-              type="submit"
-              className="btn-primary w-full flex items-center justify-center gap-2"
-              disabled={loading}
-            >
+            <button type="submit" className="btn-primary" disabled={loading} style={{ marginTop:4 }}>
               {loading ? (
                 <>
-                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  <div style={{
+                    width:18, height:18, border:'2px solid rgba(0,0,0,0.2)',
+                    borderTop:'2px solid #0B0B0B', borderRadius:'50%',
+                    animation:'spin 0.8s linear infinite'
+                  }} />
                   Ingresando…
                 </>
-              ) : (
-                'Iniciar sesión'
-              )}
+              ) : 'Iniciar sesión'}
             </button>
           </form>
 
-          <p className="text-center text-xs text-muted mt-8">
+          <p style={{ textAlign:'center', fontSize:12, color:'#636363', marginTop:32 }}>
             ¿Problemas para ingresar? Contacta a tu administrador.
           </p>
         </div>
       </div>
+
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );
 }

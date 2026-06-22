@@ -2,52 +2,106 @@
 @tailwind components;
 @tailwind utilities;
 
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@400,0..1&display=swap');
+
 @layer base {
   * { box-sizing: border-box; }
   body {
-    background-color: #0f1117;
-    color: #f1f5f9;
+    background-color: #0B0B0B;
+    color: #F5F5F5;
     font-family: 'Inter', system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
     user-select: none;
+    font-size: 15px;
   }
-  /* Scrollbar oscura */
-  ::-webkit-scrollbar { width: 6px; }
-  ::-webkit-scrollbar-track { background: #1a1d27; }
-  ::-webkit-scrollbar-thumb { background: #2a2d3e; border-radius: 3px; }
-  ::-webkit-scrollbar-thumb:hover { background: #6366f1; }
+  ::-webkit-scrollbar { width: 5px; }
+  ::-webkit-scrollbar-track { background: #161616; }
+  ::-webkit-scrollbar-thumb { background: #2E2E2E; border-radius: 4px; }
+  ::-webkit-scrollbar-thumb:hover { background: #3D3D3D; }
 }
 
 @layer components {
   .btn-primary {
-    @apply bg-accent hover:bg-indigo-500 text-white font-semibold py-3 px-6 rounded-xl
-           transition-all duration-150 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed;
+    @apply flex items-center justify-center gap-2 font-bold rounded-xl transition-all duration-150
+           active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed;
+    background: #00FF88;
+    color: #0B0B0B;
+    height: 52px;
+    font-size: 15px;
+    border-radius: 12px;
   }
+  .btn-primary:hover { background: #00E87A; }
+
   .btn-ghost {
-    @apply bg-transparent hover:bg-surface text-slate-300 hover:text-white font-medium py-2.5 px-4
-           rounded-xl border border-border transition-all duration-150 active:scale-95;
+    @apply flex items-center justify-center gap-2 font-medium rounded-xl border transition-all duration-150 active:scale-95;
+    background: transparent;
+    color: #A8A8A8;
+    border-color: #3D3D3D;
+    height: 40px;
+    font-size: 14px;
   }
-  .btn-danger {
-    @apply bg-urgent hover:bg-red-400 text-white font-semibold py-3 px-6 rounded-xl
-           transition-all duration-150 active:scale-95;
-  }
+  .btn-ghost:hover { color: #F5F5F5; border-color: #5A5A5A; background: #1F1F1F; }
+
   .card {
-    @apply bg-surface border border-border rounded-2xl p-5;
+    @apply rounded-2xl;
+    background: #161616;
+    border: 1px solid #2E2E2E;
+    padding: 20px;
   }
+
   .input {
-    @apply w-full bg-base border border-border rounded-xl px-4 py-3 text-white placeholder-muted
-           focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-all;
+    @apply w-full rounded-xl text-text placeholder-muted transition-all outline-none;
+    background: #0B0B0B;
+    border: 1px solid #2E2E2E;
+    color: #F5F5F5;
+    height: 52px;
+    padding: 0 16px;
+    font-size: 16px;
+    font-family: 'Inter', sans-serif;
   }
+  .input:focus { border-color: #00FF88; box-shadow: 0 0 0 1px #00FF88; }
+
   .label {
-    @apply block text-sm font-medium text-slate-400 mb-1.5;
+    @apply block font-medium mb-2;
+    color: #A8A8A8;
+    font-size: 14px;
   }
+
   .badge-urgente {
-    @apply inline-flex items-center gap-1 bg-red-500/15 text-urgent text-xs font-semibold px-2.5 py-1 rounded-full;
+    @apply inline-flex items-center gap-1 rounded-full font-semibold;
+    background: rgba(255,68,68,0.12);
+    color: #FF4444;
+    font-size: 12px;
+    padding: 4px 10px;
   }
   .badge-incidente {
-    @apply inline-flex items-center gap-1 bg-amber-500/15 text-warning text-xs font-semibold px-2.5 py-1 rounded-full;
+    @apply inline-flex items-center gap-1 rounded-full font-semibold;
+    background: rgba(255,170,0,0.12);
+    color: #FFAA00;
+    font-size: 12px;
+    padding: 4px 10px;
   }
   .badge-informativo {
-    @apply inline-flex items-center gap-1 bg-blue-500/15 text-info text-xs font-semibold px-2.5 py-1 rounded-full;
+    @apply inline-flex items-center gap-1 rounded-full font-semibold;
+    background: rgba(208,208,208,0.08);
+    color: #D0D0D0;
+    font-size: 12px;
+    padding: 4px 10px;
   }
+
+  .nav-item {
+    @apply flex items-center gap-3 rounded-xl font-medium transition-all duration-150 cursor-pointer no-underline;
+    padding: 12px 14px;
+    font-size: 15px;
+    color: #A8A8A8;
+  }
+  .nav-item:hover { background: #1F1F1F; color: #F5F5F5; }
+  .nav-item.active { background: #00FF88; color: #0B0B0B; font-weight: 700; }
 }
+
+@keyframes pulse-neon {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(0,255,136,0.5); }
+  50% { box-shadow: 0 0 0 8px rgba(0,255,136,0); }
+}
+.pulse-neon { animation: pulse-neon 2s ease infinite; }

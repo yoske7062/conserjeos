@@ -1,104 +1,110 @@
 import { supabase } from '../lib/supabase';
 
 const NAV = [
-  {
-    id: 'novedades',
-    label: 'Novedades',
-    icon: (
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-          d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-      </svg>
-    ),
-  },
-  {
-    id: 'visitas',
-    label: 'Visitas',
-    icon: (
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-          d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0" />
-      </svg>
-    ),
-  },
-  {
-    id: 'encomiendas',
-    label: 'Encomiendas',
-    icon: (
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-          d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10" />
-      </svg>
-    ),
-  },
+  { id: 'novedades',   icon: 'campaign',    label: 'Novedades'   },
+  { id: 'visitas',     icon: 'group',       label: 'Visitas'     },
+  { id: 'encomiendas', icon: 'inventory_2', label: 'Encomiendas' },
 ];
 
-export default function Sidebar({ perfil, modulo, setModulo, turno }) {
-  async function cerrarSesion() {
+export default function Sidebar({ page, setPage, perfil, turnoActivo }) {
+  async function handleLogout() {
     await supabase.auth.signOut();
   }
 
-  const edificio = perfil?.edificios?.nombre ?? 'Edificio';
-  const hora = new Date().toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' });
+  const nombre   = perfil?.nombre_completo || perfil?.email || 'Usuario';
+  const iniciales = nombre.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
+  const edificio  = perfil?.edificios?.nombre || 'Edificio';
 
   return (
-    <aside className="w-60 shrink-0 h-screen bg-surface border-r border-border flex flex-col">
+    <aside style={{
+      position:'fixed', left:0, top:0, width:240, height:'100vh',
+      background:'#161616', borderRight:'1px solid #2E2E2E',
+      display:'flex', flexDirection:'column', zIndex:50, padding:'20px 12px'
+    }}>
       {/* Logo */}
-      <div className="px-5 py-5 border-b border-border">
-        <div className="flex items-center gap-2.5 mb-3">
-          <div className="w-8 h-8 bg-accent rounded-lg flex items-center justify-center shrink-0">
-            <svg className="w-4.5 h-4.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-            </svg>
+      <div style={{ padding:'0 4px', marginBottom:28 }}>
+        <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:4 }}>
+          <div style={{
+            width:34, height:34, background:'#00FF88', borderRadius:8,
+            display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0
+          }}>
+            <span style={{ fontFamily:'Material Symbols Outlined', fontSize:18, color:'#0B0B0B' }}>apartment</span>
           </div>
-          <div>
-            <p className="text-sm font-bold text-white leading-none">ConserjeOS</p>
-            <p className="text-xs text-muted mt-0.5 truncate max-w-[130px]">{edificio}</p>
-          </div>
+          <span style={{ fontSize:15, fontWeight:700, color:'#F5F5F5' }}>ConserjeOS</span>
         </div>
-
-        {/* Estado del turno */}
-        <div className={`flex items-center gap-2 text-xs px-3 py-2 rounded-lg ${
-          turno ? 'bg-green-500/10 text-success' : 'bg-slate-500/10 text-muted'
-        }`}>
-          <span className={`w-1.5 h-1.5 rounded-full ${turno ? 'bg-success animate-pulse' : 'bg-muted'}`} />
-          {turno ? 'Turno activo' : 'Sin turno activo'}
-        </div>
+        <p style={{ fontSize:11, color:'#636363', paddingLeft:44 }}>{edificio}</p>
       </div>
 
-      {/* Navegación */}
-      <nav className="flex-1 px-3 py-4 space-y-1">
-        {NAV.map(item => (
+      {/* Nav */}
+      <nav style={{ flex:1, display:'flex', flexDirection:'column', gap:4 }}>
+        {NAV.map(({ id, icon, label }) => (
           <button
-            key={item.id}
-            onClick={() => setModulo(item.id)}
-            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
-              modulo === item.id
-                ? 'bg-accent text-white'
-                : 'text-slate-400 hover:text-white hover:bg-white/5'
-            }`}
+            key={id}
+            onClick={() => setPage(id)}
+            style={{
+              display:'flex', alignItems:'center', gap:12, padding:'12px 14px',
+              borderRadius:10, fontSize:15, fontWeight: page === id ? 700 : 500,
+              color: page === id ? '#0B0B0B' : '#A8A8A8',
+              background: page === id ? '#00FF88' : 'transparent',
+              border:'none', cursor:'pointer', width:'100%', textAlign:'left',
+              transition:'all 120ms'
+            }}
+            onMouseEnter={e => { if (page !== id) { e.currentTarget.style.background='#1F1F1F'; e.currentTarget.style.color='#F5F5F5'; }}}
+            onMouseLeave={e => { if (page !== id) { e.currentTarget.style.background='transparent'; e.currentTarget.style.color='#A8A8A8'; }}}
           >
-            {item.icon}
-            {item.label}
+            <span style={{
+              fontFamily:'Material Symbols Outlined', fontSize:20,
+              color: page === id ? '#0B0B0B' : 'inherit'
+            }}>{icon}</span>
+            {label}
           </button>
         ))}
       </nav>
 
-      {/* Footer — usuario */}
-      <div className="px-3 py-4 border-t border-border space-y-1">
-        <div className="px-3 py-2 rounded-xl">
-          <p className="text-xs font-semibold text-white truncate">{perfil?.nombre}</p>
-          <p className="text-xs text-muted capitalize">{perfil?.rol}</p>
+      {/* Turno indicator */}
+      {turnoActivo && (
+        <div style={{
+          background:'rgba(0,255,136,0.06)', border:'1px solid rgba(0,255,136,0.2)',
+          borderRadius:10, padding:'10px 14px', marginBottom:12
+        }}>
+          <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:4 }}>
+            <div style={{ width:7, height:7, background:'#00FF88', borderRadius:'50%' }} className="pulse-neon" />
+            <span style={{ fontSize:11, fontWeight:600, color:'#00FF88' }}>TURNO ACTIVO</span>
+          </div>
+          <p style={{ fontSize:12, color:'#A8A8A8', paddingLeft:15 }}>
+            {new Date(turnoActivo.inicio).toLocaleTimeString('es-CL', { hour:'2-digit', minute:'2-digit' })}
+          </p>
+        </div>
+      )}
+
+      {/* Footer */}
+      <div style={{ borderTop:'1px solid #2E2E2E', paddingTop:12 }}>
+        <div style={{ display:'flex', alignItems:'center', gap:10, padding:'8px 6px', marginBottom:4 }}>
+          <div style={{
+            width:32, height:32, background:'rgba(0,255,136,0.1)', borderRadius:'50%',
+            display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0,
+            border:'1px solid rgba(0,255,136,0.25)'
+          }}>
+            <span style={{ fontSize:12, fontWeight:700, color:'#00FF88' }}>{iniciales}</span>
+          </div>
+          <div style={{ minWidth:0 }}>
+            <p style={{ fontSize:13, fontWeight:600, color:'#F5F5F5', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
+              {nombre}
+            </p>
+            <p style={{ fontSize:11, color:'#636363' }}>Conserje</p>
+          </div>
         </div>
         <button
-          onClick={cerrarSesion}
-          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-slate-400 hover:text-white hover:bg-white/5 transition-all"
+          onClick={handleLogout}
+          style={{
+            display:'flex', alignItems:'center', gap:10, width:'100%', padding:'10px 14px',
+            borderRadius:10, background:'transparent', border:'none', cursor:'pointer',
+            color:'#636363', fontSize:14, fontWeight:500, transition:'all 120ms'
+          }}
+          onMouseEnter={e => { e.currentTarget.style.background='#1F1F1F'; e.currentTarget.style.color='#F5F5F5'; }}
+          onMouseLeave={e => { e.currentTarget.style.background='transparent'; e.currentTarget.style.color='#636363'; }}
         >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-              d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-          </svg>
+          <span style={{ fontFamily:'Material Symbols Outlined', fontSize:18 }}>logout</span>
           Cerrar sesión
         </button>
       </div>
