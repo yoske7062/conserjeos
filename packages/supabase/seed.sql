@@ -2,8 +2,8 @@
 -- Portia — Seed inicial (ejecutar DESPUÉS del schema.sql)
 -- ============================================================
 -- PASO 1: Crea los usuarios en Supabase Dashboard → Authentication → Users
---   Admin:    admin@portia.cl   / portia2026
---   Conserje: conserje@portia.cl / portia2026
+--   Admin:    admin@portia.cl   / (definir contraseña ahí, no la dejes aquí)
+--   Conserje: conserje@portia.cl / (definir contraseña ahí, no la dejes aquí)
 --
 -- PASO 2: Copia los UUIDs generados y reemplaza abajo.
 -- PASO 3: Ejecuta este SQL en el SQL Editor de Supabase.

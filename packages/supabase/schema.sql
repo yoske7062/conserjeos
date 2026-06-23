@@ -14,7 +14,11 @@ create table public.edificios (
   comuna      text,
   plan        text not null default 'trial',  -- trial | basic | pro
   activo      boolean not null default true,
-  created_at  timestamptz not null default now()
+  created_at  timestamptz not null default now(),
+  -- Ficha de edificio: [{ "nombre": "...", "rol": "...", "telefono": "..." }, ...]
+  contactos   jsonb not null default '[]'::jsonb,
+  -- Protocolos individuales: [{ "titulo": "...", "texto": "..." }, ...]
+  protocolos  jsonb not null default '[]'::jsonb
 );
 
 -- ─── TABLA: perfiles de usuario ──────────────────────────────
@@ -30,25 +34,32 @@ create table public.perfiles (
 
 -- ─── TABLA: turnos ───────────────────────────────────────────
 create table public.turnos (
-  id           uuid primary key default uuid_generate_v4(),
-  edificio_id  uuid not null references public.edificios(id) on delete cascade,
-  conserje_id  uuid not null references public.perfiles(id),
-  inicio       timestamptz not null default now(),
-  fin          timestamptz,
-  resumen      text,
-  activo       boolean not null default true
+  id                        uuid primary key default uuid_generate_v4(),
+  edificio_id               uuid not null references public.edificios(id) on delete cascade,
+  conserje_id               uuid not null references public.perfiles(id),
+  inicio                    timestamptz not null default now(),
+  fin                       timestamptz,
+  resumen                   text,
+  activo                    boolean not null default true,
+  -- Pendientes que este turno deja al siguiente: [{ "texto": "..." }, ...]
+  pendientes                jsonb not null default '[]'::jsonb,
+  pendientes_reconocido_por uuid references public.perfiles(id),
+  pendientes_reconocido_at  timestamptz
 );
 
 -- ─── TABLA: novedades ────────────────────────────────────────
 create table public.novedades (
-  id           uuid primary key default uuid_generate_v4(),
-  edificio_id  uuid not null references public.edificios(id) on delete cascade,
-  turno_id     uuid references public.turnos(id),
-  conserje_id  uuid not null references public.perfiles(id),
-  tipo         text not null check (tipo in ('incidente','informativo','urgente')),
-  descripcion  text not null,
-  foto_url     text,
-  created_at   timestamptz not null default now()
+  id              uuid primary key default uuid_generate_v4(),
+  edificio_id     uuid not null references public.edificios(id) on delete cascade,
+  turno_id        uuid references public.turnos(id),
+  conserje_id     uuid not null references public.perfiles(id),
+  tipo            text not null check (tipo in ('incidente','informativo','urgente')),
+  descripcion     text not null,
+  foto_url        text,
+  created_at      timestamptz not null default now(),
+  editado_por     uuid references public.perfiles(id),
+  editado_at      timestamptz,
+  valor_anterior  jsonb
 );
 
 -- ─── TABLA: visitas ──────────────────────────────────────────
@@ -63,7 +74,10 @@ create table public.visitas (
   motivo          text,
   entrada         timestamptz not null default now(),
   salida          timestamptz,
-  activa          boolean not null default true
+  activa          boolean not null default true,
+  editado_por     uuid references public.perfiles(id),
+  editado_at      timestamptz,
+  valor_anterior  jsonb
 );
 
 -- ─── TABLA: encomiendas ──────────────────────────────────────
@@ -78,7 +92,27 @@ create table public.encomiendas (
   foto_url        text,
   recibida_at     timestamptz not null default now(),
   entregada_at    timestamptz,
-  entregada       boolean not null default false
+  entregada       boolean not null default false,
+  editado_por     uuid references public.perfiles(id),
+  editado_at      timestamptz,
+  valor_anterior  jsonb
+);
+
+-- ─── TABLA: tareas ───────────────────────────────────────────
+-- El administrador asigna, el conserje ejecuta y marca como completada.
+create table public.tareas (
+  id              uuid primary key default uuid_generate_v4(),
+  edificio_id     uuid not null references public.edificios(id) on delete cascade,
+  titulo          text not null,
+  descripcion     text,
+  asignada_a      uuid references public.perfiles(id),  -- null = cualquier conserje del turno
+  creada_por      uuid references public.perfiles(id),
+  prioridad       text not null default 'normal' check (prioridad in ('baja','normal','alta')),
+  estado          text not null default 'pendiente' check (estado in ('pendiente','completada')),
+  vence_at        timestamptz,
+  completada_at   timestamptz,
+  completada_por  uuid references public.perfiles(id),
+  created_at      timestamptz not null default now()
 );
 
 -- ─── ROW LEVEL SECURITY ──────────────────────────────────────
@@ -88,6 +122,7 @@ alter table public.turnos      enable row level security;
 alter table public.novedades   enable row level security;
 alter table public.visitas     enable row level security;
 alter table public.encomiendas enable row level security;
+alter table public.tareas      enable row level security;
 
 -- Helper: obtiene edificio_id del usuario autenticado
 create or replace function public.mi_edificio_id()
@@ -120,6 +155,9 @@ create policy "visitas del edificio" on public.visitas
 create policy "encomiendas del edificio" on public.encomiendas
   for all using (edificio_id = public.mi_edificio_id());
 
+create policy "tareas del edificio" on public.tareas
+  for all using (edificio_id = public.mi_edificio_id());
+
 -- ─── FUNCIÓN: crear perfil al registrar usuario ──────────────
 create or replace function public.handle_new_user()
 returns trigger language plpgsql security definer as $$
@@ -135,9 +173,77 @@ create index on public.novedades   (edificio_id, created_at desc);
 create index on public.visitas     (edificio_id, activa);
 create index on public.encomiendas (edificio_id, entregada);
 create index on public.turnos      (edificio_id, activo);
+create index on public.tareas      (edificio_id, estado);
 
 -- ─── STORAGE BUCKET para fotos ───────────────────────────────
 -- Ejecutar en Supabase Dashboard → Storage → New Bucket
 -- Nombre: "fotos-novedades", público: false
 -- O via API:
 -- insert into storage.buckets (id, name) values ('fotos', 'fotos');
+
+-- ============================================================
+-- MIGRACIÓN — Auditoría de ediciones (22-jun-2026)
+-- ============================================================
+-- Este proyecto ya tiene las tablas creadas en Supabase con datos.
+-- Ejecutar SOLO este bloque en el SQL Editor (no el create table de arriba).
+-- Habilita "editar registro dejando rastro" en vez de sobreescribir/borrar.
+
+alter table public.novedades   add column if not exists editado_por    uuid references public.perfiles(id);
+alter table public.novedades   add column if not exists editado_at     timestamptz;
+alter table public.novedades   add column if not exists valor_anterior jsonb;
+
+alter table public.visitas     add column if not exists editado_por    uuid references public.perfiles(id);
+alter table public.visitas     add column if not exists editado_at     timestamptz;
+alter table public.visitas     add column if not exists valor_anterior jsonb;
+
+alter table public.encomiendas add column if not exists editado_por    uuid references public.perfiles(id);
+alter table public.encomiendas add column if not exists editado_at     timestamptz;
+alter table public.encomiendas add column if not exists valor_anterior jsonb;
+
+-- ============================================================
+-- MIGRACIÓN — Entrega de turno con pendientes (22-jun-2026)
+-- ============================================================
+-- Habilita el módulo "Entrega de turno": pendientes que un turno deja
+-- al siguiente, con reconocimiento explícito ("Leído") del conserje entrante.
+
+alter table public.turnos add column if not exists pendientes                jsonb not null default '[]'::jsonb;
+alter table public.turnos add column if not exists pendientes_reconocido_por uuid references public.perfiles(id);
+alter table public.turnos add column if not exists pendientes_reconocido_at  timestamptz;
+
+-- ============================================================
+-- MIGRACIÓN — Ficha de edificio (22-jun-2026)
+-- ============================================================
+-- Contactos importantes y protocolos individuales del edificio, para que un
+-- reemplazo que no conoce la comunidad pueda operar sin equivocarse.
+
+alter table public.edificios add column if not exists contactos  jsonb not null default '[]'::jsonb;
+alter table public.edificios add column if not exists protocolos jsonb not null default '[]'::jsonb;
+
+-- ============================================================
+-- MIGRACIÓN — Tareas (23-jun-2026)
+-- ============================================================
+-- El administrador asigna tareas, el conserje las ve y marca como completadas.
+
+create table if not exists public.tareas (
+  id              uuid primary key default uuid_generate_v4(),
+  edificio_id     uuid not null references public.edificios(id) on delete cascade,
+  titulo          text not null,
+  descripcion     text,
+  asignada_a      uuid references public.perfiles(id),
+  creada_por      uuid references public.perfiles(id),
+  prioridad       text not null default 'normal' check (prioridad in ('baja','normal','alta')),
+  estado          text not null default 'pendiente' check (estado in ('pendiente','completada')),
+  vence_at        timestamptz,
+  completada_at   timestamptz,
+  completada_por  uuid references public.perfiles(id),
+  created_at      timestamptz not null default now()
+);
+
+alter table public.tareas enable row level security;
+
+-- Nota: si ya corriste este bloque antes, borra la policy existente primero
+-- (drop policy "tareas del edificio" on public.tareas;) para evitar error de duplicado.
+create policy "tareas del edificio" on public.tareas
+  for all using (edificio_id = public.mi_edificio_id());
+
+create index if not exists tareas_edificio_estado_idx on public.tareas (edificio_id, estado);

@@ -1,69 +1,97 @@
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabase';
-
-const TIPOS = {
-  urgente:     { label: 'Urgente',     color: '#FF4444', bg: '#FF4444', textColor: '#fff' },
-  incidente:   { label: 'Incidente',   color: '#F59E0B', bg: '#F59E0B', textColor: '#000' },
-  informativo: { label: 'Informativo', color: '#A8A8A8', bg: '#2A2A2A', textColor: '#A8A8A8' },
-};
+import { TIPO_NOVEDAD } from '../lib/tokens';
 
 function NovedadCard({ nov }) {
-  const t = TIPOS[nov.tipo] || TIPOS.informativo;
+  const t = TIPO_NOVEDAD[nov.tipo] || TIPO_NOVEDAD.informativo;
   const hora  = new Date(nov.created_at).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' });
   const fecha = new Date(nov.created_at).toLocaleDateString('es-CL', { day: '2-digit', month: 'short' });
 
   return (
     <div style={{
-      background: '#161616', border: '1px solid #2E2E2E', borderRadius: 12,
+      background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 12,
       overflow: 'hidden', position: 'relative', transition: 'border-color 120ms',
     }}
-    className="card-hover"
-    onMouseEnter={e => e.currentTarget.style.borderColor = '#3E3E3E'}
-    onMouseLeave={e => e.currentTarget.style.borderColor = '#2E2E2E'}
+    onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--border-strong)'}
+    onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border)'}
     >
       <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 4, background: t.color }} />
       <div style={{ padding: '16px 20px 16px 24px', display: 'flex', alignItems: 'flex-start', gap: 16 }}>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 8 }}>
             <span style={{
+              display: 'flex', alignItems: 'center', gap: 4,
               padding: '2px 8px', borderRadius: 4,
-              fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase',
-              background: t.bg, color: t.textColor,
-            }}>{t.label}</span>
-            <span style={{ fontSize: 12, color: '#636363', display: 'flex', alignItems: 'center', gap: 4 }}>
+              fontSize: 11, fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase',
+              background: t.bg, color: t.color, border: `1px solid ${t.border}`,
+            }}><span>{t.icon}</span>{t.label}</span>
+            <span style={{ fontSize: 12, color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 4 }}>
               <span style={{ fontFamily: 'Material Symbols Outlined', fontSize: 14 }}>schedule</span>
               {hora} · {fecha}
             </span>
             {nov.perfiles?.nombre && (
-              <span style={{ fontSize: 12, color: '#636363', display: 'flex', alignItems: 'center', gap: 4 }}>
+              <span style={{ fontSize: 12, color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 4 }}>
                 <span style={{ fontFamily: 'Material Symbols Outlined', fontSize: 14 }}>person</span>
                 {nov.perfiles.nombre}
               </span>
             )}
           </div>
-          <p style={{ fontSize: 15, color: '#D0D0D0', lineHeight: 1.6 }}>{nov.descripcion}</p>
+          <p style={{ fontSize: 16, color: 'var(--text-body)', lineHeight: 1.6 }}>{nov.descripcion}</p>
         </div>
         {nov.foto_url && (
           <img src={nov.foto_url} alt="foto"
-            style={{ width: 80, height: 80, borderRadius: 8, objectFit: 'cover', flexShrink: 0, border: '1px solid #2E2E2E' }} />
+            style={{ width: 80, height: 80, borderRadius: 8, objectFit: 'cover', flexShrink: 0, border: '1px solid var(--border)' }} />
         )}
       </div>
     </div>
   );
 }
 
-export default function Novedades({ perfil, turno, onTurnoChange }) {
+function draftKey(edificioId) {
+  return `portia:borrador-novedad:${edificioId}`;
+}
+
+const EXPLICACION_TIPO = {
+  urgente:     'Algo está pasando ahora y necesita atención inmediata (emergencia, accidente, situación de riesgo).',
+  incidente:   'Algo salió mal o se rompió, pero ya pasó o está controlado (filtración, ascensor detenido, ruido molesto).',
+  informativo: 'Para que quede registrado, sin que sea grave ni urgente (visita de mantención, aviso de un vecino).',
+};
+
+export default function Novedades({ perfil, turno, filtroInicial }) {
   const [novedades, setNovedades]       = useState([]);
   const [loading, setLoading]           = useState(true);
   const [mostrarForm, setMostrarForm]   = useState(false);
   const [tipo, setTipo]                 = useState('informativo');
   const [descripcion, setDescripcion]   = useState('');
   const [enviando, setEnviando]         = useState(false);
-  const [filtro, setFiltro]             = useState('todos');
-  const [cerrando, setCerrando]         = useState(false);
-  const [resumenModal, setResumenModal] = useState(null);
+  const [filtro, setFiltro]             = useState(filtroInicial || 'todos');
   const fileRef = useRef();
   const [fotoFile, setFotoFile]         = useState(null);
+  const [errorMsg, setErrorMsg]         = useState('');
+  const [borradorRestaurado, setBorradorRestaurado] = useState(false);
+
+  // Restaura un borrador si el conserje fue interrumpido a mitad de una novedad
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(draftKey(perfil.edificio_id));
+      if (raw) {
+        const draft = JSON.parse(raw);
+        if (draft.descripcion?.trim()) {
+          setTipo(draft.tipo || 'informativo');
+          setDescripcion(draft.descripcion);
+          setBorradorRestaurado(true);
+          setMostrarForm(true);
+        }
+      }
+    } catch { /* borrador corrupto, se ignora */ }
+  }, []);
+
+  // Guarda el borrador en cada cambio mientras el modal está abierto
+  useEffect(() => {
+    if (!mostrarForm) return;
+    if (!descripcion.trim()) { localStorage.removeItem(draftKey(perfil.edificio_id)); return; }
+    localStorage.setItem(draftKey(perfil.edificio_id), JSON.stringify({ tipo, descripcion }));
+  }, [tipo, descripcion, mostrarForm]);
 
   useEffect(() => {
     cargarNovedades();
@@ -86,51 +114,37 @@ export default function Novedades({ perfil, turno, onTurnoChange }) {
     setLoading(false);
   }
 
-  async function iniciarTurno() {
-    const { data, error } = await supabase.from('turnos')
-      .insert({ edificio_id: perfil.edificio_id, conserje_id: perfil.id })
-      .select().single();
-    if (!error) onTurnoChange(data);
-  }
-
-  async function cerrarTurno() {
-    setCerrando(true);
-    const counts = novedades.reduce((acc, n) => { acc[n.tipo] = (acc[n.tipo] ?? 0) + 1; return acc; }, {});
-    const inicio = new Date(turno.inicio).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' });
-    const fin    = new Date().toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' });
-    const resumen = [
-      `Turno: ${inicio} → ${fin}`,
-      `Total: ${novedades.length} novedades`,
-      counts.urgente     ? `• Urgentes: ${counts.urgente}`     : null,
-      counts.incidente   ? `• Incidentes: ${counts.incidente}` : null,
-      counts.informativo ? `• Informativos: ${counts.informativo}` : null,
-    ].filter(Boolean).join('\n');
-    const { error } = await supabase.from('turnos')
-      .update({ fin: new Date().toISOString(), activo: false, resumen }).eq('id', turno.id);
-    if (!error) { setResumenModal(resumen); onTurnoChange(null); }
-    setCerrando(false);
-  }
-
   async function enviarNovedad(e) {
     e.preventDefault();
     if (!descripcion.trim()) return;
     setEnviando(true);
+    setErrorMsg('');
     let foto_url = null;
     if (fotoFile) {
       const ext  = fotoFile.name.split('.').pop();
       const path = `novedades/${perfil.edificio_id}/${Date.now()}.${ext}`;
-      const { data: up } = await supabase.storage.from('fotos').upload(path, fotoFile);
+      const { data: up, error: upError } = await supabase.storage.from('fotos').upload(path, fotoFile);
+      if (upError) { setErrorMsg('No se pudo subir la foto. Revisa tu conexión e intenta de nuevo.'); setEnviando(false); return; }
       if (up) { const { data: pub } = supabase.storage.from('fotos').getPublicUrl(path); foto_url = pub.publicUrl; }
     }
     const { error } = await supabase.from('novedades').insert({
       edificio_id: perfil.edificio_id, conserje_id: perfil.id,
       turno_id: turno?.id ?? null, tipo, descripcion: descripcion.trim(), foto_url,
     });
-    if (!error) {
-      setDescripcion(''); setFotoFile(null); setTipo('informativo');
+    if (error) {
+      setErrorMsg('No se pudo guardar la novedad. Tu descripción no se perdió, intenta de nuevo.');
+    } else {
+      localStorage.removeItem(draftKey(perfil.edificio_id));
+      setDescripcion(''); setFotoFile(null); setTipo('informativo'); setBorradorRestaurado(false);
       setMostrarForm(false); cargarNovedades();
     }
     setEnviando(false);
+  }
+
+  function cancelarForm() {
+    localStorage.removeItem(draftKey(perfil.edificio_id));
+    setDescripcion(''); setFotoFile(null); setTipo('informativo'); setBorradorRestaurado(false);
+    setMostrarForm(false);
   }
 
   const counts    = novedades.reduce((acc, n) => { acc[n.tipo] = (acc[n.tipo] ?? 0) + 1; return acc; }, {});
@@ -140,55 +154,53 @@ export default function Novedades({ perfil, turno, onTurnoChange }) {
     <div style={{ padding: '28px 32px', maxWidth: 860, margin: '0 auto' }}>
 
       {/* Page header */}
-      <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 24 }}>
-        <div>
-          <h2 style={{ fontSize: 22, fontWeight: 700, color: '#F5F5F5', marginBottom: 4 }}>Libro de Novedades</h2>
-          <p style={{ fontSize: 13, color: '#636363' }}>Historial completo de novedades del edificio</p>
-        </div>
-        {turno ? (
-          <button onClick={cerrarTurno} disabled={cerrando} style={{
-            height: 38, padding: '0 16px', background: 'transparent',
-            border: '1px solid #2E2E2E', borderRadius: 8,
-            color: '#A8A8A8', fontSize: 13, fontWeight: 500, cursor: 'pointer',
-          }}>{cerrando ? '...' : 'Cerrar turno'}</button>
-        ) : (
-          <button onClick={iniciarTurno} style={{
-            height: 38, padding: '0 18px', background: '#00FF88', border: 'none',
-            borderRadius: 8, color: '#0B0B0B', fontSize: 13, fontWeight: 700, cursor: 'pointer',
-          }}>⏱ Iniciar turno</button>
-        )}
+      <div style={{ marginBottom: 16 }}>
+        <h2 style={{ fontSize: 22, fontWeight: 700, color: 'var(--text)', marginBottom: 4 }}>Libro de Novedades</h2>
+        <p style={{ fontSize: 13, color: 'var(--text-muted)' }}>Registra todo lo que pasa en tu turno — es tu respaldo si después hay un reclamo</p>
       </div>
+
+      {/* Error banner */}
+      {errorMsg && (
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 10,
+          background: 'rgba(229,72,77,0.1)', borderLeft: '4px solid #E5484D',
+          borderRadius: '0 8px 8px 0', padding: '12px 16px', marginBottom: 16,
+        }}>
+          <span style={{ fontFamily: 'Material Symbols Outlined', fontSize: 18, color: '#E5484D', flexShrink: 0 }}>error</span>
+          <span style={{ fontSize: 14, color: '#FF8A8A' }}>{errorMsg}</span>
+        </div>
+      )}
 
       {/* Filter bar */}
       <div style={{
-        background: '#161616', border: '1px solid #2E2E2E', borderRadius: 12,
+        background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 12,
         padding: '12px 16px', display: 'flex', alignItems: 'center',
         justifyContent: 'space-between', flexWrap: 'wrap', gap: 12, marginBottom: 20,
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 3, background: '#0D0D0D', border: '1px solid #1F1F1F', borderRadius: 8, padding: 3 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 3, background: 'var(--bg-input)', border: '1px solid var(--bg-surface-high)', borderRadius: 8, padding: 3 }}>
           {[['todos','Todos'],['urgente','Urgentes'],['incidente','Incidentes'],['informativo','Informativos']].map(([id, label]) => (
             <button key={id} onClick={() => setFiltro(id)} style={{
-              padding: '6px 14px', borderRadius: 6, fontSize: 12, fontWeight: filtro === id ? 600 : 400,
-              background: filtro === id ? '#00FF88' : 'transparent',
-              color: filtro === id ? '#0B0B0B' : '#636363',
+              minHeight: 36, padding: '6px 14px', borderRadius: 6, fontSize: 13, fontWeight: filtro === id ? 600 : 400,
+              background: filtro === id ? 'var(--brand)' : 'transparent',
+              color: filtro === id ? 'var(--brand-text-on)' : 'var(--text-muted)',
               border: 'none', cursor: 'pointer', transition: 'all 100ms',
             }}>{label}</button>
           ))}
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           {counts.urgente > 0 && (
-            <span style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '3px 10px', borderRadius: 99, background: 'rgba(255,68,68,0.1)', border: '1px solid rgba(255,68,68,0.25)', fontSize: 11, fontWeight: 600, color: '#FF4444' }}>
-              <span style={{ width: 5, height: 5, borderRadius: '50%', background: '#FF4444', display: 'inline-block' }} />
+            <span style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '3px 10px', borderRadius: 99, background: 'rgba(229,72,77,0.1)', border: '1px solid rgba(229,72,77,0.3)', fontSize: 11, fontWeight: 600, color: '#E5484D' }}>
+              <span>◆</span>
               Urgentes: {counts.urgente}
             </span>
           )}
           {counts.incidente > 0 && (
-            <span style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '3px 10px', borderRadius: 99, background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.25)', fontSize: 11, fontWeight: 600, color: '#F59E0B' }}>
-              <span style={{ width: 5, height: 5, borderRadius: '50%', background: '#F59E0B', display: 'inline-block' }} />
+            <span style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '3px 10px', borderRadius: 99, background: 'rgba(255,107,61,0.1)', border: '1px solid rgba(255,107,61,0.3)', fontSize: 11, fontWeight: 600, color: '#FF6B3D' }}>
+              <span>!</span>
               Incidentes: {counts.incidente}
             </span>
           )}
-          <span style={{ fontSize: 12, color: '#636363' }}>{novedades.length} novedades</span>
+          <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{novedades.length} novedades</span>
         </div>
       </div>
 
@@ -196,14 +208,14 @@ export default function Novedades({ perfil, turno, onTurnoChange }) {
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
         {loading ? (
           <div style={{ display: 'flex', justifyContent: 'center', padding: 60 }}>
-            <div style={{ width: 24, height: 24, border: '2px solid #2E2E2E', borderTopColor: '#00FF88', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+            <div style={{ width: 24, height: 24, border: '2px solid var(--border)', borderTopColor: 'var(--brand)', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
           </div>
         ) : filtradas.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '60px 24px' }}>
-            <div style={{ width: 52, height: 52, background: '#161616', border: '1px solid #2E2E2E', borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', fontSize: 22 }}>📋</div>
-            <p style={{ fontSize: 15, fontWeight: 600, color: '#636363', marginBottom: 6 }}>Sin novedades registradas</p>
-            <p style={{ fontSize: 13, color: '#3E3E3E' }}>
-              {turno ? 'Registra la primera novedad de este turno' : 'Inicia un turno para comenzar a registrar'}
+            <div style={{ width: 52, height: 52, background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', fontSize: 22 }}>📋</div>
+            <p style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-muted)', marginBottom: 6 }}>Sin novedades registradas</p>
+            <p style={{ fontSize: 13, color: 'var(--text-subtle)' }}>
+              {turno ? 'Registra la primera novedad de este turno' : 'Inicia tu turno en "Entrega de turno" para comenzar a registrar'}
             </p>
           </div>
         ) : (
@@ -215,12 +227,11 @@ export default function Novedades({ perfil, turno, onTurnoChange }) {
       {turno && (
         <button onClick={() => setMostrarForm(true)} title="Nueva novedad" style={{
           position: 'fixed', bottom: 28, right: 28, width: 52, height: 52,
-          background: '#00FF88', border: 'none', borderRadius: '50%',
+          background: 'var(--brand)', border: 'none', borderRadius: '50%',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          cursor: 'pointer', zIndex: 60, fontSize: 26, color: '#0B0B0B', fontWeight: 700,
-          boxShadow: '0 4px 20px rgba(0,255,136,0.3)', transition: 'transform 120ms',
+          cursor: 'pointer', zIndex: 60, fontSize: 26, color: 'var(--brand-text-on)', fontWeight: 700,
+          boxShadow: '0 4px 20px rgba(var(--brand-rgb),0.3)', transition: 'transform 120ms',
         }}
-        className="fab btn-glow"
         onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.08)'}
         onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
         >+</button>
@@ -228,73 +239,64 @@ export default function Novedades({ perfil, turno, onTurnoChange }) {
 
       {/* Modal: Nueva novedad */}
       {mostrarForm && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.65)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100, padding: 24 }} className="modal-backdrop">
-          <div style={{ background: '#161616', border: '1px solid #2E2E2E', borderRadius: 16, width: '100%', maxWidth: 440, boxShadow: '0 24px 60px rgba(0,0,0,0.7)' }} className="modal-card">
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 22px', borderBottom: '1px solid #2E2E2E' }}>
-              <h2 style={{ fontSize: 16, fontWeight: 700, color: '#F5F5F5' }}>Nueva novedad</h2>
-              <button onClick={() => setMostrarForm(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#636363', fontSize: 20, lineHeight: 1 }}>✕</button>
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.65)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100, padding: 24 }}>
+          <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 16, width: '100%', maxWidth: 440, boxShadow: '0 24px 60px rgba(0,0,0,0.7)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 22px', borderBottom: '1px solid var(--border)' }}>
+              <h2 style={{ fontSize: 16, fontWeight: 700, color: 'var(--text)' }}>Nueva novedad</h2>
+              <button onClick={cancelarForm} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', fontSize: 20, lineHeight: 1 }}>✕</button>
             </div>
             <form onSubmit={enviarNovedad} style={{ padding: 22, display: 'flex', flexDirection: 'column', gap: 18 }}>
+              {borradorRestaurado && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(245,165,36,0.1)', border: '1px solid rgba(245,165,36,0.3)', borderRadius: 8, padding: '8px 12px', fontSize: 13, color: '#F5A524' }}>
+                  <span>▲</span> Recuperamos lo que estabas escribiendo
+                </div>
+              )}
               <div>
-                <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: '#636363', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>Tipo</label>
+                <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>Tipo</label>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
-                  {Object.entries(TIPOS).map(([id, t]) => (
+                  {Object.entries(TIPO_NOVEDAD).map(([id, t]) => (
                     <button key={id} type="button" onClick={() => setTipo(id)} style={{
+                      minHeight: 44, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
                       padding: '9px 8px', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer',
-                      background: tipo === id ? `${t.color}18` : 'transparent',
-                      color: tipo === id ? t.color : '#636363',
-                      border: tipo === id ? `1px solid ${t.color}50` : '1px solid #2E2E2E',
+                      background: tipo === id ? t.bg : 'transparent',
+                      color: tipo === id ? t.color : 'var(--text-muted)',
+                      border: tipo === id ? `1px solid ${t.border}` : '1px solid var(--border)',
                       transition: 'all 100ms',
-                    }}>{t.label}</button>
+                    }}><span>{t.icon}</span>{t.label}</button>
                   ))}
                 </div>
+                <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 8, lineHeight: 1.4 }}>{EXPLICACION_TIPO[tipo]}</p>
               </div>
               <div>
-                <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: '#636363', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>Descripción</label>
+                <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>Descripción</label>
                 <textarea value={descripcion} onChange={e => setDescripcion(e.target.value)}
                   placeholder="Describe la novedad con detalle…" required autoFocus
-                  style={{ width: '100%', height: 100, background: '#0D0D0D', border: '1px solid #2E2E2E', borderRadius: 8, padding: '10px 12px', color: '#F5F5F5', fontSize: 14, resize: 'none', fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box', transition: 'border-color 120ms' }}
-                  onFocus={e => e.target.style.borderColor = '#00FF88'}
-                  onBlur={e => e.target.style.borderColor = '#2E2E2E'}
+                  style={{ width: '100%', height: 100, background: 'var(--bg-input)', border: '1px solid var(--border)', borderRadius: 8, padding: '10px 12px', color: 'var(--text)', fontSize: 16, resize: 'none', fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box', transition: 'border-color 120ms' }}
+                  onFocus={e => e.target.style.borderColor = 'var(--brand)'}
+                  onBlur={e => e.target.style.borderColor = 'var(--border)'}
                 />
               </div>
               <div>
-                <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: '#636363', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>Foto (opcional)</label>
+                <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>Foto (opcional)</label>
                 <input type="file" accept="image/*" ref={fileRef} style={{ display: 'none' }} onChange={e => setFotoFile(e.target.files?.[0] ?? null)} />
                 {fotoFile ? (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: '#0D0D0D', border: '1px solid #2E2E2E', borderRadius: 8, padding: '10px 12px' }}>
-                    <span style={{ color: '#00FF88' }}>📎</span>
-                    <span style={{ fontSize: 13, color: '#D0D0D0', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{fotoFile.name}</span>
-                    <button type="button" onClick={() => setFotoFile(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#636363' }}>✕</button>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'var(--bg-input)', border: '1px solid var(--border)', borderRadius: 8, padding: '10px 12px' }}>
+                    <span style={{ color: 'var(--brand)' }}>📎</span>
+                    <span style={{ fontSize: 13, color: 'var(--text-body)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{fotoFile.name}</span>
+                    <button type="button" onClick={() => setFotoFile(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>✕</button>
                   </div>
                 ) : (
-                  <button type="button" onClick={() => fileRef.current.click()} style={{ width: '100%', padding: '10px', border: '1px dashed #2E2E2E', borderRadius: 8, background: 'transparent', color: '#636363', fontSize: 13, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 100ms' }}
-                    onMouseEnter={e => { e.currentTarget.style.borderColor = '#00FF88'; e.currentTarget.style.color = '#F5F5F5'; }}
-                    onMouseLeave={e => { e.currentTarget.style.borderColor = '#2E2E2E'; e.currentTarget.style.color = '#636363'; }}
+                  <button type="button" onClick={() => fileRef.current.click()} style={{ width: '100%', padding: '10px', border: '1px dashed var(--border)', borderRadius: 8, background: 'transparent', color: 'var(--text-muted)', fontSize: 13, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 100ms' }}
+                    onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--brand)'; e.currentTarget.style.color = 'var(--text)'; }}
+                    onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.color = 'var(--text-muted)'; }}
                   >+ Adjuntar foto</button>
                 )}
               </div>
               <div style={{ display: 'flex', gap: 10 }}>
-                <button type="button" onClick={() => setMostrarForm(false)} style={{ flex: 1, height: 42, background: 'transparent', border: '1px solid #2E2E2E', borderRadius: 8, color: '#A8A8A8', fontSize: 13, fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}>Cancelar</button>
-                <button type="submit" disabled={enviando} style={{ flex: 1, height: 42, background: '#00FF88', border: 'none', borderRadius: 8, color: '#0B0B0B', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>{enviando ? '...' : 'Registrar'}</button>
+                <button type="button" onClick={cancelarForm} style={{ flex: 1, height: 44, background: 'transparent', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 14, fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}>Cancelar</button>
+                <button type="submit" disabled={enviando} style={{ flex: 1, height: 44, background: 'var(--brand)', border: 'none', borderRadius: 8, color: 'var(--brand-text-on)', fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>{enviando ? '...' : 'Registrar'}</button>
               </div>
             </form>
-          </div>
-        </div>
-      )}
-
-      {/* Modal: Resumen turno */}
-      {resumenModal && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.65)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100, padding: 24 }} className="modal-backdrop">
-          <div style={{ background: '#161616', border: '1px solid #2E2E2E', borderRadius: 16, width: '100%', maxWidth: 380, boxShadow: '0 24px 60px rgba(0,0,0,0.7)' }}>
-            <div style={{ padding: '22px 22px 14px' }}>
-              <div style={{ width: 44, height: 44, background: 'rgba(0,255,136,0.1)', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 12, fontSize: 20 }}>✅</div>
-              <h2 style={{ fontSize: 16, fontWeight: 700, color: '#F5F5F5', marginBottom: 4 }}>Turno cerrado</h2>
-            </div>
-            <div style={{ padding: '0 22px 22px' }}>
-              <pre style={{ fontSize: 13, color: '#D0D0D0', background: '#0D0D0D', border: '1px solid #2E2E2E', borderRadius: 8, padding: '12px 14px', fontFamily: 'inherit', lineHeight: 1.7, whiteSpace: 'pre-wrap' }}>{resumenModal}</pre>
-              <button onClick={() => setResumenModal(null)} style={{ width: '100%', height: 42, marginTop: 12, background: '#00FF88', border: 'none', borderRadius: 8, color: '#0B0B0B', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>Aceptar</button>
-            </div>
           </div>
         </div>
       )}
