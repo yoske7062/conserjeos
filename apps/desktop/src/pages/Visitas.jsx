@@ -1,23 +1,77 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 
+function Avatar({ nombre, size = 40 }) {
+  const iniciales = nombre.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
+  return (
+    <div style={{
+      width: size, height: size, borderRadius: '50%', flexShrink: 0,
+      background: 'rgba(0,255,136,0.1)', border: '1px solid rgba(0,255,136,0.2)',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      fontSize: size * 0.32, fontWeight: 700, color: '#00FF88',
+    }}>{iniciales}</div>
+  );
+}
+
+function VisitaCard({ v, onSalida }) {
+  const entrada = new Date(v.entrada);
+  const minutos = Math.floor((Date.now() - entrada) / 60000);
+  const duracion = minutos < 60 ? `${minutos}min` : `${Math.floor(minutos/60)}h ${minutos%60}min`;
+
+  return (
+    <div style={{
+      background: '#161616', border: '1px solid #2E2E2E', borderRadius: 12,
+      padding: '16px 20px', display: 'flex', alignItems: 'flex-start', gap: 14,
+      transition: 'border-color 120ms',
+    }}
+    onMouseEnter={e => e.currentTarget.style.borderColor = '#3E3E3E'}
+    onMouseLeave={e => e.currentTarget.style.borderColor = '#2E2E2E'}
+    >
+      <Avatar nombre={v.nombre_visitante} />
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <p style={{ fontSize: 14, fontWeight: 600, color: '#F5F5F5', marginBottom: 3 }}>{v.nombre_visitante}</p>
+        <p style={{ fontSize: 12, color: '#636363', marginBottom: 2 }}>
+          Visita a <span style={{ color: '#A8A8A8' }}>{v.destino}</span>
+          {v.motivo && <> · {v.motivo}</>}
+        </p>
+        {v.rut_visitante && <p style={{ fontSize: 11, color: '#4E4E4E' }}>RUT: {v.rut_visitante}</p>}
+        <p style={{ fontSize: 11, color: '#636363', marginTop: 4 }}>
+          Entrada {entrada.toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })} · hace {duracion}
+        </p>
+      </div>
+      <button onClick={() => onSalida(v.id)} style={{
+        flexShrink: 0, padding: '7px 14px', borderRadius: 8,
+        background: 'transparent', border: '1px solid #2E2E2E',
+        color: '#A8A8A8', fontSize: 12, fontWeight: 500, cursor: 'pointer',
+        transition: 'all 120ms',
+      }}
+      onMouseEnter={e => { e.currentTarget.style.borderColor = '#00FF88'; e.currentTarget.style.color = '#00FF88'; }}
+      onMouseLeave={e => { e.currentTarget.style.borderColor = '#2E2E2E'; e.currentTarget.style.color = '#A8A8A8'; }}
+      >Registrar salida</button>
+    </div>
+  );
+}
+
+const INPUT_STYLE = {
+  width: '100%', height: 40, background: '#0D0D0D', border: '1px solid #2E2E2E',
+  borderRadius: 8, padding: '0 12px', color: '#F5F5F5', fontSize: 14,
+  fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box', transition: 'border-color 120ms',
+};
+
 export default function Visitas({ perfil, turno }) {
-  const [visitas, setVisitas] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [visitas, setVisitas]         = useState([]);
+  const [loading, setLoading]         = useState(true);
   const [mostrarForm, setMostrarForm] = useState(false);
-  const [form, setForm] = useState({ nombre_visitante: '', rut_visitante: '', destino: '', motivo: '' });
-  const [enviando, setEnviando] = useState(false);
+  const [form, setForm]               = useState({ nombre_visitante: '', rut_visitante: '', destino: '', motivo: '' });
+  const [enviando, setEnviando]       = useState(false);
 
   useEffect(() => { cargarVisitas(); }, []);
 
   async function cargarVisitas() {
     setLoading(true);
-    const { data } = await supabase
-      .from('visitas')
-      .select('*')
+    const { data } = await supabase.from('visitas').select('*')
       .eq('edificio_id', perfil.edificio_id)
-      .order('entrada', { ascending: false })
-      .limit(50);
+      .order('entrada', { ascending: false }).limit(50);
     setVisitas(data ?? []);
     setLoading(false);
   }
@@ -26,10 +80,8 @@ export default function Visitas({ perfil, turno }) {
     e.preventDefault();
     setEnviando(true);
     const { error } = await supabase.from('visitas').insert({
-      edificio_id: perfil.edificio_id,
-      conserje_id: perfil.id,
-      turno_id: turno?.id ?? null,
-      ...form,
+      edificio_id: perfil.edificio_id, conserje_id: perfil.id,
+      turno_id: turno?.id ?? null, ...form,
     });
     if (!error) { setMostrarForm(false); setForm({ nombre_visitante: '', rut_visitante: '', destino: '', motivo: '' }); cargarVisitas(); }
     setEnviando(false);
@@ -40,138 +92,140 @@ export default function Visitas({ perfil, turno }) {
     cargarVisitas();
   }
 
-  const activas = visitas.filter(v => v.activa);
+  const activas   = visitas.filter(v => v.activa);
   const historial = visitas.filter(v => !v.activa);
 
   return (
-    <div className="flex flex-col h-full">
-      <div className="flex items-center justify-between px-8 py-5 border-b border-border shrink-0">
+    <div style={{ padding: '28px 32px', maxWidth: 860, margin: '0 auto' }}>
+
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 28 }}>
         <div>
-          <h1 className="text-xl font-bold text-white">Control de Visitas</h1>
-          <p className="text-xs text-muted mt-0.5">{activas.length} visita{activas.length !== 1 ? 's' : ''} activa{activas.length !== 1 ? 's' : ''} en el edificio</p>
+          <h2 style={{ fontSize: 22, fontWeight: 700, color: '#F5F5F5', marginBottom: 4 }}>Control de Visitas</h2>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            {activas.length > 0 && <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#00FF88', display: 'inline-block' }} />}
+            <p style={{ fontSize: 13, color: '#636363' }}>
+              {activas.length > 0
+                ? `${activas.length} persona${activas.length !== 1 ? 's' : ''} en el edificio ahora`
+                : 'Sin visitas activas'}
+            </p>
+          </div>
         </div>
-        <button onClick={() => setMostrarForm(true)} className="btn-primary flex items-center gap-2">
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-          </svg>
-          Registrar entrada
-        </button>
+        <button onClick={() => setMostrarForm(true)} style={{
+          height: 38, padding: '0 18px', background: '#00FF88', border: 'none',
+          borderRadius: 8, color: '#0B0B0B', fontSize: 13, fontWeight: 700, cursor: 'pointer',
+        }}>+ Registrar entrada</button>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-8 py-5 space-y-6">
-        {/* Visitas activas */}
-        {activas.length > 0 && (
-          <div>
-            <h2 className="text-xs font-semibold text-muted uppercase tracking-wider mb-3">En el edificio ahora</h2>
-            <div className="space-y-2">
-              {activas.map(v => (
-                <div key={v.id} className="card flex items-center gap-4">
-                  <div className="w-10 h-10 bg-accent/15 rounded-full flex items-center justify-center shrink-0">
-                    <svg className="w-5 h-5 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                    </svg>
+      {/* Visitas activas */}
+      {activas.length > 0 && (
+        <div style={{ marginBottom: 32 }}>
+          <p style={{ fontSize: 11, fontWeight: 600, color: '#636363', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}>
+            En el edificio ahora
+          </p>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+            {activas.map(v => <VisitaCard key={v.id} v={v} onSalida={registrarSalida} />)}
+          </div>
+        </div>
+      )}
+
+      {/* Historial */}
+      {historial.length > 0 && (
+        <div>
+          <p style={{ fontSize: 11, fontWeight: 600, color: '#636363', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}>
+            Historial del día
+          </p>
+          {/* Table header */}
+          <div style={{
+            display: 'grid', gridTemplateColumns: '1fr 120px 100px 100px 90px',
+            padding: '8px 16px', background: '#0D0D0D', border: '1px solid #1F1F1F',
+            borderRadius: '10px 10px 0 0', gap: 12,
+          }}>
+            {['Visitante', 'Destino', 'Entrada', 'Salida', 'Duración'].map(h => (
+              <span key={h} style={{ fontSize: 11, fontWeight: 600, color: '#636363', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{h}</span>
+            ))}
+          </div>
+          <div style={{ border: '1px solid #1F1F1F', borderTop: 'none', borderRadius: '0 0 10px 10px', overflow: 'hidden' }}>
+            {historial.map((v, i) => {
+              const entrada = new Date(v.entrada);
+              const salida  = v.salida ? new Date(v.salida) : null;
+              const minutos = salida ? Math.floor((salida - entrada) / 60000) : null;
+              const dur = minutos !== null ? (minutos < 60 ? `${minutos}min` : `${Math.floor(minutos/60)}h ${minutos%60}min`) : '—';
+              return (
+                <div key={v.id} style={{
+                  display: 'grid', gridTemplateColumns: '1fr 120px 100px 100px 90px',
+                  padding: '12px 16px', gap: 12, alignItems: 'center',
+                  borderTop: i > 0 ? '1px solid #1A1A1A' : 'none',
+                  background: i % 2 === 0 ? '#111' : '#0D0D0D',
+                  transition: 'background 100ms',
+                }}
+                onMouseEnter={e => e.currentTarget.style.background = '#161616'}
+                onMouseLeave={e => e.currentTarget.style.background = i % 2 === 0 ? '#111' : '#0D0D0D'}
+                >
+                  <div>
+                    <p style={{ fontSize: 13, fontWeight: 500, color: '#D0D0D0' }}>{v.nombre_visitante}</p>
+                    {v.rut_visitante && <p style={{ fontSize: 11, color: '#4E4E4E' }}>{v.rut_visitante}</p>}
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-white">{v.nombre_visitante}</p>
-                    <p className="text-xs text-muted">
-                      {v.rut_visitante && `${v.rut_visitante} · `}
-                      Visita a <span className="text-slate-300">{v.destino}</span>
-                      {v.motivo && ` · ${v.motivo}`}
-                    </p>
-                  </div>
-                  <div className="text-right shrink-0">
-                    <p className="text-xs text-muted mb-2">
-                      Entrada: {new Date(v.entrada).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })}
-                    </p>
-                    <button
-                      onClick={() => registrarSalida(v.id)}
-                      className="text-xs bg-surface border border-border hover:border-success hover:text-success text-muted px-3 py-1.5 rounded-lg transition-all"
-                    >
-                      Registrar salida
-                    </button>
-                  </div>
+                  <span style={{ fontSize: 13, color: '#A8A8A8' }}>{v.destino}</span>
+                  <span style={{ fontSize: 13, color: '#636363' }}>{entrada.toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })}</span>
+                  <span style={{ fontSize: 13, color: '#636363' }}>{salida ? salida.toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' }) : '—'}</span>
+                  <span style={{ fontSize: 13, color: '#636363' }}>{dur}</span>
                 </div>
-              ))}
-            </div>
+              );
+            })}
           </div>
-        )}
+        </div>
+      )}
 
-        {/* Historial */}
-        {historial.length > 0 && (
-          <div>
-            <h2 className="text-xs font-semibold text-muted uppercase tracking-wider mb-3">Historial del día</h2>
-            <div className="space-y-2">
-              {historial.map(v => (
-                <div key={v.id} className="card opacity-60 flex items-center gap-4">
-                  <div className="w-10 h-10 bg-surface rounded-full flex items-center justify-center shrink-0 border border-border">
-                    <svg className="w-5 h-5 text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                    </svg>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-slate-300">{v.nombre_visitante}</p>
-                    <p className="text-xs text-muted">Visitó a {v.destino}</p>
-                  </div>
-                  <div className="text-right text-xs text-muted shrink-0">
-                    <p>E: {new Date(v.entrada).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })}</p>
-                    {v.salida && <p>S: {new Date(v.salida).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })}</p>}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
+      {/* Empty state */}
+      {!loading && visitas.length === 0 && (
+        <div style={{ textAlign: 'center', padding: '60px 24px' }}>
+          <div style={{ width: 52, height: 52, background: '#161616', border: '1px solid #2E2E2E', borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', fontSize: 22 }}>👤</div>
+          <p style={{ fontSize: 15, fontWeight: 600, color: '#636363', marginBottom: 6 }}>Sin visitas registradas hoy</p>
+          <p style={{ fontSize: 13, color: '#3E3E3E' }}>Registra la entrada de visitantes al edificio</p>
+        </div>
+      )}
 
-        {!loading && visitas.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-20 text-center">
-            <div className="w-16 h-16 bg-surface rounded-2xl flex items-center justify-center mb-4 border border-border">
-              <svg className="w-8 h-8 text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0" />
-              </svg>
-            </div>
-            <p className="text-slate-400 font-medium">Sin visitas registradas hoy</p>
-          </div>
-        )}
-      </div>
+      {/* FAB */}
+      <button onClick={() => setMostrarForm(true)} title="Registrar entrada" style={{
+        position: 'fixed', bottom: 28, right: 28, width: 52, height: 52,
+        background: '#00FF88', border: 'none', borderRadius: '50%',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        cursor: 'pointer', zIndex: 60, fontSize: 26, color: '#0B0B0B', fontWeight: 700,
+        boxShadow: '0 4px 20px rgba(0,255,136,0.3)', transition: 'transform 120ms',
+      }}
+      onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.08)'}
+      onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
+      >+</button>
 
-      {/* Modal nueva visita */}
+      {/* Modal */}
       {mostrarForm && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-6">
-          <div className="bg-surface border border-border rounded-2xl w-full max-w-md shadow-2xl">
-            <div className="flex items-center justify-between px-6 pt-6 pb-4 border-b border-border">
-              <h2 className="text-lg font-bold text-white">Registrar entrada</h2>
-              <button onClick={() => setMostrarForm(false)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/5 text-muted hover:text-white transition-all">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.65)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100, padding: 24 }}>
+          <div style={{ background: '#161616', border: '1px solid #2E2E2E', borderRadius: 16, width: '100%', maxWidth: 420, boxShadow: '0 24px 60px rgba(0,0,0,0.7)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 22px', borderBottom: '1px solid #2E2E2E' }}>
+              <h2 style={{ fontSize: 16, fontWeight: 700, color: '#F5F5F5' }}>Registrar entrada</h2>
+              <button onClick={() => setMostrarForm(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#636363', fontSize: 20 }}>✕</button>
             </div>
-            <form onSubmit={registrarEntrada} className="p-6 space-y-4">
-              <div>
-                <label className="label">Nombre del visitante</label>
-                <input className="input" placeholder="Juan Pérez" required
-                  value={form.nombre_visitante} onChange={e => setForm(f => ({ ...f, nombre_visitante: e.target.value }))} />
-              </div>
-              <div>
-                <label className="label">RUT (opcional)</label>
-                <input className="input" placeholder="12.345.678-9"
-                  value={form.rut_visitante} onChange={e => setForm(f => ({ ...f, rut_visitante: e.target.value }))} />
-              </div>
-              <div>
-                <label className="label">Visita a (Depto / Oficina)</label>
-                <input className="input" placeholder="201, Oficina 3, etc." required
-                  value={form.destino} onChange={e => setForm(f => ({ ...f, destino: e.target.value }))} />
-              </div>
-              <div>
-                <label className="label">Motivo (opcional)</label>
-                <input className="input" placeholder="Visita personal, delivery, técnico…"
-                  value={form.motivo} onChange={e => setForm(f => ({ ...f, motivo: e.target.value }))} />
-              </div>
-              <div className="flex gap-3 pt-1">
-                <button type="button" onClick={() => setMostrarForm(false)} className="btn-ghost flex-1">Cancelar</button>
-                <button type="submit" className="btn-primary flex-1 flex items-center justify-center gap-2" disabled={enviando}>
-                  {enviando ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : 'Registrar entrada'}
-                </button>
+            <form onSubmit={registrarEntrada} style={{ padding: 22, display: 'flex', flexDirection: 'column', gap: 14 }}>
+              {[
+                ['nombre_visitante', 'Nombre del visitante', 'Juan Pérez', true],
+                ['rut_visitante',    'RUT (opcional)',        '12.345.678-9', false],
+                ['destino',          'Depto / Oficina',       '201, Oficina 3…', true],
+                ['motivo',           'Motivo (opcional)',     'Visita personal, delivery…', false],
+              ].map(([key, label, placeholder, required]) => (
+                <div key={key}>
+                  <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: '#636363', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>{label}</label>
+                  <input
+                    style={INPUT_STYLE} placeholder={placeholder} required={required}
+                    value={form[key]} onChange={e => setForm(f => ({ ...f, [key]: e.target.value }))}
+                    onFocus={e => e.target.style.borderColor = '#00FF88'}
+                    onBlur={e => e.target.style.borderColor = '#2E2E2E'}
+                  />
+                </div>
+              ))}
+              <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
+                <button type="button" onClick={() => setMostrarForm(false)} style={{ flex: 1, height: 42, background: 'transparent', border: '1px solid #2E2E2E', borderRadius: 8, color: '#A8A8A8', fontSize: 13, cursor: 'pointer', fontFamily: 'inherit' }}>Cancelar</button>
+                <button type="submit" disabled={enviando} style={{ flex: 1, height: 42, background: '#00FF88', border: 'none', borderRadius: 8, color: '#0B0B0B', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>{enviando ? '...' : 'Registrar entrada'}</button>
               </div>
             </form>
           </div>

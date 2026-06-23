@@ -34,20 +34,23 @@ export default function App() {
     setLoading(false);
   }
 
-  if (loading) {
-    return (
+  const content = (() => {
+    if (loading) return (
       <div className="h-screen flex items-center justify-center bg-base">
         <div className="flex flex-col items-center gap-4">
-          <div className="w-10 h-10 border-2 border-accent border-t-transparent rounded-full animate-spin" />
+          <div className="w-10 h-10 border-2 border-neon border-t-transparent rounded-full animate-spin" />
           <span className="text-muted text-sm">Cargando Portia…</span>
         </div>
       </div>
     );
-  }
+    if (!session || !perfil) return <Login onLogin={cargarPerfil} />;
+    return <Dashboard session={session} perfil={perfil} />;
+  })();
 
-  if (!session || !perfil) {
-    return <Login onLogin={cargarPerfil} />;
-  }
-
-  return <Dashboard session={session} perfil={perfil} />;
+  return (
+    <>
+      <div className="drag-region" />
+      {content}
+    </>
+  );
 }

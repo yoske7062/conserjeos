@@ -1,25 +1,44 @@
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 
+function tiempoDesde(fecha) {
+  const min = Math.floor((Date.now() - new Date(fecha)) / 60000);
+  if (min < 60) return `hace ${min}min`;
+  const h = Math.floor(min / 60);
+  return `hace ${h}h ${min % 60}min`;
+}
+
+const INPUT_STYLE = {
+  width: '100%', height: 40, background: '#0D0D0D', border: '1px solid #2E2E2E',
+  borderRadius: 8, padding: '0 12px', color: '#F5F5F5', fontSize: 14,
+  fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box', transition: 'border-color 120ms',
+};
+
+function PaqueteIcon() {
+  return (
+    <div style={{ width: 52, height: 52, background: '#1A1A1A', border: '1px solid #2E2E2E', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+      <span style={{ fontFamily: 'Material Symbols Outlined', fontSize: 22, color: '#636363' }}>inventory_2</span>
+    </div>
+  );
+}
+
 export default function Encomiendas({ perfil, turno }) {
   const [encomiendas, setEncomiendas] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading]         = useState(true);
+  const [tab, setTab]                 = useState('pendientes');
   const [mostrarForm, setMostrarForm] = useState(false);
-  const [form, setForm] = useState({ remitente: '', destinatario: '', depto: '' });
-  const [fotoFile, setFotoFile] = useState(null);
-  const [enviando, setEnviando] = useState(false);
+  const [form, setForm]               = useState({ remitente: '', destinatario: '', depto: '' });
+  const [fotoFile, setFotoFile]       = useState(null);
+  const [enviando, setEnviando]       = useState(false);
   const fileRef = useRef();
 
   useEffect(() => { cargarEncomiendas(); }, []);
 
   async function cargarEncomiendas() {
     setLoading(true);
-    const { data } = await supabase
-      .from('encomiendas')
-      .select('*')
+    const { data } = await supabase.from('encomiendas').select('*')
       .eq('edificio_id', perfil.edificio_id)
-      .order('recibida_at', { ascending: false })
-      .limit(50);
+      .order('recibida_at', { ascending: false }).limit(50);
     setEncomiendas(data ?? []);
     setLoading(false);
   }
@@ -29,27 +48,16 @@ export default function Encomiendas({ perfil, turno }) {
     setEnviando(true);
     let foto_url = null;
     if (fotoFile) {
-      const ext = fotoFile.name.split('.').pop();
+      const ext  = fotoFile.name.split('.').pop();
       const path = `encomiendas/${perfil.edificio_id}/${Date.now()}.${ext}`;
       const { data: up } = await supabase.storage.from('fotos').upload(path, fotoFile);
-      if (up) {
-        const { data: pub } = supabase.storage.from('fotos').getPublicUrl(path);
-        foto_url = pub.publicUrl;
-      }
+      if (up) { const { data: pub } = supabase.storage.from('fotos').getPublicUrl(path); foto_url = pub.publicUrl; }
     }
     const { error } = await supabase.from('encomiendas').insert({
-      edificio_id: perfil.edificio_id,
-      conserje_id: perfil.id,
-      turno_id: turno?.id ?? null,
-      foto_url,
-      ...form,
+      edificio_id: perfil.edificio_id, conserje_id: perfil.id,
+      turno_id: turno?.id ?? null, foto_url, ...form,
     });
-    if (!error) {
-      setMostrarForm(false);
-      setForm({ remitente: '', destinatario: '', depto: '' });
-      setFotoFile(null);
-      cargarEncomiendas();
-    }
+    if (!error) { setMostrarForm(false); setForm({ remitente: '', destinatario: '', depto: '' }); setFotoFile(null); cargarEncomiendas(); }
     setEnviando(false);
   }
 
@@ -60,155 +68,177 @@ export default function Encomiendas({ perfil, turno }) {
 
   const pendientes = encomiendas.filter(e => !e.entregada);
   const entregadas = encomiendas.filter(e => e.entregada);
+  const lista      = tab === 'pendientes' ? pendientes : entregadas;
 
   return (
-    <div className="flex flex-col h-full">
-      <div className="flex items-center justify-between px-8 py-5 border-b border-border shrink-0">
+    <div style={{ padding: '28px 32px', maxWidth: 860, margin: '0 auto' }}>
+
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 20 }}>
         <div>
-          <h1 className="text-xl font-bold text-white">Encomiendas</h1>
-          <p className="text-xs text-muted mt-0.5">{pendientes.length} pendiente{pendientes.length !== 1 ? 's' : ''} de entrega</p>
+          <h2 style={{ fontSize: 22, fontWeight: 700, color: '#F5F5F5', marginBottom: 8 }}>Encomiendas</h2>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            {pendientes.length > 0 && (
+              <span style={{ padding: '3px 10px', borderRadius: 6, background: '#00FF88', color: '#0B0B0B', fontSize: 12, fontWeight: 700 }}>
+                {pendientes.length} pendientes
+              </span>
+            )}
+            <span style={{ fontSize: 13, color: '#636363' }}>{entregadas.length} entregadas hoy</span>
+          </div>
         </div>
-        <button onClick={() => setMostrarForm(true)} className="btn-primary flex items-center gap-2">
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-          </svg>
-          Registrar llegada
-        </button>
+        <button onClick={() => setMostrarForm(true)} style={{
+          display: 'flex', alignItems: 'center', gap: 8, height: 38, padding: '0 18px',
+          background: '#00FF88', border: 'none', borderRadius: 8,
+          color: '#0B0B0B', fontSize: 13, fontWeight: 700, cursor: 'pointer',
+        }}>+ Registrar ingreso</button>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-8 py-5 space-y-6">
-        {pendientes.length > 0 && (
-          <div>
-            <h2 className="text-xs font-semibold text-muted uppercase tracking-wider mb-3">Pendientes de entrega</h2>
-            <div className="space-y-2">
-              {pendientes.map(enc => (
-                <div key={enc.id} className="card flex items-center gap-4">
-                  {enc.foto_url ? (
-                    <img src={enc.foto_url} alt="" className="w-12 h-12 rounded-lg object-cover shrink-0 border border-border" />
-                  ) : (
-                    <div className="w-12 h-12 bg-accent/10 rounded-lg flex items-center justify-center shrink-0">
-                      <svg className="w-6 h-6 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10" />
-                      </svg>
-                    </div>
+      {/* Tabs */}
+      <div style={{ display: 'flex', gap: 0, marginBottom: 20, borderBottom: '1px solid #1F1F1F' }}>
+        {[['pendientes', `Pendientes (${pendientes.length})`], ['historial', `Historial (${entregadas.length})`]].map(([id, label]) => (
+          <button key={id} onClick={() => setTab(id)} style={{
+            padding: '10px 20px', fontSize: 14, fontWeight: tab === id ? 600 : 400,
+            color: tab === id ? '#F5F5F5' : '#636363',
+            background: 'transparent', border: 'none', cursor: 'pointer',
+            borderBottom: tab === id ? '2px solid #00FF88' : '2px solid transparent',
+            marginBottom: -1, transition: 'all 120ms',
+          }}>{label}</button>
+        ))}
+      </div>
+
+      {/* List */}
+      {loading ? (
+        <div style={{ display: 'flex', justifyContent: 'center', padding: 60 }}>
+          <div style={{ width: 24, height: 24, border: '2px solid #2E2E2E', borderTopColor: '#00FF88', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+        </div>
+      ) : lista.length === 0 ? (
+        <div style={{ textAlign: 'center', padding: '60px 24px' }}>
+          <div style={{ width: 52, height: 52, background: '#161616', border: '1px solid #2E2E2E', borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', fontSize: 22 }}>📦</div>
+          <p style={{ fontSize: 15, fontWeight: 600, color: '#636363', marginBottom: 6 }}>
+            {tab === 'pendientes' ? 'Sin encomiendas pendientes' : 'Sin encomiendas entregadas hoy'}
+          </p>
+        </div>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {lista.map(enc => (
+            <div key={enc.id} style={{
+              background: '#161616', border: '1px solid #2E2E2E', borderRadius: 12,
+              padding: '14px 20px', display: 'flex', alignItems: 'center', gap: 16,
+              transition: 'border-color 120ms', opacity: enc.entregada ? 0.6 : 1,
+            }}
+            onMouseEnter={e => e.currentTarget.style.borderColor = '#3E3E3E'}
+            onMouseLeave={e => e.currentTarget.style.borderColor = '#2E2E2E'}
+            >
+              {/* Foto o icono */}
+              {enc.foto_url ? (
+                <img src={enc.foto_url} alt="" style={{ width: 52, height: 52, borderRadius: 8, objectFit: 'cover', flexShrink: 0, border: '1px solid #2E2E2E' }} />
+              ) : <PaqueteIcon />}
+
+              {/* Info */}
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 3 }}>
+                  <span style={{ fontSize: 14, fontWeight: 600, color: '#F5F5F5' }}>{enc.destinatario}</span>
+                  <span style={{ padding: '1px 7px', borderRadius: 5, background: '#222', border: '1px solid #333', fontSize: 11, fontWeight: 600, color: '#A8A8A8' }}>Depto {enc.depto}</span>
+                  {enc.entregada && (
+                    <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, color: '#00FF88' }}>
+                      <span style={{ fontFamily: 'Material Symbols Outlined', fontSize: 14 }}>check_circle</span>
+                      Entregada
+                    </span>
                   )}
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-white">{enc.destinatario}</p>
-                    <p className="text-xs text-muted">
-                      Depto <span className="text-slate-300">{enc.depto}</span>
-                      {enc.remitente && ` · De: ${enc.remitente}`}
-                    </p>
-                    <p className="text-xs text-muted mt-0.5">
-                      Recibida {new Date(enc.recibida_at).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })}
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => marcarEntregada(enc.id)}
-                    className="shrink-0 text-xs bg-surface border border-border hover:border-success hover:text-success text-muted px-3 py-1.5 rounded-lg transition-all"
-                  >
-                    Marcar entregada
-                  </button>
                 </div>
-              ))}
-            </div>
-          </div>
-        )}
+                {enc.remitente && <p style={{ fontSize: 12, color: '#636363', marginBottom: 2 }}>De: {enc.remitente}</p>}
+                <p style={{ fontSize: 11, color: '#4E4E4E', display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <span style={{ fontFamily: 'Material Symbols Outlined', fontSize: 12 }}>schedule</span>
+                  {enc.entregada
+                    ? `Entregada ${new Date(enc.entregada_at).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })}`
+                    : `Recibida ${tiempoDesde(enc.recibida_at)}`
+                  }
+                </p>
+              </div>
 
-        {entregadas.length > 0 && (
-          <div>
-            <h2 className="text-xs font-semibold text-muted uppercase tracking-wider mb-3">Entregadas hoy</h2>
-            <div className="space-y-2">
-              {entregadas.slice(0, 10).map(enc => (
-                <div key={enc.id} className="card opacity-60 flex items-center gap-4">
-                  <div className="w-10 h-10 bg-green-500/10 rounded-lg flex items-center justify-center shrink-0">
-                    <svg className="w-5 h-5 text-success" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm text-slate-300">{enc.destinatario} — Depto {enc.depto}</p>
-                    <p className="text-xs text-muted">
-                      Entregada {new Date(enc.entregada_at).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })}
-                    </p>
-                  </div>
-                </div>
-              ))}
+              {/* Acción */}
+              {!enc.entregada && (
+                <button onClick={() => marcarEntregada(enc.id)} style={{
+                  flexShrink: 0, display: 'flex', alignItems: 'center', gap: 6,
+                  padding: '7px 14px', borderRadius: 8,
+                  background: 'transparent', border: '1px solid #2E2E2E',
+                  color: '#A8A8A8', fontSize: 12, fontWeight: 500, cursor: 'pointer',
+                  transition: 'all 120ms',
+                }}
+                onMouseEnter={e => { e.currentTarget.style.borderColor = '#00FF88'; e.currentTarget.style.color = '#00FF88'; }}
+                onMouseLeave={e => { e.currentTarget.style.borderColor = '#2E2E2E'; e.currentTarget.style.color = '#A8A8A8'; }}
+                >
+                  <span style={{ fontFamily: 'Material Symbols Outlined', fontSize: 14 }}>check_circle</span>
+                  Marcar entregada
+                </button>
+              )}
             </div>
-          </div>
-        )}
+          ))}
+        </div>
+      )}
 
-        {!loading && encomiendas.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-20 text-center">
-            <div className="w-16 h-16 bg-surface rounded-2xl flex items-center justify-center mb-4 border border-border">
-              <svg className="w-8 h-8 text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10" />
-              </svg>
-            </div>
-            <p className="text-slate-400 font-medium">Sin encomiendas registradas</p>
-          </div>
-        )}
-      </div>
+      {/* FAB */}
+      <button onClick={() => setMostrarForm(true)} title="Registrar encomienda" style={{
+        position: 'fixed', bottom: 28, right: 28, width: 52, height: 52,
+        background: '#00FF88', border: 'none', borderRadius: '50%',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        cursor: 'pointer', zIndex: 60, fontSize: 26, color: '#0B0B0B', fontWeight: 700,
+        boxShadow: '0 4px 20px rgba(0,255,136,0.3)', transition: 'transform 120ms',
+      }}
+      onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.08)'}
+      onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
+      >+</button>
 
+      {/* Modal */}
       {mostrarForm && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-6">
-          <div className="bg-surface border border-border rounded-2xl w-full max-w-md shadow-2xl">
-            <div className="flex items-center justify-between px-6 pt-6 pb-4 border-b border-border">
-              <h2 className="text-lg font-bold text-white">Registrar encomienda</h2>
-              <button onClick={() => setMostrarForm(false)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/5 text-muted hover:text-white transition-all">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.65)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100, padding: 24 }}>
+          <div style={{ background: '#161616', border: '1px solid #2E2E2E', borderRadius: 16, width: '100%', maxWidth: 420, boxShadow: '0 24px 60px rgba(0,0,0,0.7)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 22px', borderBottom: '1px solid #2E2E2E' }}>
+              <h2 style={{ fontSize: 16, fontWeight: 700, color: '#F5F5F5' }}>Registrar encomienda</h2>
+              <button onClick={() => setMostrarForm(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#636363', fontSize: 20 }}>✕</button>
             </div>
-            <form onSubmit={registrarEncomienda} className="p-6 space-y-4">
+            <form onSubmit={registrarEncomienda} style={{ padding: 22, display: 'flex', flexDirection: 'column', gap: 14 }}>
+              {[
+                ['destinatario', 'Destinatario', 'Nombre del residente', true],
+                ['depto',        'Depto / Oficina', '201', true],
+                ['remitente',    'Remitente (opcional)', 'Falabella, Amazon…', false],
+              ].map(([key, label, placeholder, required]) => (
+                <div key={key}>
+                  <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: '#636363', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>{label}</label>
+                  <input style={INPUT_STYLE} placeholder={placeholder} required={required}
+                    value={form[key]} onChange={e => setForm(f => ({ ...f, [key]: e.target.value }))}
+                    onFocus={e => e.target.style.borderColor = '#00FF88'}
+                    onBlur={e => e.target.style.borderColor = '#2E2E2E'}
+                  />
+                </div>
+              ))}
+              {/* Foto */}
               <div>
-                <label className="label">Destinatario</label>
-                <input className="input" placeholder="Nombre del residente" required
-                  value={form.destinatario} onChange={e => setForm(f => ({ ...f, destinatario: e.target.value }))} />
-              </div>
-              <div>
-                <label className="label">Depto / Oficina</label>
-                <input className="input" placeholder="201" required
-                  value={form.depto} onChange={e => setForm(f => ({ ...f, depto: e.target.value }))} />
-              </div>
-              <div>
-                <label className="label">Remitente (opcional)</label>
-                <input className="input" placeholder="Falabella, Mercado Libre, etc."
-                  value={form.remitente} onChange={e => setForm(f => ({ ...f, remitente: e.target.value }))} />
-              </div>
-              <div>
-                <label className="label">Foto (opcional)</label>
-                <input type="file" accept="image/*" ref={fileRef} className="hidden"
-                  onChange={e => setFotoFile(e.target.files?.[0] ?? null)} />
+                <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: '#636363', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>Foto (opcional)</label>
+                <input type="file" accept="image/*" ref={fileRef} style={{ display: 'none' }} onChange={e => setFotoFile(e.target.files?.[0] ?? null)} />
                 {fotoFile ? (
-                  <div className="flex items-center gap-3 bg-base rounded-xl px-4 py-3 border border-border">
-                    <span className="text-sm text-slate-300 flex-1 truncate">{fotoFile.name}</span>
-                    <button type="button" onClick={() => setFotoFile(null)} className="text-muted hover:text-white">
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                      </svg>
-                    </button>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: '#0D0D0D', border: '1px solid #2E2E2E', borderRadius: 8, padding: '10px 12px' }}>
+                    <span style={{ color: '#00FF88' }}>📎</span>
+                    <span style={{ fontSize: 13, color: '#D0D0D0', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{fotoFile.name}</span>
+                    <button type="button" onClick={() => setFotoFile(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#636363' }}>✕</button>
                   </div>
                 ) : (
-                  <button type="button" onClick={() => fileRef.current.click()}
-                    className="w-full border border-dashed border-border rounded-xl py-3 text-sm text-muted hover:text-white hover:border-accent transition-all flex items-center justify-center gap-2">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
-                    Adjuntar foto
-                  </button>
+                  <button type="button" onClick={() => fileRef.current.click()} style={{ width: '100%', padding: '10px', border: '1px dashed #2E2E2E', borderRadius: 8, background: 'transparent', color: '#636363', fontSize: 13, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 100ms' }}
+                    onMouseEnter={e => { e.currentTarget.style.borderColor = '#00FF88'; e.currentTarget.style.color = '#F5F5F5'; }}
+                    onMouseLeave={e => { e.currentTarget.style.borderColor = '#2E2E2E'; e.currentTarget.style.color = '#636363'; }}
+                  >+ Adjuntar foto</button>
                 )}
               </div>
-              <div className="flex gap-3 pt-1">
-                <button type="button" onClick={() => setMostrarForm(false)} className="btn-ghost flex-1">Cancelar</button>
-                <button type="submit" className="btn-primary flex-1 flex items-center justify-center gap-2" disabled={enviando}>
-                  {enviando ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : 'Registrar'}
-                </button>
+              <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
+                <button type="button" onClick={() => setMostrarForm(false)} style={{ flex: 1, height: 42, background: 'transparent', border: '1px solid #2E2E2E', borderRadius: 8, color: '#A8A8A8', fontSize: 13, cursor: 'pointer', fontFamily: 'inherit' }}>Cancelar</button>
+                <button type="submit" disabled={enviando} style={{ flex: 1, height: 42, background: '#00FF88', border: 'none', borderRadius: 8, color: '#0B0B0B', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>{enviando ? '...' : 'Registrar'}</button>
               </div>
             </form>
           </div>
         </div>
       )}
+
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );
 }

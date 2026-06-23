@@ -20,26 +20,13 @@
       "dist/**/*"
     ],
     "win": {
-      "target": [
-        {
-          "target": "nsis",
-          "arch": [
-            "x64"
-          ]
-        }
-      ],
-      "artifactName": "ConserjeOS-Setup-${version}.${ext}"
+      "target": [{ "target": "nsis", "arch": ["x64"] }],
+      "artifactName": "Portia-Setup-${version}.${ext}"
     },
     "mac": {
       "category": "public.app-category.business",
-      "target": [
-        {
-          "target": "dmg",
-          "arch": [
-            "arm64"
-          ]
-        }
-      ]
+      "target": [{ "target": "dmg", "arch": ["arm64", "x64"] }],
+      "artifactName": "Portia-${version}-${arch}.${ext}"
     }
   },
   "type": "module",

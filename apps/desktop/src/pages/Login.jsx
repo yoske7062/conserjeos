@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { supabase } from '../lib/supabase';
+import logoImg from '../assets/logo.png';
 
 export default function Login() {
   const [email, setEmail]       = useState('');
@@ -27,14 +28,8 @@ export default function Login() {
       }}>
         <div>
           {/* Logo */}
-          <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:48 }}>
-            <div style={{
-              width:40, height:40, background:'#00FF88', borderRadius:10,
-              display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0
-            }}>
-              <span style={{ fontFamily:'Material Symbols Outlined', fontSize:22, color:'#0B0B0B' }}>apartment</span>
-            </div>
-            <span style={{ fontSize:18, fontWeight:700, color:'#F5F5F5' }}>Portia</span>
+          <div style={{ marginBottom:40 }}>
+            <img src={logoImg} alt="Portia" style={{ width:140, height:140, objectFit:'contain', mixBlendMode:'lighten' }} />
           </div>
 
           <p style={{ fontSize:12, fontWeight:600, color:'#00FF88', letterSpacing:'0.1em', marginBottom:16, textTransform:'uppercase' }}>

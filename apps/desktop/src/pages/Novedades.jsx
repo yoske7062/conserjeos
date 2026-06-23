@@ -1,407 +1,303 @@
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 
-const TIPOS = [
-  { id: 'informativo', label: 'Informativo', color: 'badge-informativo', dot: 'bg-info' },
-  { id: 'incidente',   label: 'Incidente',   color: 'badge-incidente',   dot: 'bg-warning' },
-  { id: 'urgente',     label: 'Urgente',      color: 'badge-urgente',     dot: 'bg-urgent' },
-];
-
-function TipoBadge({ tipo }) {
-  const t = TIPOS.find(t => t.id === tipo);
-  if (!t) return null;
-  return (
-    <span className={t.color}>
-      <span className={`w-1.5 h-1.5 rounded-full ${t.dot}`} />
-      {t.label}
-    </span>
-  );
-}
+const TIPOS = {
+  urgente:     { label: 'Urgente',     color: '#FF4444', bg: '#FF4444', textColor: '#fff' },
+  incidente:   { label: 'Incidente',   color: '#F59E0B', bg: '#F59E0B', textColor: '#000' },
+  informativo: { label: 'Informativo', color: '#A8A8A8', bg: '#2A2A2A', textColor: '#A8A8A8' },
+};
 
 function NovedadCard({ nov }) {
-  const hora = new Date(nov.created_at).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' });
+  const t = TIPOS[nov.tipo] || TIPOS.informativo;
+  const hora  = new Date(nov.created_at).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' });
   const fecha = new Date(nov.created_at).toLocaleDateString('es-CL', { day: '2-digit', month: 'short' });
 
   return (
-    <article className={`card border-l-4 ${
-      nov.tipo === 'urgente'     ? 'border-l-urgent' :
-      nov.tipo === 'incidente'   ? 'border-l-warning' :
-                                   'border-l-info'
-    }`}>
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-2 flex-wrap">
-            <TipoBadge tipo={nov.tipo} />
-            <span className="text-xs text-muted">{hora} · {fecha}</span>
+    <div style={{
+      background: '#161616', border: '1px solid #2E2E2E', borderRadius: 12,
+      overflow: 'hidden', position: 'relative', transition: 'border-color 120ms',
+    }}
+    onMouseEnter={e => e.currentTarget.style.borderColor = '#3E3E3E'}
+    onMouseLeave={e => e.currentTarget.style.borderColor = '#2E2E2E'}
+    >
+      <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 4, background: t.color }} />
+      <div style={{ padding: '16px 20px 16px 24px', display: 'flex', alignItems: 'flex-start', gap: 16 }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 8 }}>
+            <span style={{
+              padding: '2px 8px', borderRadius: 4,
+              fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase',
+              background: t.bg, color: t.textColor,
+            }}>{t.label}</span>
+            <span style={{ fontSize: 12, color: '#636363', display: 'flex', alignItems: 'center', gap: 4 }}>
+              <span style={{ fontFamily: 'Material Symbols Outlined', fontSize: 14 }}>schedule</span>
+              {hora} · {fecha}
+            </span>
             {nov.perfiles?.nombre && (
-              <span className="text-xs text-muted">· {nov.perfiles.nombre}</span>
+              <span style={{ fontSize: 12, color: '#636363', display: 'flex', alignItems: 'center', gap: 4 }}>
+                <span style={{ fontFamily: 'Material Symbols Outlined', fontSize: 14 }}>person</span>
+                {nov.perfiles.nombre}
+              </span>
             )}
           </div>
-          <p className="text-sm text-slate-200 leading-relaxed">{nov.descripcion}</p>
+          <p style={{ fontSize: 15, color: '#D0D0D0', lineHeight: 1.6 }}>{nov.descripcion}</p>
         </div>
         {nov.foto_url && (
-          <img
-            src={nov.foto_url}
-            alt="foto novedad"
-            className="w-16 h-16 rounded-lg object-cover shrink-0 border border-border"
-          />
+          <img src={nov.foto_url} alt="foto"
+            style={{ width: 80, height: 80, borderRadius: 8, objectFit: 'cover', flexShrink: 0, border: '1px solid #2E2E2E' }} />
         )}
       </div>
-    </article>
+    </div>
   );
 }
 
 export default function Novedades({ perfil, turno, onTurnoChange }) {
-  const [novedades, setNovedades] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [mostrarForm, setMostrarForm] = useState(false);
-  const [tipo, setTipo] = useState('informativo');
-  const [descripcion, setDescripcion] = useState('');
-  const [enviando, setEnviando] = useState(false);
-  const [filtro, setFiltro] = useState('todos');
-  const [cerrando, setCerrando] = useState(false);
+  const [novedades, setNovedades]       = useState([]);
+  const [loading, setLoading]           = useState(true);
+  const [mostrarForm, setMostrarForm]   = useState(false);
+  const [tipo, setTipo]                 = useState('informativo');
+  const [descripcion, setDescripcion]   = useState('');
+  const [enviando, setEnviando]         = useState(false);
+  const [filtro, setFiltro]             = useState('todos');
+  const [cerrando, setCerrando]         = useState(false);
   const [resumenModal, setResumenModal] = useState(null);
   const fileRef = useRef();
-  const [fotoFile, setFotoFile] = useState(null);
+  const [fotoFile, setFotoFile]         = useState(null);
 
   useEffect(() => {
     cargarNovedades();
-    // Suscripción realtime
-    const channel = supabase
-      .channel('novedades-live')
-      .on('postgres_changes', {
-        event: 'INSERT',
-        schema: 'public',
-        table: 'novedades',
-        filter: `edificio_id=eq.${perfil.edificio_id}`,
-      }, payload => {
-        setNovedades(prev => [payload.new, ...prev]);
-      })
+    const channel = supabase.channel('novedades-live')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'novedades',
+        filter: `edificio_id=eq.${perfil.edificio_id}` },
+        payload => setNovedades(prev => [payload.new, ...prev]))
       .subscribe();
-
     return () => supabase.removeChannel(channel);
   }, [turno]);
 
   async function cargarNovedades() {
     setLoading(true);
-    let q = supabase
-      .from('novedades')
-      .select('*, perfiles(nombre)')
+    let q = supabase.from('novedades').select('*, perfiles(nombre)')
       .eq('edificio_id', perfil.edificio_id)
-      .order('created_at', { ascending: false })
-      .limit(100);
-
+      .order('created_at', { ascending: false }).limit(100);
     if (turno) q = q.eq('turno_id', turno.id);
-
     const { data } = await q;
     setNovedades(data ?? []);
     setLoading(false);
   }
 
   async function iniciarTurno() {
-    const { data, error } = await supabase
-      .from('turnos')
+    const { data, error } = await supabase.from('turnos')
       .insert({ edificio_id: perfil.edificio_id, conserje_id: perfil.id })
-      .select()
-      .single();
+      .select().single();
     if (!error) onTurnoChange(data);
   }
 
   async function cerrarTurno() {
     setCerrando(true);
-    const resumen = generarResumen();
-    const { error } = await supabase
-      .from('turnos')
-      .update({ fin: new Date().toISOString(), activo: false, resumen })
-      .eq('id', turno.id);
-    if (!error) {
-      setResumenModal(resumen);
-      onTurnoChange(null);
-    }
-    setCerrando(false);
-  }
-
-  function generarResumen() {
-    const counts = novedades.reduce((acc, n) => {
-      acc[n.tipo] = (acc[n.tipo] ?? 0) + 1;
-      return acc;
-    }, {});
-    const inicio = turno ? new Date(turno.inicio).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' }) : '';
-    return [
-      `Turno iniciado: ${inicio}`,
-      `Total novedades: ${novedades.length}`,
-      counts.urgente    ? `• Urgentes: ${counts.urgente}` : null,
-      counts.incidente  ? `• Incidentes: ${counts.incidente}` : null,
+    const counts = novedades.reduce((acc, n) => { acc[n.tipo] = (acc[n.tipo] ?? 0) + 1; return acc; }, {});
+    const inicio = new Date(turno.inicio).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' });
+    const fin    = new Date().toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' });
+    const resumen = [
+      `Turno: ${inicio} → ${fin}`,
+      `Total: ${novedades.length} novedades`,
+      counts.urgente     ? `• Urgentes: ${counts.urgente}`     : null,
+      counts.incidente   ? `• Incidentes: ${counts.incidente}` : null,
       counts.informativo ? `• Informativos: ${counts.informativo}` : null,
     ].filter(Boolean).join('\n');
+    const { error } = await supabase.from('turnos')
+      .update({ fin: new Date().toISOString(), activo: false, resumen }).eq('id', turno.id);
+    if (!error) { setResumenModal(resumen); onTurnoChange(null); }
+    setCerrando(false);
   }
 
   async function enviarNovedad(e) {
     e.preventDefault();
     if (!descripcion.trim()) return;
     setEnviando(true);
-
     let foto_url = null;
     if (fotoFile) {
-      const ext = fotoFile.name.split('.').pop();
+      const ext  = fotoFile.name.split('.').pop();
       const path = `novedades/${perfil.edificio_id}/${Date.now()}.${ext}`;
       const { data: up } = await supabase.storage.from('fotos').upload(path, fotoFile);
-      if (up) {
-        const { data: pub } = supabase.storage.from('fotos').getPublicUrl(path);
-        foto_url = pub.publicUrl;
-      }
+      if (up) { const { data: pub } = supabase.storage.from('fotos').getPublicUrl(path); foto_url = pub.publicUrl; }
     }
-
     const { error } = await supabase.from('novedades').insert({
-      edificio_id: perfil.edificio_id,
-      conserje_id: perfil.id,
-      turno_id: turno?.id ?? null,
-      tipo,
-      descripcion: descripcion.trim(),
-      foto_url,
+      edificio_id: perfil.edificio_id, conserje_id: perfil.id,
+      turno_id: turno?.id ?? null, tipo, descripcion: descripcion.trim(), foto_url,
     });
-
     if (!error) {
-      setDescripcion('');
-      setFotoFile(null);
-      setTipo('informativo');
-      setMostrarForm(false);
-      cargarNovedades();
-      if (tipo === 'urgente' && window.electron) {
-        window.electron.notify('🚨 Novedad urgente registrada', descripcion.trim().slice(0, 60));
-      }
+      setDescripcion(''); setFotoFile(null); setTipo('informativo');
+      setMostrarForm(false); cargarNovedades();
     }
     setEnviando(false);
   }
 
-  const novedadesFiltradas = filtro === 'todos'
-    ? novedades
-    : novedades.filter(n => n.tipo === filtro);
+  const counts    = novedades.reduce((acc, n) => { acc[n.tipo] = (acc[n.tipo] ?? 0) + 1; return acc; }, {});
+  const filtradas = filtro === 'todos' ? novedades : novedades.filter(n => n.tipo === filtro);
 
   return (
-    <div className="flex flex-col h-full">
-      {/* Header */}
-      <div className="flex items-center justify-between px-8 py-5 border-b border-border shrink-0">
+    <div style={{ padding: '28px 32px', maxWidth: 860, margin: '0 auto' }}>
+
+      {/* Page header */}
+      <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 24 }}>
         <div>
-          <h1 className="text-xl font-bold text-white">Libro de Novedades</h1>
-          <p className="text-xs text-muted mt-0.5">
-            {turno
-              ? `Turno activo desde ${new Date(turno.inicio).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })}`
-              : 'Inicia un turno para registrar novedades'}
-          </p>
+          <h2 style={{ fontSize: 22, fontWeight: 700, color: '#F5F5F5', marginBottom: 4 }}>Libro de Novedades</h2>
+          <p style={{ fontSize: 13, color: '#636363' }}>Historial completo de novedades del edificio</p>
         </div>
-        <div className="flex items-center gap-3">
-          {!turno ? (
-            <button onClick={iniciarTurno} className="btn-primary flex items-center gap-2">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              Iniciar turno
-            </button>
-          ) : (
-            <>
-              <button
-                onClick={() => setMostrarForm(true)}
-                className="btn-primary flex items-center gap-2"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                </svg>
-                Nueva novedad
-              </button>
-              <button
-                onClick={cerrarTurno}
-                disabled={cerrando}
-                className="btn-ghost flex items-center gap-2"
-              >
-                {cerrando ? (
-                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                ) : (
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                )}
-                Cerrar turno
-              </button>
-            </>
-          )}
-        </div>
-      </div>
-
-      {/* Filtros */}
-      <div className="flex items-center gap-2 px-8 py-3 border-b border-border shrink-0">
-        {['todos', 'urgente', 'incidente', 'informativo'].map(f => (
-          <button
-            key={f}
-            onClick={() => setFiltro(f)}
-            className={`text-xs font-medium px-3 py-1.5 rounded-lg capitalize transition-all ${
-              filtro === f
-                ? 'bg-accent text-white'
-                : 'text-muted hover:text-white hover:bg-white/5'
-            }`}
-          >
-            {f === 'todos' ? `Todos (${novedades.length})` : (
-              `${f} (${novedades.filter(n => n.tipo === f).length})`
-            )}
-          </button>
-        ))}
-      </div>
-
-      {/* Lista */}
-      <div className="flex-1 overflow-y-auto px-8 py-5 space-y-3">
-        {loading ? (
-          <div className="flex items-center justify-center py-20">
-            <div className="w-6 h-6 border-2 border-accent border-t-transparent rounded-full animate-spin" />
-          </div>
-        ) : novedadesFiltradas.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20 text-center">
-            <div className="w-16 h-16 bg-surface rounded-2xl flex items-center justify-center mb-4 border border-border">
-              <svg className="w-8 h-8 text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
-                  d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-              </svg>
-            </div>
-            <p className="text-slate-400 font-medium">Sin novedades registradas</p>
-            <p className="text-muted text-sm mt-1">
-              {turno ? 'Registra la primera novedad del turno' : 'Inicia un turno para comenzar'}
-            </p>
-          </div>
+        {turno ? (
+          <button onClick={cerrarTurno} disabled={cerrando} style={{
+            height: 38, padding: '0 16px', background: 'transparent',
+            border: '1px solid #2E2E2E', borderRadius: 8,
+            color: '#A8A8A8', fontSize: 13, fontWeight: 500, cursor: 'pointer',
+          }}>{cerrando ? '...' : 'Cerrar turno'}</button>
         ) : (
-          novedadesFiltradas.map(n => <NovedadCard key={n.id} nov={n} />)
+          <button onClick={iniciarTurno} style={{
+            height: 38, padding: '0 18px', background: '#00FF88', border: 'none',
+            borderRadius: 8, color: '#0B0B0B', fontSize: 13, fontWeight: 700, cursor: 'pointer',
+          }}>⏱ Iniciar turno</button>
         )}
       </div>
 
-      {/* Modal: nueva novedad */}
-      {mostrarForm && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-6">
-          <div className="bg-surface border border-border rounded-2xl w-full max-w-md shadow-2xl">
-            <div className="flex items-center justify-between px-6 pt-6 pb-4 border-b border-border">
-              <h2 className="text-lg font-bold text-white">Nueva novedad</h2>
-              <button
-                onClick={() => setMostrarForm(false)}
-                className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/5 text-muted hover:text-white transition-all"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
+      {/* Filter bar */}
+      <div style={{
+        background: '#161616', border: '1px solid #2E2E2E', borderRadius: 12,
+        padding: '12px 16px', display: 'flex', alignItems: 'center',
+        justifyContent: 'space-between', flexWrap: 'wrap', gap: 12, marginBottom: 20,
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 3, background: '#0D0D0D', border: '1px solid #1F1F1F', borderRadius: 8, padding: 3 }}>
+          {[['todos','Todos'],['urgente','Urgentes'],['incidente','Incidentes'],['informativo','Informativos']].map(([id, label]) => (
+            <button key={id} onClick={() => setFiltro(id)} style={{
+              padding: '6px 14px', borderRadius: 6, fontSize: 12, fontWeight: filtro === id ? 600 : 400,
+              background: filtro === id ? '#00FF88' : 'transparent',
+              color: filtro === id ? '#0B0B0B' : '#636363',
+              border: 'none', cursor: 'pointer', transition: 'all 100ms',
+            }}>{label}</button>
+          ))}
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          {counts.urgente > 0 && (
+            <span style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '3px 10px', borderRadius: 99, background: 'rgba(255,68,68,0.1)', border: '1px solid rgba(255,68,68,0.25)', fontSize: 11, fontWeight: 600, color: '#FF4444' }}>
+              <span style={{ width: 5, height: 5, borderRadius: '50%', background: '#FF4444', display: 'inline-block' }} />
+              Urgentes: {counts.urgente}
+            </span>
+          )}
+          {counts.incidente > 0 && (
+            <span style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '3px 10px', borderRadius: 99, background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.25)', fontSize: 11, fontWeight: 600, color: '#F59E0B' }}>
+              <span style={{ width: 5, height: 5, borderRadius: '50%', background: '#F59E0B', display: 'inline-block' }} />
+              Incidentes: {counts.incidente}
+            </span>
+          )}
+          <span style={{ fontSize: 12, color: '#636363' }}>{novedades.length} novedades</span>
+        </div>
+      </div>
 
-            <form onSubmit={enviarNovedad} className="p-6 space-y-5">
-              {/* Tipo */}
+      {/* List */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        {loading ? (
+          <div style={{ display: 'flex', justifyContent: 'center', padding: 60 }}>
+            <div style={{ width: 24, height: 24, border: '2px solid #2E2E2E', borderTopColor: '#00FF88', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+          </div>
+        ) : filtradas.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '60px 24px' }}>
+            <div style={{ width: 52, height: 52, background: '#161616', border: '1px solid #2E2E2E', borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', fontSize: 22 }}>📋</div>
+            <p style={{ fontSize: 15, fontWeight: 600, color: '#636363', marginBottom: 6 }}>Sin novedades registradas</p>
+            <p style={{ fontSize: 13, color: '#3E3E3E' }}>
+              {turno ? 'Registra la primera novedad de este turno' : 'Inicia un turno para comenzar a registrar'}
+            </p>
+          </div>
+        ) : (
+          filtradas.map(n => <NovedadCard key={n.id} nov={n} />)
+        )}
+      </div>
+
+      {/* FAB */}
+      {turno && (
+        <button onClick={() => setMostrarForm(true)} title="Nueva novedad" style={{
+          position: 'fixed', bottom: 28, right: 28, width: 52, height: 52,
+          background: '#00FF88', border: 'none', borderRadius: '50%',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          cursor: 'pointer', zIndex: 60, fontSize: 26, color: '#0B0B0B', fontWeight: 700,
+          boxShadow: '0 4px 20px rgba(0,255,136,0.3)', transition: 'transform 120ms',
+        }}
+        onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.08)'}
+        onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
+        >+</button>
+      )}
+
+      {/* Modal: Nueva novedad */}
+      {mostrarForm && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.65)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100, padding: 24 }}>
+          <div style={{ background: '#161616', border: '1px solid #2E2E2E', borderRadius: 16, width: '100%', maxWidth: 440, boxShadow: '0 24px 60px rgba(0,0,0,0.7)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 22px', borderBottom: '1px solid #2E2E2E' }}>
+              <h2 style={{ fontSize: 16, fontWeight: 700, color: '#F5F5F5' }}>Nueva novedad</h2>
+              <button onClick={() => setMostrarForm(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#636363', fontSize: 20, lineHeight: 1 }}>✕</button>
+            </div>
+            <form onSubmit={enviarNovedad} style={{ padding: 22, display: 'flex', flexDirection: 'column', gap: 18 }}>
               <div>
-                <label className="label">Tipo de novedad</label>
-                <div className="grid grid-cols-3 gap-2">
-                  {TIPOS.map(t => (
-                    <button
-                      key={t.id}
-                      type="button"
-                      onClick={() => setTipo(t.id)}
-                      className={`py-2.5 px-3 rounded-xl text-sm font-medium border transition-all ${
-                        tipo === t.id
-                          ? t.id === 'urgente'     ? 'bg-urgent/20 border-urgent text-urgent'
-                          : t.id === 'incidente'   ? 'bg-amber-500/20 border-warning text-warning'
-                          :                          'bg-blue-500/20 border-info text-info'
-                          : 'border-border text-muted hover:border-white/20 hover:text-white'
-                      }`}
-                    >
-                      {t.label}
-                    </button>
+                <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: '#636363', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>Tipo</label>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
+                  {Object.entries(TIPOS).map(([id, t]) => (
+                    <button key={id} type="button" onClick={() => setTipo(id)} style={{
+                      padding: '9px 8px', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer',
+                      background: tipo === id ? `${t.color}18` : 'transparent',
+                      color: tipo === id ? t.color : '#636363',
+                      border: tipo === id ? `1px solid ${t.color}50` : '1px solid #2E2E2E',
+                      transition: 'all 100ms',
+                    }}>{t.label}</button>
                   ))}
                 </div>
               </div>
-
-              {/* Descripción */}
               <div>
-                <label className="label">Descripción</label>
-                <textarea
-                  className="input resize-none h-28"
-                  placeholder="Describe la novedad con detalle…"
-                  value={descripcion}
-                  onChange={e => setDescripcion(e.target.value)}
-                  required
-                  autoFocus
+                <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: '#636363', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>Descripción</label>
+                <textarea value={descripcion} onChange={e => setDescripcion(e.target.value)}
+                  placeholder="Describe la novedad con detalle…" required autoFocus
+                  style={{ width: '100%', height: 100, background: '#0D0D0D', border: '1px solid #2E2E2E', borderRadius: 8, padding: '10px 12px', color: '#F5F5F5', fontSize: 14, resize: 'none', fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box', transition: 'border-color 120ms' }}
+                  onFocus={e => e.target.style.borderColor = '#00FF88'}
+                  onBlur={e => e.target.style.borderColor = '#2E2E2E'}
                 />
               </div>
-
-              {/* Foto */}
               <div>
-                <label className="label">Foto (opcional)</label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  ref={fileRef}
-                  className="hidden"
-                  onChange={e => setFotoFile(e.target.files?.[0] ?? null)}
-                />
+                <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: '#636363', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>Foto (opcional)</label>
+                <input type="file" accept="image/*" ref={fileRef} style={{ display: 'none' }} onChange={e => setFotoFile(e.target.files?.[0] ?? null)} />
                 {fotoFile ? (
-                  <div className="flex items-center gap-3 bg-base rounded-xl px-4 py-3 border border-border">
-                    <svg className="w-4 h-4 text-success shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
-                    <span className="text-sm text-slate-300 flex-1 truncate">{fotoFile.name}</span>
-                    <button type="button" onClick={() => setFotoFile(null)} className="text-muted hover:text-white">
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                      </svg>
-                    </button>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: '#0D0D0D', border: '1px solid #2E2E2E', borderRadius: 8, padding: '10px 12px' }}>
+                    <span style={{ color: '#00FF88' }}>📎</span>
+                    <span style={{ fontSize: 13, color: '#D0D0D0', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{fotoFile.name}</span>
+                    <button type="button" onClick={() => setFotoFile(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#636363' }}>✕</button>
                   </div>
                 ) : (
-                  <button
-                    type="button"
-                    onClick={() => fileRef.current.click()}
-                    className="w-full border border-dashed border-border rounded-xl py-3 text-sm text-muted hover:text-white hover:border-accent transition-all flex items-center justify-center gap-2"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
-                    Adjuntar foto
-                  </button>
+                  <button type="button" onClick={() => fileRef.current.click()} style={{ width: '100%', padding: '10px', border: '1px dashed #2E2E2E', borderRadius: 8, background: 'transparent', color: '#636363', fontSize: 13, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 100ms' }}
+                    onMouseEnter={e => { e.currentTarget.style.borderColor = '#00FF88'; e.currentTarget.style.color = '#F5F5F5'; }}
+                    onMouseLeave={e => { e.currentTarget.style.borderColor = '#2E2E2E'; e.currentTarget.style.color = '#636363'; }}
+                  >+ Adjuntar foto</button>
                 )}
               </div>
-
-              <div className="flex gap-3 pt-1">
-                <button type="button" onClick={() => setMostrarForm(false)} className="btn-ghost flex-1">
-                  Cancelar
-                </button>
-                <button type="submit" className="btn-primary flex-1 flex items-center justify-center gap-2" disabled={enviando}>
-                  {enviando ? (
-                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  ) : 'Registrar'}
-                </button>
+              <div style={{ display: 'flex', gap: 10 }}>
+                <button type="button" onClick={() => setMostrarForm(false)} style={{ flex: 1, height: 42, background: 'transparent', border: '1px solid #2E2E2E', borderRadius: 8, color: '#A8A8A8', fontSize: 13, fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}>Cancelar</button>
+                <button type="submit" disabled={enviando} style={{ flex: 1, height: 42, background: '#00FF88', border: 'none', borderRadius: 8, color: '#0B0B0B', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>{enviando ? '...' : 'Registrar'}</button>
               </div>
             </form>
           </div>
         </div>
       )}
 
-      {/* Modal: resumen de turno */}
+      {/* Modal: Resumen turno */}
       {resumenModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-6">
-          <div className="bg-surface border border-border rounded-2xl w-full max-w-sm shadow-2xl">
-            <div className="px-6 pt-6 pb-4 border-b border-border">
-              <div className="w-12 h-12 bg-green-500/15 rounded-2xl flex items-center justify-center mb-3">
-                <svg className="w-6 h-6 text-success" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
-              <h2 className="text-lg font-bold text-white">Turno cerrado</h2>
-              <p className="text-sm text-muted mt-0.5">Resumen del turno completado</p>
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.65)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100, padding: 24 }}>
+          <div style={{ background: '#161616', border: '1px solid #2E2E2E', borderRadius: 16, width: '100%', maxWidth: 380, boxShadow: '0 24px 60px rgba(0,0,0,0.7)' }}>
+            <div style={{ padding: '22px 22px 14px' }}>
+              <div style={{ width: 44, height: 44, background: 'rgba(0,255,136,0.1)', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 12, fontSize: 20 }}>✅</div>
+              <h2 style={{ fontSize: 16, fontWeight: 700, color: '#F5F5F5', marginBottom: 4 }}>Turno cerrado</h2>
             </div>
-            <div className="p-6">
-              <pre className="text-sm text-slate-300 whitespace-pre-wrap font-sans leading-relaxed bg-base rounded-xl p-4 border border-border">
-                {resumenModal}
-              </pre>
-              <button
-                onClick={() => setResumenModal(null)}
-                className="btn-primary w-full mt-4"
-              >
-                Aceptar
-              </button>
+            <div style={{ padding: '0 22px 22px' }}>
+              <pre style={{ fontSize: 13, color: '#D0D0D0', background: '#0D0D0D', border: '1px solid #2E2E2E', borderRadius: 8, padding: '12px 14px', fontFamily: 'inherit', lineHeight: 1.7, whiteSpace: 'pre-wrap' }}>{resumenModal}</pre>
+              <button onClick={() => setResumenModal(null)} style={{ width: '100%', height: 42, marginTop: 12, background: '#00FF88', border: 'none', borderRadius: 8, color: '#0B0B0B', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>Aceptar</button>
             </div>
           </div>
         </div>
       )}
+
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );
 }
