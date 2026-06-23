@@ -23,9 +23,9 @@ export const text = {
 // Dorado en vez de verde neón: la zona azul-verde es la más difícil de discriminar
 // para ojos mayores por el amarilleamiento del cristalino.
 export const brand = {
-  color: '#00FF88',
-  bg: 'rgba(0,255,136,0.08)',
-  border: 'rgba(0,255,136,0.2)',
+  color: '#C8932F',
+  bg: 'rgba(200,147,47,0.08)',
+  border: 'rgba(200,147,47,0.2)',
 };
 
 // Estados semánticos: cada uno con su propio color + icono. Nunca solo color.
