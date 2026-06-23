@@ -6,9 +6,9 @@ function Avatar({ nombre, size = 40 }) {
   return (
     <div style={{
       width: size, height: size, borderRadius: '50%', flexShrink: 0,
-      background: 'rgba(0,255,136,0.1)', border: '1px solid rgba(0,255,136,0.2)',
+      background: 'rgba(var(--brand-rgb),0.1)', border: '1px solid rgba(var(--brand-rgb),0.2)',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
-      fontSize: size * 0.32, fontWeight: 700, color: '#00FF88',
+      fontSize: size * 0.32, fontWeight: 700, color: 'var(--brand)',
     }}>{iniciales}</div>
   );
 }
@@ -20,41 +20,41 @@ function VisitaCard({ v, onSalida }) {
 
   return (
     <div style={{
-      background: '#161616', border: '1px solid #2E2E2E', borderRadius: 12,
+      background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 12,
       padding: '16px 20px', display: 'flex', alignItems: 'flex-start', gap: 14,
       transition: 'border-color 120ms',
     }}
-    onMouseEnter={e => e.currentTarget.style.borderColor = '#3E3E3E'}
-    onMouseLeave={e => e.currentTarget.style.borderColor = '#2E2E2E'}
+    onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--border-strong)'}
+    onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border)'}
     >
       <Avatar nombre={v.nombre_visitante} />
       <div style={{ flex: 1, minWidth: 0 }}>
-        <p style={{ fontSize: 14, fontWeight: 600, color: '#F5F5F5', marginBottom: 3 }}>{v.nombre_visitante}</p>
-        <p style={{ fontSize: 12, color: '#636363', marginBottom: 2 }}>
-          Visita a <span style={{ color: '#A8A8A8' }}>{v.destino}</span>
+        <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)', marginBottom: 3 }}>{v.nombre_visitante}</p>
+        <p style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 2 }}>
+          Visita a <span style={{ color: 'var(--text-secondary)' }}>{v.destino}</span>
           {v.motivo && <> · {v.motivo}</>}
         </p>
-        {v.rut_visitante && <p style={{ fontSize: 11, color: '#4E4E4E' }}>RUT: {v.rut_visitante}</p>}
-        <p style={{ fontSize: 11, color: '#636363', marginTop: 4 }}>
+        {v.rut_visitante && <p style={{ fontSize: 11, color: 'var(--text-subtle)' }}>RUT: {v.rut_visitante}</p>}
+        <p style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>
           Entrada {entrada.toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })} · hace {duracion}
         </p>
       </div>
       <button onClick={() => onSalida(v.id)} style={{
-        flexShrink: 0, padding: '7px 14px', borderRadius: 8,
-        background: 'transparent', border: '1px solid #2E2E2E',
-        color: '#A8A8A8', fontSize: 12, fontWeight: 500, cursor: 'pointer',
+        flexShrink: 0, minHeight: 44, padding: '0 14px', borderRadius: 8,
+        background: 'transparent', border: '1px solid var(--border)',
+        color: 'var(--text-secondary)', fontSize: 13, fontWeight: 500, cursor: 'pointer',
         transition: 'all 120ms',
       }}
-      onMouseEnter={e => { e.currentTarget.style.borderColor = '#00FF88'; e.currentTarget.style.color = '#00FF88'; }}
-      onMouseLeave={e => { e.currentTarget.style.borderColor = '#2E2E2E'; e.currentTarget.style.color = '#A8A8A8'; }}
+      onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--brand)'; e.currentTarget.style.color = 'var(--brand)'; }}
+      onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.color = 'var(--text-secondary)'; }}
       >Registrar salida</button>
     </div>
   );
 }
 
 const INPUT_STYLE = {
-  width: '100%', height: 40, background: '#0D0D0D', border: '1px solid #2E2E2E',
-  borderRadius: 8, padding: '0 12px', color: '#F5F5F5', fontSize: 14,
+  width: '100%', height: 44, background: 'var(--bg-input)', border: '1px solid var(--border)',
+  borderRadius: 8, padding: '0 12px', color: 'var(--text)', fontSize: 16,
   fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box', transition: 'border-color 120ms',
 };
 
@@ -64,6 +64,7 @@ export default function Visitas({ perfil, turno }) {
   const [mostrarForm, setMostrarForm] = useState(false);
   const [form, setForm]               = useState({ nombre_visitante: '', rut_visitante: '', destino: '', motivo: '' });
   const [enviando, setEnviando]       = useState(false);
+  const [errorMsg, setErrorMsg]       = useState('');
 
   useEffect(() => { cargarVisitas(); }, []);
 
@@ -79,17 +80,24 @@ export default function Visitas({ perfil, turno }) {
   async function registrarEntrada(e) {
     e.preventDefault();
     setEnviando(true);
+    setErrorMsg('');
     const { error } = await supabase.from('visitas').insert({
       edificio_id: perfil.edificio_id, conserje_id: perfil.id,
       turno_id: turno?.id ?? null, ...form,
     });
-    if (!error) { setMostrarForm(false); setForm({ nombre_visitante: '', rut_visitante: '', destino: '', motivo: '' }); cargarVisitas(); }
+    if (error) {
+      setErrorMsg('No se pudo registrar la visita. Tus datos no se perdieron, intenta de nuevo.');
+    } else {
+      setMostrarForm(false); setForm({ nombre_visitante: '', rut_visitante: '', destino: '', motivo: '' }); cargarVisitas();
+    }
     setEnviando(false);
   }
 
   async function registrarSalida(id) {
-    await supabase.from('visitas').update({ salida: new Date().toISOString(), activa: false }).eq('id', id);
-    cargarVisitas();
+    setErrorMsg('');
+    const { error } = await supabase.from('visitas').update({ salida: new Date().toISOString(), activa: false }).eq('id', id);
+    if (error) setErrorMsg('No se pudo registrar la salida. Intenta de nuevo.');
+    else cargarVisitas();
   }
 
   const activas   = visitas.filter(v => v.activa);
@@ -101,10 +109,15 @@ export default function Visitas({ perfil, turno }) {
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 28 }}>
         <div>
-          <h2 style={{ fontSize: 22, fontWeight: 700, color: '#F5F5F5', marginBottom: 4 }}>Control de Visitas</h2>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
+            <div style={{ width: 32, height: 32, borderRadius: 8, background: 'rgba(47,191,113,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <span style={{ fontFamily: 'Material Symbols Outlined', fontSize: 18, color: '#2FBF71' }}>group</span>
+            </div>
+            <h2 style={{ fontSize: 22, fontWeight: 700, color: 'var(--text)' }}>Control de Visitas</h2>
+          </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            {activas.length > 0 && <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#00FF88', display: 'inline-block' }} />}
-            <p style={{ fontSize: 13, color: '#636363' }}>
+            {activas.length > 0 && <span style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--brand)', display: 'inline-block' }} />}
+            <p style={{ fontSize: 13, color: 'var(--text-muted)' }}>
               {activas.length > 0
                 ? `${activas.length} persona${activas.length !== 1 ? 's' : ''} en el edificio ahora`
                 : 'Sin visitas activas'}
@@ -112,15 +125,27 @@ export default function Visitas({ perfil, turno }) {
           </div>
         </div>
         <button onClick={() => setMostrarForm(true)} style={{
-          height: 38, padding: '0 18px', background: '#00FF88', border: 'none',
-          borderRadius: 8, color: '#0B0B0B', fontSize: 13, fontWeight: 700, cursor: 'pointer',
+          height: 44, padding: '0 18px', background: 'var(--brand)', border: 'none',
+          borderRadius: 8, color: 'var(--brand-text-on)', fontSize: 14, fontWeight: 700, cursor: 'pointer',
         }}>+ Registrar entrada</button>
       </div>
+
+      {/* Error banner */}
+      {errorMsg && (
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 10,
+          background: 'rgba(229,72,77,0.1)', borderLeft: '4px solid #E5484D',
+          borderRadius: '0 8px 8px 0', padding: '12px 16px', marginBottom: 20,
+        }}>
+          <span style={{ fontFamily: 'Material Symbols Outlined', fontSize: 18, color: '#E5484D', flexShrink: 0 }}>error</span>
+          <span style={{ fontSize: 14, color: '#FF8A8A' }}>{errorMsg}</span>
+        </div>
+      )}
 
       {/* Visitas activas */}
       {activas.length > 0 && (
         <div style={{ marginBottom: 32 }}>
-          <p style={{ fontSize: 11, fontWeight: 600, color: '#636363', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}>
+          <p style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}>
             En el edificio ahora
           </p>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
@@ -132,20 +157,20 @@ export default function Visitas({ perfil, turno }) {
       {/* Historial */}
       {historial.length > 0 && (
         <div>
-          <p style={{ fontSize: 11, fontWeight: 600, color: '#636363', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}>
+          <p style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}>
             Historial del día
           </p>
           {/* Table header */}
           <div style={{
             display: 'grid', gridTemplateColumns: '1fr 120px 100px 100px 90px',
-            padding: '8px 16px', background: '#0D0D0D', border: '1px solid #1F1F1F',
+            padding: '8px 16px', background: 'var(--bg-input)', border: '1px solid var(--bg-surface-high)',
             borderRadius: '10px 10px 0 0', gap: 12,
           }}>
             {['Visitante', 'Destino', 'Entrada', 'Salida', 'Duración'].map(h => (
-              <span key={h} style={{ fontSize: 11, fontWeight: 600, color: '#636363', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{h}</span>
+              <span key={h} style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{h}</span>
             ))}
           </div>
-          <div style={{ border: '1px solid #1F1F1F', borderTop: 'none', borderRadius: '0 0 10px 10px', overflow: 'hidden' }}>
+          <div style={{ border: '1px solid var(--bg-surface-high)', borderTop: 'none', borderRadius: '0 0 10px 10px', overflow: 'hidden' }}>
             {historial.map((v, i) => {
               const entrada = new Date(v.entrada);
               const salida  = v.salida ? new Date(v.salida) : null;
@@ -155,21 +180,21 @@ export default function Visitas({ perfil, turno }) {
                 <div key={v.id} style={{
                   display: 'grid', gridTemplateColumns: '1fr 120px 100px 100px 90px',
                   padding: '12px 16px', gap: 12, alignItems: 'center',
-                  borderTop: i > 0 ? '1px solid #1A1A1A' : 'none',
-                  background: i % 2 === 0 ? '#111' : '#0D0D0D',
+                  borderTop: i > 0 ? '1px solid var(--border)' : 'none',
+                  background: i % 2 === 0 ? 'var(--bg-surface)' : 'var(--bg-input)',
                   transition: 'background 100ms',
                 }}
-                onMouseEnter={e => e.currentTarget.style.background = '#161616'}
-                onMouseLeave={e => e.currentTarget.style.background = i % 2 === 0 ? '#111' : '#0D0D0D'}
+                onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-surface)'}
+                onMouseLeave={e => e.currentTarget.style.background = i % 2 === 0 ? 'var(--bg-surface)' : 'var(--bg-input)'}
                 >
                   <div>
-                    <p style={{ fontSize: 13, fontWeight: 500, color: '#D0D0D0' }}>{v.nombre_visitante}</p>
-                    {v.rut_visitante && <p style={{ fontSize: 11, color: '#4E4E4E' }}>{v.rut_visitante}</p>}
+                    <p style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-body)' }}>{v.nombre_visitante}</p>
+                    {v.rut_visitante && <p style={{ fontSize: 11, color: 'var(--text-subtle)' }}>{v.rut_visitante}</p>}
                   </div>
-                  <span style={{ fontSize: 13, color: '#A8A8A8' }}>{v.destino}</span>
-                  <span style={{ fontSize: 13, color: '#636363' }}>{entrada.toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })}</span>
-                  <span style={{ fontSize: 13, color: '#636363' }}>{salida ? salida.toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' }) : '—'}</span>
-                  <span style={{ fontSize: 13, color: '#636363' }}>{dur}</span>
+                  <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{v.destino}</span>
+                  <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>{entrada.toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })}</span>
+                  <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>{salida ? salida.toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' }) : '—'}</span>
+                  <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>{dur}</span>
                 </div>
               );
             })}
@@ -180,19 +205,19 @@ export default function Visitas({ perfil, turno }) {
       {/* Empty state */}
       {!loading && visitas.length === 0 && (
         <div style={{ textAlign: 'center', padding: '60px 24px' }}>
-          <div style={{ width: 52, height: 52, background: '#161616', border: '1px solid #2E2E2E', borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', fontSize: 22 }}>👤</div>
-          <p style={{ fontSize: 15, fontWeight: 600, color: '#636363', marginBottom: 6 }}>Sin visitas registradas hoy</p>
-          <p style={{ fontSize: 13, color: '#3E3E3E' }}>Registra la entrada de visitantes al edificio</p>
+          <div style={{ width: 52, height: 52, background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', fontSize: 22 }}>👤</div>
+          <p style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-muted)', marginBottom: 6 }}>Sin visitas registradas hoy</p>
+          <p style={{ fontSize: 13, color: 'var(--text-subtle)' }}>Registra la entrada de visitantes al edificio</p>
         </div>
       )}
 
       {/* FAB */}
       <button onClick={() => setMostrarForm(true)} title="Registrar entrada" style={{
         position: 'fixed', bottom: 28, right: 28, width: 52, height: 52,
-        background: '#00FF88', border: 'none', borderRadius: '50%',
+        background: 'var(--brand)', border: 'none', borderRadius: '50%',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
-        cursor: 'pointer', zIndex: 60, fontSize: 26, color: '#0B0B0B', fontWeight: 700,
-        boxShadow: '0 4px 20px rgba(0,255,136,0.3)', transition: 'transform 120ms',
+        cursor: 'pointer', zIndex: 60, fontSize: 26, color: 'var(--brand-text-on)', fontWeight: 700,
+        boxShadow: '0 4px 20px rgba(var(--brand-rgb),0.3)', transition: 'transform 120ms',
       }}
       onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.08)'}
       onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
@@ -201,10 +226,10 @@ export default function Visitas({ perfil, turno }) {
       {/* Modal */}
       {mostrarForm && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.65)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100, padding: 24 }}>
-          <div style={{ background: '#161616', border: '1px solid #2E2E2E', borderRadius: 16, width: '100%', maxWidth: 420, boxShadow: '0 24px 60px rgba(0,0,0,0.7)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 22px', borderBottom: '1px solid #2E2E2E' }}>
-              <h2 style={{ fontSize: 16, fontWeight: 700, color: '#F5F5F5' }}>Registrar entrada</h2>
-              <button onClick={() => setMostrarForm(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#636363', fontSize: 20 }}>✕</button>
+          <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 16, width: '100%', maxWidth: 420, boxShadow: '0 24px 60px rgba(0,0,0,0.7)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 22px', borderBottom: '1px solid var(--border)' }}>
+              <h2 style={{ fontSize: 16, fontWeight: 700, color: 'var(--text)' }}>Registrar entrada</h2>
+              <button onClick={() => setMostrarForm(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', fontSize: 20 }}>✕</button>
             </div>
             <form onSubmit={registrarEntrada} style={{ padding: 22, display: 'flex', flexDirection: 'column', gap: 14 }}>
               {[
@@ -214,18 +239,18 @@ export default function Visitas({ perfil, turno }) {
                 ['motivo',           'Motivo (opcional)',     'Visita personal, delivery…', false],
               ].map(([key, label, placeholder, required]) => (
                 <div key={key}>
-                  <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: '#636363', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>{label}</label>
+                  <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>{label}</label>
                   <input
                     style={INPUT_STYLE} placeholder={placeholder} required={required}
                     value={form[key]} onChange={e => setForm(f => ({ ...f, [key]: e.target.value }))}
-                    onFocus={e => e.target.style.borderColor = '#00FF88'}
-                    onBlur={e => e.target.style.borderColor = '#2E2E2E'}
+                    onFocus={e => e.target.style.borderColor = 'var(--brand)'}
+                    onBlur={e => e.target.style.borderColor = 'var(--border)'}
                   />
                 </div>
               ))}
               <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
-                <button type="button" onClick={() => setMostrarForm(false)} style={{ flex: 1, height: 42, background: 'transparent', border: '1px solid #2E2E2E', borderRadius: 8, color: '#A8A8A8', fontSize: 13, cursor: 'pointer', fontFamily: 'inherit' }}>Cancelar</button>
-                <button type="submit" disabled={enviando} style={{ flex: 1, height: 42, background: '#00FF88', border: 'none', borderRadius: 8, color: '#0B0B0B', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>{enviando ? '...' : 'Registrar entrada'}</button>
+                <button type="button" onClick={() => setMostrarForm(false)} style={{ flex: 1, height: 44, background: 'transparent', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 14, cursor: 'pointer', fontFamily: 'inherit' }}>Cancelar</button>
+                <button type="submit" disabled={enviando} style={{ flex: 1, height: 44, background: 'var(--brand)', border: 'none', borderRadius: 8, color: 'var(--brand-text-on)', fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>{enviando ? '...' : 'Registrar entrada'}</button>
               </div>
             </form>
           </div>

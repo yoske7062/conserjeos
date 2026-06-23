@@ -5,15 +5,60 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@400,0..1&display=swap');
 
+/*
+ * Paleta ajustada para conserjes mayores (ver research UX):
+ * - Verde neón retirado: la zona azul-verde es la más difícil de discriminar
+ *   con el amarilleamiento del cristalino propio de la edad. Se reemplaza por
+ *   un dorado cálido (también coherente con la identidad "portería/llave").
+ * - Fondo oscuro con tinte cálido (no negro frío) para reducir el glare en
+ *   usuarios con cristalino nublado/cataratas, manteniendo alto contraste.
+ * - text-muted y text-subtle subidos de luminosidad: las versiones anteriores
+ *   caían por debajo de WCAG AA (4.5:1) sobre el fondo oscuro.
+ */
+:root[data-theme="dark"] {
+  --bg-base: #14110D;
+  --bg-surface: #1E1A14;
+  --bg-input: #181410;
+  --bg-surface-high: #2A251D;
+  --border: #3A332A;
+  --border-strong: #4D4435;
+  --text: #F7F4EE;
+  --text-secondary: #C9C2B4;
+  --text-muted: #9C9484;
+  --text-subtle: #76705F;
+  --text-body: #E3DDD0;
+  --brand: #C8932F;
+  --brand-rgb: 200,147,47;
+  --brand-text-on: #18130C;
+}
+
+:root[data-theme="light"] {
+  --bg-base: #F4F1EA;
+  --bg-surface: #FFFFFF;
+  --bg-input: #FFFFFF;
+  --bg-surface-high: #EAE5D9;
+  --border: #D8D2C2;
+  --border-strong: #BDB6A2;
+  --text: #1C1812;
+  --text-secondary: #4F493B;
+  --text-muted: #6E6757;
+  --text-subtle: #8A8270;
+  --text-body: #2A2519;
+  --brand: #9C6F1E;
+  --brand-rgb: 156,111,30;
+  --brand-text-on: #FFFFFF;
+}
+
 @layer base {
   * { box-sizing: border-box; }
   body {
-    background-color: #0B0B0B;
-    color: #F5F5F5;
+    background-color: var(--bg-base);
+    color: var(--text);
     font-family: 'Inter', system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
     user-select: none;
-    font-size: 15px;
+    font-size: 16px;
+    transition: background-color 150ms, color 150ms;
   }
   .drag-region {
     -webkit-app-region: drag;
@@ -26,22 +71,22 @@
   }
   .drag-region * { -webkit-app-region: no-drag; }
   ::-webkit-scrollbar { width: 5px; }
-  ::-webkit-scrollbar-track { background: #161616; }
-  ::-webkit-scrollbar-thumb { background: #2E2E2E; border-radius: 4px; }
-  ::-webkit-scrollbar-thumb:hover { background: #3D3D3D; }
+  ::-webkit-scrollbar-track { background: var(--bg-surface); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--border-strong); }
 }
 
 @layer components {
   .btn-primary {
     @apply flex items-center justify-center gap-2 font-bold rounded-xl transition-all duration-150
            active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed;
-    background: #00FF88;
-    color: #0B0B0B;
+    background: #C8932F;
+    color: #18130C;
     height: 52px;
     font-size: 15px;
     border-radius: 12px;
   }
-  .btn-primary:hover { background: #00E87A; }
+  .btn-primary:hover { background: #B07F28; }
 
   .btn-ghost {
     @apply flex items-center justify-center gap-2 font-medium rounded-xl border transition-all duration-150 active:scale-95;
@@ -70,7 +115,7 @@
     font-size: 16px;
     font-family: 'Inter', sans-serif;
   }
-  .input:focus { border-color: #00FF88; box-shadow: 0 0 0 1px #00FF88; }
+  .input:focus { border-color: #C8932F; box-shadow: 0 0 0 1px #C8932F; }
 
   .label {
     @apply block font-medium mb-2;
