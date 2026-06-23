@@ -126,7 +126,7 @@ export default function Login() {
               </div>
             )}
 
-            <button type="submit" className="btn-primary" disabled={loading} style={{ marginTop:4 }}>
+            <button type="submit" className="btn-primary btn-glow" disabled={loading} style={{ marginTop:4 }}>
               {loading ? (
                 <>
                   <div style={{

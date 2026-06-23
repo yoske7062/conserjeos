@@ -51,8 +51,8 @@ export default function Dashboard({ perfil }) {
             </div>
           </div>
         </header>
-        {/* Page content */}
-        <div style={{ flex:1, overflowY:'auto' }}>
+        {/* Page content — key forces remount → triggers page-enter animation */}
+        <div key={modulo} className="page-enter" style={{ flex:1, overflowY:'auto' }}>
           {content[modulo]}
         </div>
       </main>

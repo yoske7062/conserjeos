@@ -24,6 +24,7 @@ function VisitaCard({ v, onSalida }) {
       padding: '16px 20px', display: 'flex', alignItems: 'flex-start', gap: 14,
       transition: 'border-color 120ms',
     }}
+    className="card-hover"
     onMouseEnter={e => e.currentTarget.style.borderColor = '#3E3E3E'}
     onMouseLeave={e => e.currentTarget.style.borderColor = '#2E2E2E'}
     >
@@ -192,7 +193,7 @@ export default function Visitas({ perfil, turno }) {
         background: '#00FF88', border: 'none', borderRadius: '50%',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         cursor: 'pointer', zIndex: 60, fontSize: 26, color: '#0B0B0B', fontWeight: 700,
-        boxShadow: '0 4px 20px rgba(0,255,136,0.3)', transition: 'transform 120ms',
+        transition: 'transform 120ms',
       }}
       onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.08)'}
       onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
@@ -200,8 +201,8 @@ export default function Visitas({ perfil, turno }) {
 
       {/* Modal */}
       {mostrarForm && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.65)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100, padding: 24 }}>
-          <div style={{ background: '#161616', border: '1px solid #2E2E2E', borderRadius: 16, width: '100%', maxWidth: 420, boxShadow: '0 24px 60px rgba(0,0,0,0.7)' }}>
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.65)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100, padding: 24 }} className="modal-backdrop">
+          <div style={{ background: '#161616', border: '1px solid #2E2E2E', borderRadius: 16, width: '100%', maxWidth: 420, boxShadow: '0 24px 60px rgba(0,0,0,0.7)' }} className="modal-card">
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 22px', borderBottom: '1px solid #2E2E2E' }}>
               <h2 style={{ fontSize: 16, fontWeight: 700, color: '#F5F5F5' }}>Registrar entrada</h2>
               <button onClick={() => setMostrarForm(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#636363', fontSize: 20 }}>✕</button>
