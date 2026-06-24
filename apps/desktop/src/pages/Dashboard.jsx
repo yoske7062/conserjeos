@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
+import { getAll, remove, count, onCountChange } from '../lib/offlineQueue';
 import Sidebar from '../components/Sidebar';
 import EntregaTurno from './EntregaTurno';
 import Novedades from './Novedades';
@@ -10,6 +11,7 @@ import Tareas from './Tareas';
 import Inicio from './Inicio';
 import PendientesChecklist from '../components/PendientesChecklist';
 import EmergenciaButton from '../components/EmergenciaButton';
+import Ayuda from './Ayuda';
 
 export default function Dashboard({ perfil }) {
   const [modulo, setModulo] = useState('inicio');
@@ -17,6 +19,8 @@ export default function Dashboard({ perfil }) {
   const [turno, setTurno] = useState(null);
   const [turnoPrevioConPendientes, setTurnoPrevioConPendientes] = useState(null);
   const [enLinea, setEnLinea] = useState(navigator.onLine);
+  const [pendingCount, setPendingCount] = useState(count);
+  const [sincronizando, setSincronizando] = useState(false);
 
   useEffect(() => {
     const marcarOnline  = () => setEnLinea(true);
@@ -28,6 +32,28 @@ export default function Dashboard({ perfil }) {
       window.removeEventListener('offline', marcarOffline);
     };
   }, []);
+
+  // Reaccionar a cambios en la cola (enqueues desde páginas hijas)
+  useEffect(() => onCountChange(setPendingCount), []);
+
+  // Al reconectar, vaciar la cola
+  useEffect(() => {
+    if (!enLinea || pendingCount === 0) return;
+    async function flush() {
+      setSincronizando(true);
+      for (const item of getAll()) {
+        let error;
+        if (item.op === 'insert') {
+          ({ error } = await supabase.from(item.table).insert(item.payload));
+        } else if (item.op === 'update') {
+          ({ error } = await supabase.from(item.table).update(item.payload).eq('id', item.rowId));
+        }
+        if (!error) remove(item._id);
+      }
+      setSincronizando(false);
+    }
+    flush();
+  }, [enLinea]);
 
   useEffect(() => {
     // Buscar turno activo del conserje
@@ -68,6 +94,35 @@ export default function Dashboard({ perfil }) {
     if (!error) setTurnoPrevioConPendientes(null);
   }
 
+  // Notificaciones de escritorio: escucha novedades urgentes ajenas en tiempo real
+  useEffect(() => {
+    if (!perfil?.edificio_id) return;
+    const ch = supabase.channel('notif-urgentes')
+      .on('postgres_changes', {
+        event: 'INSERT', schema: 'public', table: 'novedades',
+        filter: `edificio_id=eq.${perfil.edificio_id}`,
+      }, payload => {
+        const nov = payload.new;
+        if (nov.tipo !== 'urgente' || nov.conserje_id === perfil.id) return;
+        window.electron?.notify(
+          '◆ Novedad Urgente',
+          nov.descripcion?.slice(0, 100) ?? '',
+          'open-novedades'
+        );
+      })
+      .subscribe();
+    return () => supabase.removeChannel(ch);
+  }, [perfil.edificio_id, perfil.id]);
+
+  // Clic en notificación nativa → navegar al módulo
+  useEffect(() => {
+    if (!window.electron?.onNotifyAction) return;
+    const off = window.electron.onNotifyAction(action => {
+      if (action === 'open-novedades') setModulo('novedades');
+    });
+    return off;
+  }, []);
+
   // Navegación desde Inicio: ir a un módulo y, si aplica, dejarlo pre-filtrado
   function navegarA(destino, valor = null) {
     setFiltroPendiente(valor !== null ? { modulo: destino, valor } : null);
@@ -90,9 +145,10 @@ export default function Dashboard({ perfil }) {
     encomiendas: <Encomiendas perfil={perfil} turno={turno} />,
     tareas:      <Tareas      perfil={perfil} />,
     edificio:    <FichaEdificio perfil={perfil} />,
+    ayuda:       <Ayuda />,
   };
 
-  const labels = { inicio: 'Inicio', turno: 'Entrega de turno', novedades:'Novedades', visitas:'Visitas', encomiendas:'Encomiendas', tareas: 'Tareas', edificio: 'Edificio' };
+  const labels = { inicio: 'Inicio', turno: 'Entrega de turno', novedades:'Novedades', visitas:'Visitas', encomiendas:'Encomiendas', tareas: 'Tareas', edificio: 'Edificio', ayuda: 'Ayuda' };
 
   return (
     <div style={{ display:'flex', height:'100vh', background:'var(--bg-base)' }}>
@@ -107,6 +163,19 @@ export default function Dashboard({ perfil }) {
             Portia / <span style={{ color:'var(--text)', fontWeight:600 }}>{labels[modulo]}</span>
           </span>
           <div style={{ display:'flex', alignItems:'center', gap:14 }}>
+            {pendingCount > 0 && (
+              <span style={{
+                display:'flex', alignItems:'center', gap:5, fontSize:12, fontWeight:600,
+                color: sincronizando ? '#F5A524' : '#A8A8A8',
+                background: 'rgba(245,165,36,0.08)', border: '1px solid rgba(245,165,36,0.2)',
+                borderRadius:99, padding:'2px 10px',
+              }}>
+                {sincronizando
+                  ? <span style={{ width:8, height:8, border:'1.5px solid #F5A524', borderTopColor:'transparent', borderRadius:'50%', display:'inline-block', animation:'spin 0.8s linear infinite' }} />
+                  : '▲'}
+                {sincronizando ? 'Sincronizando…' : `${pendingCount} pendiente${pendingCount !== 1 ? 's' : ''}`}
+              </span>
+            )}
             <span style={{
               display:'flex', alignItems:'center', gap:6, fontSize:12, fontWeight:600,
               color: enLinea ? '#2FBF71' : '#E5484D',

@@ -24,15 +24,18 @@ export default function Login() {
       {/* Panel izquierdo — branding */}
       <div style={{
         width: 420, background:'#161616', borderRight:'1px solid #2E2E2E',
-        padding: 40, display:'flex', flexDirection:'column', justifyContent:'space-between'
+        padding: '48px 40px 40px', display:'flex', flexDirection:'column', justifyContent:'space-between'
       }}>
         <div>
           {/* Logo */}
-          <div style={{ marginBottom:40 }}>
-            <img src={logoImg} alt="Portia" style={{ width:140, height:140, objectFit:'contain', mixBlendMode:'lighten' }} />
+          <div style={{ marginBottom:36 }}>
+            <img src={logoImg} alt="Portia" style={{
+              width:120, height:120, objectFit:'contain',
+              filter:'hue-rotate(120deg) saturate(1.3) brightness(1.0)',
+            }} />
           </div>
 
-          <p style={{ fontSize:12, fontWeight:600, color:'#C8932F', letterSpacing:'0.1em', marginBottom:16, textTransform:'uppercase' }}>
+          <p style={{ fontSize:12, fontWeight:600, color:'#6366F1', letterSpacing:'0.1em', marginBottom:16, textTransform:'uppercase' }}>
             App de Conserjería
           </p>
           <h2 style={{ fontSize:28, fontWeight:700, color:'#F5F5F5', lineHeight:1.3, marginBottom:16 }}>
@@ -55,7 +58,7 @@ export default function Login() {
                   display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0,
                   border:'1px solid #2E2E2E'
                 }}>
-                  <span style={{ fontFamily:'Material Symbols Outlined', fontSize:20, color:'#C8932F' }}>{icon}</span>
+                  <span style={{ fontFamily:'Material Symbols Outlined', fontSize:20, color:'#6366F1' }}>{icon}</span>
                 </div>
                 <span style={{ fontSize:14, color:'#A8A8A8' }}>{text}</span>
               </div>

@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 import { TIPO_NOVEDAD } from '../lib/tokens';
+import { enqueue } from '../lib/offlineQueue';
 
 function NovedadCard({ nov }) {
   const t = TIPO_NOVEDAD[nov.tipo] || TIPO_NOVEDAD.informativo;
@@ -117,6 +118,24 @@ export default function Novedades({ perfil, turno, filtroInicial }) {
   async function enviarNovedad(e) {
     e.preventDefault();
     if (!descripcion.trim()) return;
+
+    if (!navigator.onLine) {
+      if (fotoFile) {
+        setErrorMsg('Sin conexión: registra sin foto. Puedes adjuntarla cuando vuelva la red.');
+        return;
+      }
+      enqueue({ table: 'novedades', op: 'insert', payload: {
+        edificio_id: perfil.edificio_id, conserje_id: perfil.id,
+        turno_id: turno?.id ?? null, tipo,
+        descripcion: descripcion.trim(), foto_url: null,
+        created_at: new Date().toISOString(),
+      }});
+      localStorage.removeItem(draftKey(perfil.edificio_id));
+      setDescripcion(''); setFotoFile(null); setTipo('informativo');
+      setBorradorRestaurado(false); setMostrarForm(false);
+      return;
+    }
+
     setEnviando(true);
     setErrorMsg('');
     let foto_url = null;

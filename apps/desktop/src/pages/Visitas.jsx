@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
+import { enqueue } from '../lib/offlineQueue';
 
 function Avatar({ nombre, size = 40 }) {
   const iniciales = nombre.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
@@ -79,6 +80,16 @@ export default function Visitas({ perfil, turno }) {
 
   async function registrarEntrada(e) {
     e.preventDefault();
+    if (!navigator.onLine) {
+      const ahora = new Date().toISOString();
+      enqueue({ table: 'visitas', op: 'insert', payload: {
+        edificio_id: perfil.edificio_id, conserje_id: perfil.id,
+        turno_id: turno?.id ?? null, entrada: ahora, activa: true, ...form,
+      }});
+      setMostrarForm(false);
+      setForm({ nombre_visitante: '', rut_visitante: '', destino: '', motivo: '' });
+      return;
+    }
     setEnviando(true);
     setErrorMsg('');
     const { error } = await supabase.from('visitas').insert({
@@ -95,7 +106,13 @@ export default function Visitas({ perfil, turno }) {
 
   async function registrarSalida(id) {
     setErrorMsg('');
-    const { error } = await supabase.from('visitas').update({ salida: new Date().toISOString(), activa: false }).eq('id', id);
+    const ahora = new Date().toISOString();
+    if (!navigator.onLine) {
+      enqueue({ table: 'visitas', op: 'update', rowId: id, payload: { salida: ahora, activa: false } });
+      setVisitas(prev => prev.map(v => v.id === id ? { ...v, salida: ahora, activa: false } : v));
+      return;
+    }
+    const { error } = await supabase.from('visitas').update({ salida: ahora, activa: false }).eq('id', id);
     if (error) setErrorMsg('No se pudo registrar la salida. Intenta de nuevo.');
     else cargarVisitas();
   }

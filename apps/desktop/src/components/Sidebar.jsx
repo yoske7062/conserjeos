@@ -44,6 +44,7 @@ const NAV_SECUNDARIO = [
   { id: 'novedades',   icon: 'campaign',    label: 'Novedades'        },
   { id: 'turno',       icon: 'schedule',    label: 'Entrega de turno' },
   { id: 'edificio',    icon: 'apartment',   label: 'Edificio'         },
+  { id: 'ayuda',       icon: 'help',        label: 'Ayuda'            },
 ];
 
 function NavButton({ id, icon, label, active, setModulo }) {

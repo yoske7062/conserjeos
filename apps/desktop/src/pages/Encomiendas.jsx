@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabase';
+import { enqueue } from '../lib/offlineQueue';
 
 function tiempoDesde(fecha) {
   const min = Math.floor((Date.now() - new Date(fecha)) / 60000);
@@ -46,6 +47,21 @@ export default function Encomiendas({ perfil, turno }) {
 
   async function registrarEncomienda(e) {
     e.preventDefault();
+    if (!navigator.onLine) {
+      if (fotoFile) {
+        setErrorMsg('Sin conexión: registra sin foto. Puedes adjuntarla cuando vuelva la red.');
+        return;
+      }
+      enqueue({ table: 'encomiendas', op: 'insert', payload: {
+        edificio_id: perfil.edificio_id, conserje_id: perfil.id,
+        turno_id: turno?.id ?? null, foto_url: null,
+        recibida_at: new Date().toISOString(), ...form,
+      }});
+      setMostrarForm(false);
+      setForm({ remitente: '', destinatario: '', depto: '' });
+      setFotoFile(null);
+      return;
+    }
     setEnviando(true);
     setErrorMsg('');
     let foto_url = null;
@@ -70,7 +86,13 @@ export default function Encomiendas({ perfil, turno }) {
 
   async function marcarEntregada(id) {
     setErrorMsg('');
-    const { error } = await supabase.from('encomiendas').update({ entregada: true, entregada_at: new Date().toISOString() }).eq('id', id);
+    const ahora = new Date().toISOString();
+    if (!navigator.onLine) {
+      enqueue({ table: 'encomiendas', op: 'update', rowId: id, payload: { entregada: true, entregada_at: ahora } });
+      setEncomiendas(prev => prev.map(e => e.id === id ? { ...e, entregada: true, entregada_at: ahora } : e));
+      return;
+    }
+    const { error } = await supabase.from('encomiendas').update({ entregada: true, entregada_at: ahora }).eq('id', id);
     if (error) setErrorMsg('No se pudo marcar como entregada. Intenta de nuevo.');
     else cargarEncomiendas();
   }

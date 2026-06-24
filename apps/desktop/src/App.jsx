@@ -36,10 +36,10 @@ export default function App() {
 
   const content = (() => {
     if (loading) return (
-      <div className="h-screen flex items-center justify-center bg-base">
-        <div className="flex flex-col items-center gap-4">
-          <div className="w-10 h-10 border-2 border-neon border-t-transparent rounded-full animate-spin" />
-          <span className="text-muted text-sm">Cargando Portia…</span>
+      <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0B0B0B' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
+          <div style={{ width: 36, height: 36, border: '2px solid #2E2E2E', borderTopColor: '#6366F1', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+          <span style={{ color: '#A8A8A8', fontSize: 13 }}>Cargando Portia…</span>
         </div>
       </div>
     );

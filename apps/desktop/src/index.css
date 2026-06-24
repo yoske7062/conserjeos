@@ -27,9 +27,9 @@
   --text-muted: #636363;
   --text-subtle: #4E4E4E;
   --text-body: #D0D0D0;
-  --brand: #C8932F;
-  --brand-rgb: 200,147,47;
-  --brand-text-on: #0B0B0B;
+  --brand: #6366F1;
+  --brand-rgb: 99,102,241;
+  --brand-text-on: #FFFFFF;
 }
 
 :root[data-theme="light"] {
@@ -44,8 +44,8 @@
   --text-muted: #6E6757;
   --text-subtle: #8A8270;
   --text-body: #2A2519;
-  --brand: #C8932F;
-  --brand-rgb: 156,111,30;
+  --brand: #4F46E5;
+  --brand-rgb: 79,70,229;
   --brand-text-on: #FFFFFF;
 }
 
@@ -80,13 +80,13 @@
   .btn-primary {
     @apply flex items-center justify-center gap-2 font-bold rounded-xl transition-all duration-150
            active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed;
-    background: #C8932F;
-    color: #0B0B0B;
+    background: #6366F1;
+    color: #FFFFFF;
     height: 52px;
     font-size: 15px;
     border-radius: 12px;
   }
-  .btn-primary:hover { background: #B07F28; }
+  .btn-primary:hover { background: #4F46E5; }
 
   .btn-ghost {
     @apply flex items-center justify-center gap-2 font-medium rounded-xl border transition-all duration-150 active:scale-95;
@@ -115,7 +115,7 @@
     font-size: 16px;
     font-family: 'Inter', sans-serif;
   }
-  .input:focus { border-color: #C8932F; box-shadow: 0 0 0 1px #C8932F; }
+  .input:focus { border-color: #6366F1; box-shadow: 0 0 0 1px #6366F1; }
 
   .label {
     @apply block font-medium mb-2;
@@ -152,13 +152,13 @@
     color: #A8A8A8;
   }
   .nav-item:hover { background: #1F1F1F; color: #F5F5F5; }
-  .nav-item.active { background: #C8932F; color: #0B0B0B; font-weight: 700; }
+  .nav-item.active { background: #6366F1; color: #FFFFFF; font-weight: 700; }
 }
 
 /* ── Pulse neon ── */
 @keyframes pulse-neon {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(200,147,47,0.5); }
-  50%       { box-shadow: 0 0 0 8px rgba(200,147,47,0); }
+  0%, 100% { box-shadow: 0 0 0 0 rgba(99,102,241,0.5); }
+  50%       { box-shadow: 0 0 0 8px rgba(99,102,241,0); }
 }
 .pulse-neon { animation: pulse-neon 2s ease infinite; }
 
@@ -185,9 +185,9 @@
 
 /* ── FAB ring ── */
 @keyframes fab-ring {
-  0%   { box-shadow: 0 0 0 0   rgba(200,147,47,0.4), 0 4px 20px rgba(200,147,47,0.3); }
-  70%  { box-shadow: 0 0 0 12px rgba(200,147,47,0),   0 4px 20px rgba(200,147,47,0.3); }
-  100% { box-shadow: 0 0 0 0   rgba(200,147,47,0),    0 4px 20px rgba(200,147,47,0.3); }
+  0%   { box-shadow: 0 0 0 0   rgba(99,102,241,0.4), 0 4px 20px rgba(99,102,241,0.3); }
+  70%  { box-shadow: 0 0 0 12px rgba(99,102,241,0),   0 4px 20px rgba(99,102,241,0.3); }
+  100% { box-shadow: 0 0 0 0   rgba(99,102,241,0),    0 4px 20px rgba(99,102,241,0.3); }
 }
 .fab { animation: fab-ring 2.5s ease infinite; }
 
@@ -205,7 +205,7 @@
   transition: box-shadow 150ms ease, transform 100ms ease;
 }
 .btn-glow:hover {
-  box-shadow: 0 0 20px rgba(200,147,47,0.35);
+  box-shadow: 0 0 20px rgba(99,102,241,0.35);
 }
 .btn-glow:active { transform: scale(0.97); }
 

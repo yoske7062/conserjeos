@@ -45,9 +45,20 @@ app.on('activate', () => {
   if (BrowserWindow.getAllWindows().length === 0) createWindow();
 });
 
-ipcMain.on('notify', (_, { title, body }) => {
+ipcMain.on('notify', (_, { title, body, action }) => {
   try {
-    if (Notification.isSupported()) new Notification({ title, body }).show();
+    if (!Notification.isSupported()) return;
+    const n = new Notification({ title, body });
+    if (action) {
+      n.on('click', () => {
+        if (mainWindow) {
+          if (mainWindow.isMinimized()) mainWindow.restore();
+          mainWindow.focus();
+          mainWindow.webContents.send('notify-action', action);
+        }
+      });
+    }
+    n.show();
   } catch (_) {}
 });
 
