@@ -33,7 +33,22 @@ const STEPS = [
   { r: 'III', t: 'Todo en tiempo real',        d: 'Lo que ocurre en la portería aparece al instante en el panel.' },
 ];
 
-const GH = 'https://github.com/yoske7062/conserjeos/releases';
+const GH_BASE = 'https://github.com/yoske7062/conserjeos/releases/download/v1.0.0-stage1';
+const GH      = 'https://github.com/yoske7062/conserjeos/releases';
+
+function descargar() {
+  const ua = navigator.userAgent;
+  if (/Win/i.test(ua)) {
+    window.location.href = `${GH_BASE}/Portia-Setup-1.0.0.exe`;
+    return;
+  }
+  // Mac — detecta Apple Silicon con canvas trick
+  const isArm = /arm64|aarch64/i.test(navigator.platform + ua) ||
+    (typeof navigator.gpu !== 'undefined');
+  window.location.href = isArm
+    ? `${GH_BASE}/Portia-1.0.0-arm64.dmg`
+    : `${GH_BASE}/Portia-1.0.0-x64.dmg`;
+}
 
 export default function Landing() {
   const cursorRef = useRef(null);
@@ -125,9 +140,9 @@ export default function Landing() {
           Portia<span style={{ color: CLAY }}>.</span>
         </Link>
         <div style={{ display: 'flex', alignItems: 'center', gap: 30 }}>
-          <a href={GH} target="_blank" rel="noopener noreferrer" className="pia-link" style={{ ...CAPS, color: INK, textDecoration: 'none' }}>
+          <button onClick={descargar} className="pia-link" style={{ ...CAPS, color: INK, textDecoration: 'none', background: 'none', border: 'none', cursor: 'pointer', fontFamily: SANS, padding: 0 }}>
             Descargar
-          </a>
+          </button>
           <Link href="/login" className="pia-fill" style={{
             ...CAPS, color: INK, textDecoration: 'none', border: `1px solid ${INK}`,
             borderRadius: 40, padding: '10px 22px',
@@ -161,12 +176,13 @@ export default function Landing() {
             funciona con la misma información, al mismo tiempo.
           </p>
           <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', justifyContent: 'flex-start' }}>
-            <a href={GH} target="_blank" rel="noopener noreferrer" className="pia-fill" style={{
-              ...CAPS, letterSpacing: '0.16em', color: BONE, background: INK, textDecoration: 'none',
+            <button onClick={descargar} className="pia-fill" style={{
+              ...CAPS, letterSpacing: '0.16em', color: BONE, background: INK,
               borderRadius: 44, padding: '17px 30px', border: `1px solid ${INK}`,
+              cursor: 'pointer', fontFamily: SANS,
             }}>
               Descargar la app
-            </a>
+            </button>
             <Link href="/login" className="pia-fill" style={{
               ...CAPS, letterSpacing: '0.16em', color: INK, textDecoration: 'none',
               borderRadius: 44, padding: '17px 30px', border: `1px solid ${INK}`,
@@ -264,12 +280,13 @@ export default function Landing() {
           Pon tu edificio <span style={{ fontStyle: 'italic', color: '#E69A6B' }}>en orden</span>.
         </h2>
         <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap' }}>
-          <a href={GH} target="_blank" rel="noopener noreferrer" style={{
-            ...CAPS, letterSpacing: '0.16em', color: INK, background: BONE, textDecoration: 'none',
-            borderRadius: 44, padding: '18px 32px',
+          <button onClick={descargar} style={{
+            ...CAPS, letterSpacing: '0.16em', color: INK, background: BONE,
+            borderRadius: 44, padding: '18px 32px', border: 'none',
+            cursor: 'pointer', fontFamily: SANS,
           }}>
             Descargar gratis
-          </a>
+          </button>
           <Link href="/login" style={{
             ...CAPS, letterSpacing: '0.16em', color: BONE, textDecoration: 'none',
             borderRadius: 44, padding: '18px 32px', border: '1px solid rgba(232,226,212,0.4)',
@@ -292,9 +309,8 @@ export default function Landing() {
           </div>
           <div>
             <div style={{ ...CAPS, color: INK40, marginBottom: 16 }}>Producto</div>
-            {[['Descargar app', GH], ['Panel admin', '/login']].map(([l, h]) => (
-              <a key={l} href={h} className="pia-link" style={{ display: 'block', fontFamily: SANS, fontSize: 15, color: INK, textDecoration: 'none', marginBottom: 10, width: 'fit-content' }}>{l}</a>
-            ))}
+            <button onClick={descargar} className="pia-link" style={{ display: 'block', fontFamily: SANS, fontSize: 15, color: INK, background: 'none', border: 'none', padding: 0, marginBottom: 10, cursor: 'pointer', width: 'fit-content' }}>Descargar app</button>
+            <Link href="/login" className="pia-link" style={{ display: 'block', fontFamily: SANS, fontSize: 15, color: INK, textDecoration: 'none', marginBottom: 10, width: 'fit-content' }}>Panel admin</Link>
           </div>
           <div>
             <div style={{ ...CAPS, color: INK40, marginBottom: 16 }}>Contacto</div>
