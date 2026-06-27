@@ -10,8 +10,8 @@ const INK40  = 'rgba(23,21,15,0.40)';
 const LINE   = 'rgba(23,21,15,0.16)';
 const CLAY   = '#B6451F';
 
-const SERIF = "'Fraunces', Georgia, serif";
-const SANS  = "'Instrument Sans', system-ui, sans-serif";
+const SERIF = "'Bricolage Grotesque', system-ui, sans-serif";
+const SANS  = "'Nunito', system-ui, sans-serif";
 
 const CAPS = {
   fontFamily: SANS, fontSize: 11, fontWeight: 500,
@@ -63,7 +63,7 @@ export default function Landing() {
   return (
     <div style={{ position: 'relative', background: BONE, color: INK, fontFamily: SANS, minHeight: '100vh', overflowX: 'hidden' }}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..600;1,9..144,300..600&family=Instrument+Sans:ital,wght@0,400;0,500;1,400&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,300..700&family=Nunito:ital,wght@0,400;0,500;0,600;1,400&display=swap');
         @keyframes riseIn { from { opacity: 0; transform: translateY(115%); } to { opacity: 1; transform: translateY(0); } }
         @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
