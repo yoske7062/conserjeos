@@ -1,7 +1,7 @@
 # Portia — Project State
 
 > **Fuente única de verdad.** Si solo vas a leer un archivo, lee este.
-> Última actualización: **2026-06-25** · Mantenedor: Diego
+> Última actualización: **2026-06-27** · Mantenedor: Diego
 >
 > Mapa del sistema de gestión: [`docs/README.md`](docs/README.md)
 
@@ -13,9 +13,12 @@ Portia es un SaaS B2B que digitaliza la conserjería de edificios residenciales 
 reemplaza el cuaderno físico de novedades, el registro de visitas y el control de encomiendas
 por una **app de escritorio** para conserjes y un **panel web** para administradores, en tiempo real.
 
-- **Stage actual:** `Stage 3 — Admin Web + Offline` · **85% completo** (código listo, falta deploy + validación en terreno).
-- **Próximo hito:** desplegar el panel admin (Vercel) + onboarding del **primer edificio real** (Private Alpha).
+- **Stage actual:** `Stage 3 — Admin Web + Offline` · **95% completo**.
+- **Panel admin LIVE:** https://admin-five-bay-95.vercel.app (auto-deploy desde GitHub main)
+- **Landing page LIVE:** https://admin-five-bay-95.vercel.app/ — landing + /dashboard + /login
+- **Próximo hito:** onboarding del **primer edificio real** (Private Alpha).
 - **Bloqueador #1:** no hay todavía un edificio real comprometido para validar.
+- **Pendiente técnico:** agregar `SUPABASE_SERVICE_ROLE_KEY` en Vercel Settings → Environment Variables (necesario para invitación de conserjes por email). Copiarlo desde supabase.com/dashboard/project/cpxywvxwdnpsrxqjoqjl/settings/api-keys/legacy → service_role → Reveal → Copy.
 
 ---
 
@@ -61,10 +64,10 @@ Dos superficies de producto sobre **un mismo backend Supabase**:
 - Realtime de novedades urgentes entre dispositivos del mismo edificio.
 
 **No funciona / no validado todavía:**
-- ❌ Panel admin **no está desplegado** (solo local). Falta Vercel + dominio.
+- ✅ Panel admin desplegado en Vercel: https://admin-five-bay-95.vercel.app
+- ✅ Invitación de conserjes por email (Server Action con service_role) — falta SUPABASE_SERVICE_ROLE_KEY en Vercel env.
 - ❌ Modo offline **construido pero no probado en terreno** con cortes reales.
 - ❌ Sin usuarios reales → cero feedback de campo, cero métricas de uso.
-- ❌ Creación de conserjes desde el panel usa `signUp` con anon key — revisar flujo de invitación real (ver [ADR-005](docs/decisions/ADR-005-offline-localstorage.md) y backlog).
 - ❌ Cumplimiento Ley 21.719 (datos personales) no iniciado.
 
 ## 4. Qué estamos haciendo ahora
