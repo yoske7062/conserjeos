@@ -20,21 +20,19 @@ export const text = {
 };
 
 // Marca: solo logo, foco y CTAs primarios. Nunca representa "éxito" ni "todo bien".
-// Dorado en vez de verde neón: la zona azul-verde es la más difícil de discriminar
-// para ojos mayores por el amarilleamiento del cristalino.
 export const brand = {
-  color: '#6366F1',
-  bg: 'rgba(99,102,241,0.08)',
-  border: 'rgba(99,102,241,0.2)',
+  color: 'var(--brand)',
+  bg: 'var(--info-bg)',
+  border: 'var(--info-border)',
 };
 
 // Estados semánticos: cada uno con su propio color + icono. Nunca solo color.
 export const state = {
-  success:   { color: '#2FBF71', bg: 'rgba(47,191,113,0.12)',  border: 'rgba(47,191,113,0.3)',  icon: '✓' },
-  info:      { color: '#3B9EFF', bg: 'rgba(59,158,255,0.12)',  border: 'rgba(59,158,255,0.3)',  icon: 'ℹ' },
-  warning:   { color: '#F5A524', bg: 'rgba(245,165,36,0.12)',  border: 'rgba(245,165,36,0.3)',  icon: '▲' },
-  incident:  { color: '#FF6B3D', bg: 'rgba(255,107,61,0.12)',  border: 'rgba(255,107,61,0.3)',  icon: '!' },
-  emergency: { color: '#E5484D', bg: 'rgba(229,72,77,0.12)',   border: 'rgba(229,72,77,0.3)',   icon: '◆' },
+  success:   { color: 'var(--ok-tx)', bg: 'var(--ok-bg)',  border: 'var(--ok-border)',  icon: '✓' },
+  info:      { color: 'var(--info-tx)', bg: 'var(--info-bg)',  border: 'var(--info-border)',  icon: 'ℹ' },
+  warning:   { color: 'var(--warn-tx)', bg: 'var(--warn-bg)',  border: 'var(--warn-border)',  icon: '▲' },
+  incident:  { color: 'var(--warn-tx)', bg: 'var(--warn-bg)',  border: 'var(--warn-border)',  icon: '!' },
+  emergency: { color: 'var(--crit-tx)', bg: 'var(--crit-bg)',   border: 'var(--crit-border)',   icon: '◆' },
 };
 
 // Tipos de novedad → estado semántico (ver §10.2 research: emergencia nunca es verde)

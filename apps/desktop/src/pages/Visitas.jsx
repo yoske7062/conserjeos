@@ -30,7 +30,7 @@ function VisitaCard({ v, onSalida }) {
     >
       <Avatar nombre={v.nombre_visitante} />
       <div style={{ flex: 1, minWidth: 0 }}>
-        <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)', marginBottom: 3 }}>{v.nombre_visitante}</p>
+        <p style={{ fontSize: 16, fontWeight: 600, color: 'var(--text)', marginBottom: 3 }}>{v.nombre_visitante}</p>
         <p style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 2 }}>
           Visita a <span style={{ color: 'var(--text-secondary)' }}>{v.destino}</span>
           {v.motivo && <> · {v.motivo}</>}
@@ -41,9 +41,9 @@ function VisitaCard({ v, onSalida }) {
         </p>
       </div>
       <button onClick={() => onSalida(v.id)} style={{
-        flexShrink: 0, minHeight: 44, padding: '0 14px', borderRadius: 8,
+        flexShrink: 0, minHeight: 48, padding: '0 16px', borderRadius: 8,
         background: 'transparent', border: '1px solid var(--border)',
-        color: 'var(--text-secondary)', fontSize: 13, fontWeight: 500, cursor: 'pointer',
+        color: 'var(--text-secondary)', fontSize: 16, fontWeight: 500, cursor: 'pointer',
         transition: 'all 120ms',
       }}
       onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--brand)'; e.currentTarget.style.color = 'var(--brand)'; }}
@@ -54,7 +54,7 @@ function VisitaCard({ v, onSalida }) {
 }
 
 const INPUT_STYLE = {
-  width: '100%', height: 44, background: 'var(--bg-input)', border: '1px solid var(--border)',
+  width: '100%', height: 48, background: 'var(--bg-input)', border: '1px solid var(--border)',
   borderRadius: 8, padding: '0 12px', color: 'var(--text)', fontSize: 16,
   fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box', transition: 'border-color 120ms',
 };
@@ -121,16 +121,16 @@ export default function Visitas({ perfil, turno }) {
   const historial = visitas.filter(v => !v.activa);
 
   return (
-    <div style={{ padding: '28px 32px', maxWidth: 860, margin: '0 auto' }}>
+    <div style={{ padding: '22px 24px 28px' }}>
 
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 28 }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
-            <div style={{ width: 32, height: 32, borderRadius: 8, background: 'rgba(47,191,113,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <span style={{ fontFamily: 'Material Symbols Outlined', fontSize: 18, color: '#2FBF71' }}>group</span>
+            <div style={{ width: 32, height: 32, borderRadius: 8, background: 'rgba(var(--brand-rgb),0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <span style={{ fontFamily: 'Material Symbols Outlined', fontSize: 18, color: 'var(--brand)' }}>group</span>
             </div>
-            <h2 style={{ fontSize: 22, fontWeight: 700, color: 'var(--text)' }}>Control de Visitas</h2>
+            <div style={{ fontSize: 23, fontWeight: 800, color: 'var(--text)', letterSpacing: '-0.5px' }}>Control de Visitas</div>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             {activas.length > 0 && <span style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--brand)', display: 'inline-block' }} />}
@@ -142,8 +142,8 @@ export default function Visitas({ perfil, turno }) {
           </div>
         </div>
         <button onClick={() => setMostrarForm(true)} style={{
-          height: 44, padding: '0 18px', background: 'var(--brand)', border: 'none',
-          borderRadius: 8, color: 'var(--brand-text-on)', fontSize: 14, fontWeight: 700, cursor: 'pointer',
+          height: 48, padding: '0 20px', background: 'var(--brand)', border: 'none',
+          borderRadius: 8, color: 'var(--brand-text-on)', fontSize: 16, fontWeight: 700, cursor: 'pointer',
         }}>+ Registrar entrada</button>
       </div>
 
@@ -151,11 +151,11 @@ export default function Visitas({ perfil, turno }) {
       {errorMsg && (
         <div style={{
           display: 'flex', alignItems: 'center', gap: 10,
-          background: 'rgba(229,72,77,0.1)', borderLeft: '4px solid #E5484D',
+          background: 'var(--crit-bg)', borderLeft: '4px solid var(--crit-tx)',
           borderRadius: '0 8px 8px 0', padding: '12px 16px', marginBottom: 20,
         }}>
-          <span style={{ fontFamily: 'Material Symbols Outlined', fontSize: 18, color: '#E5484D', flexShrink: 0 }}>error</span>
-          <span style={{ fontSize: 14, color: '#FF8A8A' }}>{errorMsg}</span>
+          <span style={{ fontFamily: 'Material Symbols Outlined', fontSize: 18, color: 'var(--crit-tx)', flexShrink: 0 }}>error</span>
+          <span style={{ fontSize: 14, color: 'var(--crit-tx)', fontWeight: 600 }}>{errorMsg}</span>
         </div>
       )}
 
@@ -223,7 +223,7 @@ export default function Visitas({ perfil, turno }) {
       {!loading && visitas.length === 0 && (
         <div style={{ textAlign: 'center', padding: '60px 24px' }}>
           <div style={{ width: 52, height: 52, background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', fontSize: 22 }}>👤</div>
-          <p style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-muted)', marginBottom: 6 }}>Sin visitas registradas hoy</p>
+          <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-muted)', marginBottom: 6 }}>Sin visitas registradas hoy</p>
           <p style={{ fontSize: 13, color: 'var(--text-subtle)' }}>Registra la entrada de visitantes al edificio</p>
         </div>
       )}
@@ -245,7 +245,7 @@ export default function Visitas({ perfil, turno }) {
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.65)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100, padding: 24 }}>
           <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 16, width: '100%', maxWidth: 420, boxShadow: '0 24px 60px rgba(0,0,0,0.7)' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 22px', borderBottom: '1px solid var(--border)' }}>
-              <h2 style={{ fontSize: 16, fontWeight: 700, color: 'var(--text)' }}>Registrar entrada</h2>
+              <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)' }}>Registrar entrada</div>
               <button onClick={() => setMostrarForm(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', fontSize: 20 }}>✕</button>
             </div>
             <form onSubmit={registrarEntrada} style={{ padding: 22, display: 'flex', flexDirection: 'column', gap: 14 }}>
@@ -266,8 +266,8 @@ export default function Visitas({ perfil, turno }) {
                 </div>
               ))}
               <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
-                <button type="button" onClick={() => setMostrarForm(false)} style={{ flex: 1, height: 44, background: 'transparent', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 14, cursor: 'pointer', fontFamily: 'inherit' }}>Cancelar</button>
-                <button type="submit" disabled={enviando} style={{ flex: 1, height: 44, background: 'var(--brand)', border: 'none', borderRadius: 8, color: 'var(--brand-text-on)', fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>{enviando ? '...' : 'Registrar entrada'}</button>
+                <button type="button" onClick={() => setMostrarForm(false)} style={{ flex: 1, height: 48, background: 'transparent', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 16, cursor: 'pointer', fontFamily: 'inherit' }}>Cancelar</button>
+                <button type="submit" disabled={enviando} style={{ flex: 1, height: 48, background: 'var(--brand)', border: 'none', borderRadius: 8, color: 'var(--brand-text-on)', fontSize: 16, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>{enviando ? '...' : 'Registrar entrada'}</button>
               </div>
             </form>
           </div>

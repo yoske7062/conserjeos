@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabase';
 import { state as estados } from '../lib/tokens';
 
 const INPUT_STYLE = {
-  width: '100%', height: 44, background: 'var(--bg-input)', border: '1px solid var(--border)',
+  width: '100%', height: 48, background: 'var(--bg-input)', border: '1px solid var(--border)',
   borderRadius: 8, padding: '0 12px', color: 'var(--text)', fontSize: 16,
   fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box', transition: 'border-color 120ms',
 };
@@ -40,7 +40,7 @@ function TareaCard({ t, onCompletar }) {
           )}
         </div>
         <p style={{ fontSize: 16, fontWeight: 600, color: 'var(--text)', marginBottom: t.descripcion ? 4 : 0 }}>{t.titulo}</p>
-        {t.descripcion && <p style={{ fontSize: 14, color: 'var(--text-body)', lineHeight: 1.5, marginBottom: 6 }}>{t.descripcion}</p>}
+        {t.descripcion && <p style={{ fontSize: 12, color: 'var(--text-body)', lineHeight: 1.5, marginBottom: 6 }}>{t.descripcion}</p>}
         {t.vence_at && !t.completada_at && (
           <p style={{ fontSize: 12, color: 'var(--text-muted)' }}>
             Vence: {new Date(t.vence_at).toLocaleDateString('es-CL', { day: '2-digit', month: 'short' })}
@@ -54,9 +54,9 @@ function TareaCard({ t, onCompletar }) {
       </div>
       {t.estado !== 'completada' && (
         <button onClick={() => onCompletar(t.id)} style={{
-          flexShrink: 0, minHeight: 44, display: 'flex', alignItems: 'center', gap: 6,
+          flexShrink: 0, minHeight: 48, display: 'flex', alignItems: 'center', gap: 6,
           padding: '0 16px', borderRadius: 8, background: 'var(--brand)', border: 'none',
-          color: 'var(--brand-text-on)', fontSize: 13, fontWeight: 700, cursor: 'pointer',
+          color: 'var(--brand-text-on)', fontSize: 16, fontWeight: 700, cursor: 'pointer',
         }}>✓ Completar</button>
       )}
     </div>
@@ -119,16 +119,16 @@ export default function Tareas({ perfil }) {
   const vencidas = pendientes.filter(t => vencidaYa(t.vence_at)).length;
 
   return (
-    <div style={{ padding: '28px 32px', maxWidth: 860, margin: '0 auto' }}>
+    <div style={{ padding: '22px 24px 28px' }}>
 
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 8 }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
-            <div style={{ width: 32, height: 32, borderRadius: 8, background: 'rgba(var(--brand-rgb),0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div style={{ width: 32, height: 32, borderRadius: 8, background: 'rgba(var(--brand-rgb),0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <span style={{ fontFamily: 'Material Symbols Outlined', fontSize: 18, color: 'var(--brand)' }}>checklist</span>
             </div>
-            <h2 style={{ fontSize: 22, fontWeight: 700, color: 'var(--text)' }}>Tareas</h2>
+            <div style={{ fontSize: 23, fontWeight: 800, color: 'var(--text)', letterSpacing: '-0.5px' }}>Tareas</div>
           </div>
           <p style={{ fontSize: 13, color: 'var(--text-muted)' }}>
             {esAdmin ? 'Asigna tareas y revisa qué se ha cumplido' : 'Lo que el administrador te pidió hacer'}
@@ -136,8 +136,8 @@ export default function Tareas({ perfil }) {
         </div>
         {esAdmin && (
           <button onClick={() => setMostrarForm(true)} style={{
-            height: 44, padding: '0 18px', background: 'var(--brand)', border: 'none',
-            borderRadius: 8, color: 'var(--brand-text-on)', fontSize: 14, fontWeight: 700, cursor: 'pointer',
+            height: 48, padding: '0 20px', background: 'var(--brand)', border: 'none',
+            borderRadius: 8, color: 'var(--brand-text-on)', fontSize: 16, fontWeight: 700, cursor: 'pointer',
           }}>+ Nueva tarea</button>
         )}
       </div>
@@ -151,10 +151,10 @@ export default function Tareas({ perfil }) {
       {errorMsg && (
         <div style={{
           display: 'flex', alignItems: 'center', gap: 10,
-          background: 'rgba(229,72,77,0.1)', borderLeft: '4px solid #E5484D',
+          background: 'var(--crit-bg)', borderLeft: '4px solid var(--crit-tx)',
           borderRadius: '0 8px 8px 0', padding: '12px 16px', marginBottom: 16,
         }}>
-          <span style={{ fontSize: 14, color: '#FF8A8A' }}>{errorMsg}</span>
+          <span style={{ fontSize: 12, color: 'var(--crit-tx)', fontWeight: 600 }}>{errorMsg}</span>
         </div>
       )}
 
@@ -162,7 +162,7 @@ export default function Tareas({ perfil }) {
       <div style={{ display: 'flex', gap: 0, marginBottom: 20, borderBottom: '1px solid var(--bg-surface-high)' }}>
         {[['pendientes', `Pendientes (${pendientes.length})`], ['completadas', `Completadas (${completadas.length})`]].map(([id, label]) => (
           <button key={id} onClick={() => setTab(id)} style={{
-            padding: '10px 20px', fontSize: 14, fontWeight: tab === id ? 600 : 400,
+            padding: '10px 20px', fontSize: 13, fontWeight: tab === id ? 600 : 400,
             color: tab === id ? 'var(--text)' : 'var(--text-muted)',
             background: 'transparent', border: 'none', cursor: 'pointer',
             borderBottom: tab === id ? '2px solid var(--brand)' : '2px solid transparent',
@@ -179,7 +179,7 @@ export default function Tareas({ perfil }) {
       ) : lista.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '60px 24px' }}>
           <div style={{ width: 52, height: 52, background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', fontSize: 22 }}>✓</div>
-          <p style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-muted)', marginBottom: 6 }}>
+          <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-muted)', marginBottom: 6 }}>
             {tab === 'pendientes' ? 'Sin tareas pendientes' : 'Sin tareas completadas todavía'}
           </p>
         </div>
@@ -194,7 +194,7 @@ export default function Tareas({ perfil }) {
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.65)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100, padding: 24 }}>
           <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 16, width: '100%', maxWidth: 440, boxShadow: '0 24px 60px rgba(0,0,0,0.7)' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 22px', borderBottom: '1px solid var(--border)' }}>
-              <h2 style={{ fontSize: 16, fontWeight: 700, color: 'var(--text)' }}>Nueva tarea</h2>
+              <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)' }}>Nueva tarea</div>
               <button onClick={() => setMostrarForm(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', fontSize: 20, lineHeight: 1 }}>✕</button>
             </div>
             <form onSubmit={crearTarea} style={{ padding: 22, display: 'flex', flexDirection: 'column', gap: 14 }}>
@@ -230,8 +230,8 @@ export default function Tareas({ perfil }) {
                 </div>
               </div>
               <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
-                <button type="button" onClick={() => setMostrarForm(false)} style={{ flex: 1, height: 44, background: 'transparent', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 14, cursor: 'pointer', fontFamily: 'inherit' }}>Cancelar</button>
-                <button type="submit" disabled={enviando} style={{ flex: 1, height: 44, background: 'var(--brand)', border: 'none', borderRadius: 8, color: 'var(--brand-text-on)', fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>{enviando ? '...' : 'Crear tarea'}</button>
+                <button type="button" onClick={() => setMostrarForm(false)} style={{ flex: 1, height: 48, background: 'transparent', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 16, cursor: 'pointer', fontFamily: 'inherit' }}>Cancelar</button>
+                <button type="submit" disabled={enviando} style={{ flex: 1, height: 48, background: 'var(--brand)', border: 'none', borderRadius: 8, color: 'var(--brand-text-on)', fontSize: 16, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>{enviando ? '...' : 'Crear tarea'}</button>
               </div>
             </form>
           </div>

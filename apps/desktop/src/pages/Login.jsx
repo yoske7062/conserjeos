@@ -23,25 +23,24 @@ export default function Login() {
 
       {/* Panel izquierdo — branding */}
       <div style={{
-        width: 420, background:'#161616', borderRight:'1px solid #2E2E2E',
+        width: 420, background:'#0E1525', borderRight:'1px solid #1D2D45',
         padding: '48px 40px 40px', display:'flex', flexDirection:'column', justifyContent:'space-between'
       }}>
         <div>
-          {/* Logo */}
+          {/* Logo — sin filtros, color original */}
           <div style={{ marginBottom:36 }}>
             <img src={logoImg} alt="Portia" style={{
-              width:120, height:120, objectFit:'contain',
-              filter:'hue-rotate(120deg) saturate(1.3) brightness(1.0)',
+              width:100, height:100, objectFit:'contain',
             }} />
           </div>
 
-          <p style={{ fontSize:12, fontWeight:600, color:'#6366F1', letterSpacing:'0.1em', marginBottom:16, textTransform:'uppercase' }}>
+          <p style={{ fontSize:12, fontWeight:600, color:'#8FAFD4', letterSpacing:'0.1em', marginBottom:16, textTransform:'uppercase' }}>
             App de Conserjería
           </p>
-          <h2 style={{ fontSize:28, fontWeight:700, color:'#F5F5F5', lineHeight:1.3, marginBottom:16 }}>
+          <h2 style={{ fontSize:28, fontWeight:700, color:'#F0EDE8', lineHeight:1.3, marginBottom:16 }}>
             Control total de tu conserjería
           </h2>
-          <p style={{ fontSize:15, color:'#A8A8A8', lineHeight:1.6 }}>
+          <p style={{ fontSize:15, color:'#8394AA', lineHeight:1.6 }}>
             Registra novedades, visitas y encomiendas en tiempo real. Sin papel, sin pérdida de información.
           </p>
 
@@ -54,19 +53,19 @@ export default function Login() {
             ].map(([icon, text]) => (
               <div key={text} style={{ display:'flex', alignItems:'center', gap:14 }}>
                 <div style={{
-                  width:38, height:38, background:'#1F1F1F', borderRadius:9,
+                  width:38, height:38, background:'#162035', borderRadius:9,
                   display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0,
-                  border:'1px solid #2E2E2E'
+                  border:'1px solid #1D2D45'
                 }}>
-                  <span style={{ fontFamily:'Material Symbols Outlined', fontSize:20, color:'#6366F1' }}>{icon}</span>
+                  <span style={{ fontFamily:'Material Symbols Outlined', fontSize:20, color:'#8FAFD4' }}>{icon}</span>
                 </div>
-                <span style={{ fontSize:14, color:'#A8A8A8' }}>{text}</span>
+                <span style={{ fontSize:14, color:'#8394AA' }}>{text}</span>
               </div>
             ))}
           </div>
         </div>
 
-        <p style={{ fontSize:12, color:'#636363', borderTop:'1px solid #2E2E2E', paddingTop:16 }}>
+        <p style={{ fontSize:12, color:'#4A5568', borderTop:'1px solid #1D2D45', paddingTop:16 }}>
           ¿Eres administrador? Accede desde el panel web.
         </p>
       </div>
@@ -121,11 +120,11 @@ export default function Login() {
             {error && (
               <div style={{
                 display:'flex', alignItems:'center', gap:10,
-                background:'rgba(255,68,68,0.08)', borderLeft:'4px solid #FF4444',
+                background:'rgba(239,68,68,0.16)', borderLeft:'4px solid #ef4444',
                 borderRadius:'0 10px 10px 0', padding:'12px 16px'
               }}>
-                <span style={{ fontFamily:'Material Symbols Outlined', fontSize:18, color:'#FF4444', flexShrink:0 }}>error</span>
-                <span style={{ fontSize:14, color:'#FF7070' }}>{error}</span>
+                <span style={{ fontFamily:'Material Symbols Outlined', fontSize:18, color:'#fca5a5', flexShrink:0 }}>error</span>
+                <span style={{ fontSize:14, color:'#fca5a5', fontWeight: 600 }}>{error}</span>
               </div>
             )}
 

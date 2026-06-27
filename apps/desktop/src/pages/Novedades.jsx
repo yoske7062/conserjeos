@@ -170,11 +170,11 @@ export default function Novedades({ perfil, turno, filtroInicial }) {
   const filtradas = filtro === 'todos' ? novedades : novedades.filter(n => n.tipo === filtro);
 
   return (
-    <div style={{ padding: '28px 32px', maxWidth: 860, margin: '0 auto' }}>
+    <div style={{ padding: '22px 24px 28px' }}>
 
       {/* Page header */}
       <div style={{ marginBottom: 16 }}>
-        <h2 style={{ fontSize: 22, fontWeight: 700, color: 'var(--text)', marginBottom: 4 }}>Libro de Novedades</h2>
+        <div style={{ fontSize: 23, fontWeight: 800, color: 'var(--text)', marginBottom: 4, letterSpacing: '-0.5px' }}>Libro de Novedades</div>
         <p style={{ fontSize: 13, color: 'var(--text-muted)' }}>Registra todo lo que pasa en tu turno — es tu respaldo si después hay un reclamo</p>
       </div>
 
@@ -182,11 +182,11 @@ export default function Novedades({ perfil, turno, filtroInicial }) {
       {errorMsg && (
         <div style={{
           display: 'flex', alignItems: 'center', gap: 10,
-          background: 'rgba(229,72,77,0.1)', borderLeft: '4px solid #E5484D',
+          background: 'var(--crit-bg)', borderLeft: '4px solid var(--crit-tx)',
           borderRadius: '0 8px 8px 0', padding: '12px 16px', marginBottom: 16,
         }}>
-          <span style={{ fontFamily: 'Material Symbols Outlined', fontSize: 18, color: '#E5484D', flexShrink: 0 }}>error</span>
-          <span style={{ fontSize: 14, color: '#FF8A8A' }}>{errorMsg}</span>
+          <span style={{ fontFamily: 'Material Symbols Outlined', fontSize: 18, color: 'var(--crit-tx)', flexShrink: 0 }}>error</span>
+          <span style={{ fontSize: 12, color: 'var(--crit-tx)', fontWeight: 600 }}>{errorMsg}</span>
         </div>
       )}
 
@@ -208,13 +208,13 @@ export default function Novedades({ perfil, turno, filtroInicial }) {
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           {counts.urgente > 0 && (
-            <span style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '3px 10px', borderRadius: 99, background: 'rgba(229,72,77,0.1)', border: '1px solid rgba(229,72,77,0.3)', fontSize: 11, fontWeight: 600, color: '#E5484D' }}>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '3px 10px', borderRadius: 99, background: 'var(--crit-bg)', border: '1px solid var(--crit-border)', fontSize: 11, fontWeight: 600, color: 'var(--crit-tx)' }}>
               <span>◆</span>
               Urgentes: {counts.urgente}
             </span>
           )}
           {counts.incidente > 0 && (
-            <span style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '3px 10px', borderRadius: 99, background: 'rgba(255,107,61,0.1)', border: '1px solid rgba(255,107,61,0.3)', fontSize: 11, fontWeight: 600, color: '#FF6B3D' }}>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '3px 10px', borderRadius: 99, background: 'var(--warn-bg)', border: '1px solid var(--warn-border)', fontSize: 11, fontWeight: 600, color: 'var(--warn-tx)' }}>
               <span>!</span>
               Incidentes: {counts.incidente}
             </span>
@@ -232,7 +232,7 @@ export default function Novedades({ perfil, turno, filtroInicial }) {
         ) : filtradas.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '60px 24px' }}>
             <div style={{ width: 52, height: 52, background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', fontSize: 22 }}>📋</div>
-            <p style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-muted)', marginBottom: 6 }}>Sin novedades registradas</p>
+            <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-muted)', marginBottom: 6 }}>Sin novedades registradas</p>
             <p style={{ fontSize: 13, color: 'var(--text-subtle)' }}>
               {turno ? 'Registra la primera novedad de este turno' : 'Inicia tu turno en "Entrega de turno" para comenzar a registrar'}
             </p>
@@ -261,7 +261,7 @@ export default function Novedades({ perfil, turno, filtroInicial }) {
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.65)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100, padding: 24 }}>
           <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 16, width: '100%', maxWidth: 440, boxShadow: '0 24px 60px rgba(0,0,0,0.7)' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 22px', borderBottom: '1px solid var(--border)' }}>
-              <h2 style={{ fontSize: 16, fontWeight: 700, color: 'var(--text)' }}>Nueva novedad</h2>
+              <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)' }}>Nueva novedad</div>
               <button onClick={cancelarForm} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', fontSize: 20, lineHeight: 1 }}>✕</button>
             </div>
             <form onSubmit={enviarNovedad} style={{ padding: 22, display: 'flex', flexDirection: 'column', gap: 18 }}>
@@ -290,7 +290,7 @@ export default function Novedades({ perfil, turno, filtroInicial }) {
                 <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>Descripción</label>
                 <textarea value={descripcion} onChange={e => setDescripcion(e.target.value)}
                   placeholder="Describe la novedad con detalle…" required autoFocus
-                  style={{ width: '100%', height: 100, background: 'var(--bg-input)', border: '1px solid var(--border)', borderRadius: 8, padding: '10px 12px', color: 'var(--text)', fontSize: 16, resize: 'none', fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box', transition: 'border-color 120ms' }}
+                  style={{ width: '100%', height: 110, background: 'var(--bg-input)', border: '1px solid var(--border)', borderRadius: 8, padding: '10px 12px', color: 'var(--text)', fontSize: 16, resize: 'none', fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box', transition: 'border-color 120ms' }}
                   onFocus={e => e.target.style.borderColor = 'var(--brand)'}
                   onBlur={e => e.target.style.borderColor = 'var(--border)'}
                 />
@@ -312,8 +312,8 @@ export default function Novedades({ perfil, turno, filtroInicial }) {
                 )}
               </div>
               <div style={{ display: 'flex', gap: 10 }}>
-                <button type="button" onClick={cancelarForm} style={{ flex: 1, height: 44, background: 'transparent', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 14, fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}>Cancelar</button>
-                <button type="submit" disabled={enviando} style={{ flex: 1, height: 44, background: 'var(--brand)', border: 'none', borderRadius: 8, color: 'var(--brand-text-on)', fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>{enviando ? '...' : 'Registrar'}</button>
+                <button type="button" onClick={cancelarForm} style={{ flex: 1, height: 44, background: 'transparent', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 16, fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}>Cancelar</button>
+                <button type="submit" disabled={enviando} style={{ flex: 1, height: 48, background: 'var(--brand)', border: 'none', borderRadius: 8, color: 'var(--brand-text-on)', fontSize: 16, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>{enviando ? '...' : 'Registrar'}</button>
               </div>
             </form>
           </div>
