@@ -15,8 +15,12 @@ jobs:
         with:
           node-version: 20
 
-      - name: Install all deps (workspaces)
+      - name: Install desktop deps
         run: npm install --include=dev
+        working-directory: apps/desktop
+
+      - name: Check binary exists
+        run: ls -la apps/desktop/node_modules/app-builder-bin/mac/ || echo "Binary not found"
 
       - name: Create .env
         working-directory: apps/desktop
@@ -45,8 +49,12 @@ jobs:
         with:
           node-version: 20
 
-      - name: Install all deps (workspaces)
+      - name: Install desktop deps
         run: npm install --include=dev
+        working-directory: apps/desktop
+
+      - name: Check binary exists
+        run: dir apps\desktop\node_modules\app-builder-bin\win\x64\ 2>NUL || echo "Binary not found"
 
       - name: Create .env
         working-directory: apps/desktop
