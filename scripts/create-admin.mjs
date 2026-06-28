@@ -40,7 +40,10 @@ async function main() {
   let userId;
   if (existing) {
     userId = existing.id;
-    console.log(`   Ya existe — ID: ${userId}`);
+    console.log(`   Ya existe — ID: ${userId}. Actualizando contraseña...`);
+    const { error: updateErr } = await supabase.auth.admin.updateUserById(userId, { password: ADMIN_PASS });
+    if (updateErr) { console.error('❌ Error actualizando contraseña:', updateErr.message); process.exit(1); }
+    console.log('   ✓ Contraseña actualizada.');
   } else {
     const { data: userData, error: authErr } = await supabase.auth.admin.createUser({
       email:         ADMIN_EMAIL,
