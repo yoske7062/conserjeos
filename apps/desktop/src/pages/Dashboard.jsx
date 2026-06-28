@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
-import { getAll, remove, count, onCountChange } from '../lib/offlineQueue';
+import { getAll, remove, count, onCountChange, base64ToBlob } from '../lib/offlineQueue';
 import Sidebar from '../components/Sidebar';
 import EntregaTurno from './EntregaTurno';
 import Novedades from './Novedades';
@@ -45,10 +45,20 @@ export default function Dashboard({ perfil }) {
       setSincronizando(true);
       for (const item of getAll()) {
         let error;
+        let payload = item.payload;
+        if (item.fotoBase64) {
+          const ext  = item.fotoName?.split('.').pop() || 'jpg';
+          const path = `${item.table}/${payload.edificio_id}/${Date.now()}.${ext}`;
+          const { data: up, error: upError } = await supabase.storage.from('fotos').upload(path, base64ToBlob(item.fotoBase64));
+          if (!upError && up) {
+            const { data: pub } = supabase.storage.from('fotos').getPublicUrl(path);
+            payload = { ...payload, foto_url: pub.publicUrl };
+          }
+        }
         if (item.op === 'insert') {
-          ({ error } = await supabase.from(item.table).insert(item.payload));
+          ({ error } = await supabase.from(item.table).insert(payload));
         } else if (item.op === 'update') {
-          ({ error } = await supabase.from(item.table).update(item.payload).eq('id', item.rowId));
+          ({ error } = await supabase.from(item.table).update(payload).eq('id', item.rowId));
         }
         if (!error) remove(item._id);
       }

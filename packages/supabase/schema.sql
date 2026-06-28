@@ -75,6 +75,7 @@ create table public.visitas (
   entrada         timestamptz not null default now(),
   salida          timestamptz,
   activa          boolean not null default true,
+  avisado         boolean not null default false,
   editado_por     uuid references public.perfiles(id),
   editado_at      timestamptz,
   valor_anterior  jsonb
@@ -95,6 +96,8 @@ create table public.encomiendas (
   recibida_at     timestamptz not null default now(),
   entregada_at    timestamptz,
   entregada       boolean not null default false,
+  retirado_por    text,
+  retirado_tipo   text check (retirado_tipo in ('residente','tercero')),
   editado_por     uuid references public.perfiles(id),
   editado_at      timestamptz,
   valor_anterior  jsonb
@@ -247,5 +250,17 @@ alter table public.tareas enable row level security;
 -- (drop policy "tareas del edificio" on public.tareas;) para evitar error de duplicado.
 create policy "tareas del edificio" on public.tareas
   for all using (edificio_id = public.mi_edificio_id());
+
+-- ============================================================
+-- MIGRACIÓN — Trazabilidad de retiro + aviso de visita (28-jun-2026)
+-- ============================================================
+-- Quién retiró cada encomienda (residente o un tercero autorizado), y si ya
+-- se avisó por citófono al depto de que su visita llegó.
+
+alter table public.encomiendas add column if not exists retirado_por  text;
+alter table public.encomiendas add column if not exists retirado_tipo text
+  check (retirado_tipo in ('residente','tercero'));
+
+alter table public.visitas add column if not exists avisado boolean not null default false;
 
 create index if not exists tareas_edificio_estado_idx on public.tareas (edificio_id, estado);
