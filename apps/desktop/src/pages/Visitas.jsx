@@ -15,7 +15,7 @@ function Avatar({ nombre, size = 40 }) {
   );
 }
 
-function VisitaCard({ v, onSalida, onAvisar, onEditar }) {
+function VisitaCard({ v, onSalida, onEditar }) {
   const entrada = new Date(v.entrada);
   const minutos = Math.floor((Date.now() - entrada) / 60000);
   const duracion = minutos < 60 ? `${minutos}min` : `${Math.floor(minutos/60)}h ${minutos%60}min`;
@@ -49,16 +49,6 @@ function VisitaCard({ v, onSalida, onAvisar, onEditar }) {
         onMouseEnter={e => e.currentTarget.style.color = 'var(--brand)'}
         onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}
         ><span style={{ fontFamily: 'Material Symbols Outlined', fontSize: 18 }}>edit</span></button>
-        <button onClick={() => onAvisar(v.id, !v.avisado)} style={{
-          minHeight: 36, padding: '0 12px', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer',
-          border: v.avisado ? '1px solid var(--brand)' : '1px solid var(--border)',
-          background: v.avisado ? 'rgba(var(--brand-rgb),0.12)' : 'transparent',
-          color: v.avisado ? 'var(--brand)' : 'var(--text-secondary)',
-          display: 'flex', alignItems: 'center', gap: 5, justifyContent: 'center',
-        }}>
-          <span style={{ fontFamily: 'Material Symbols Outlined', fontSize: 14 }}>{v.avisado ? 'check_circle' : 'call'}</span>
-          {v.avisado ? 'Avisado' : 'Avisar al depto'}
-        </button>
         <button onClick={() => onSalida(v.id)} style={{
           minHeight: 40, padding: '0 16px', borderRadius: 8,
           background: 'transparent', border: '1px solid var(--border)',
@@ -199,17 +189,6 @@ export default function Visitas({ perfil, turno }) {
     else cargarVisitas();
   }
 
-  async function toggleAvisado(id, valor) {
-    setErrorMsg('');
-    setVisitas(prev => prev.map(v => v.id === id ? { ...v, avisado: valor } : v));
-    if (!navigator.onLine) {
-      enqueue({ table: 'visitas', op: 'update', rowId: id, payload: { avisado: valor } });
-      return;
-    }
-    const { error } = await supabase.from('visitas').update({ avisado: valor }).eq('id', id);
-    if (error) setErrorMsg('No se pudo actualizar el aviso. Intenta de nuevo.');
-  }
-
   function abrirEdicion(v) {
     setEditForm({ nombre_visitante: v.nombre_visitante, rut_visitante: v.rut_visitante, destino: v.destino, motivo: v.motivo ?? '' });
     setEditTarget(v);
@@ -298,7 +277,7 @@ export default function Visitas({ perfil, turno }) {
             <p style={{ fontSize: 13, color: 'var(--text-subtle)' }}>Sin resultados.</p>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {resultadosBusqueda.map(v => <VisitaCard key={v.id} v={v} onSalida={registrarSalida} onAvisar={toggleAvisado} onEditar={abrirEdicion} />)}
+              {resultadosBusqueda.map(v => <VisitaCard key={v.id} v={v} onSalida={registrarSalida} onEditar={abrirEdicion} />)}
             </div>
           )}
         </div>
@@ -311,7 +290,7 @@ export default function Visitas({ perfil, turno }) {
                 En el edificio ahora
               </p>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                {activasTodas.map(v => <VisitaCard key={v.id} v={v} onSalida={registrarSalida} onAvisar={toggleAvisado} onEditar={abrirEdicion} />)}
+                {activasTodas.map(v => <VisitaCard key={v.id} v={v} onSalida={registrarSalida} onEditar={abrirEdicion} />)}
               </div>
             </div>
           )}

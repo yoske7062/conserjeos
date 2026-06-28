@@ -235,9 +235,18 @@ export default function Novedades({ perfil, turno, filtroInicial }) {
     <div style={{ padding: '22px 24px 28px' }}>
 
       {/* Page header */}
-      <div style={{ marginBottom: 16 }}>
-        <div style={{ fontSize: 23, fontWeight: 800, color: 'var(--text)', marginBottom: 4, letterSpacing: '-0.5px' }}>Libro de Novedades</div>
-        <p style={{ fontSize: 13, color: 'var(--text-muted)' }}>Registra todo lo que pasa en tu turno — es tu respaldo si después hay un reclamo</p>
+      <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 16, gap: 16 }}>
+        <div>
+          <div style={{ fontSize: 23, fontWeight: 800, color: 'var(--text)', marginBottom: 4, letterSpacing: '-0.5px' }}>Libro de Novedades</div>
+          <p style={{ fontSize: 13, color: 'var(--text-muted)' }}>Registra todo lo que pasa en tu turno — es tu respaldo si después hay un reclamo</p>
+        </div>
+        {turno && (
+          <button onClick={() => setMostrarForm(true)} style={{
+            flexShrink: 0, display: 'flex', alignItems: 'center', gap: 8, height: 48, padding: '0 20px',
+            background: 'var(--brand)', border: 'none', borderRadius: 8,
+            color: 'var(--brand-text-on)', fontSize: 16, fontWeight: 700, cursor: 'pointer',
+          }}>+ Nueva novedad</button>
+        )}
       </div>
 
       {/* Error banner */}
