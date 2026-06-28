@@ -15,9 +15,8 @@ jobs:
         with:
           node-version: 20
 
-      - name: Install desktop deps
+      - name: Install all deps (workspaces)
         run: npm install --include=dev
-        working-directory: apps/desktop
 
       - name: Create .env
         working-directory: apps/desktop
@@ -46,9 +45,8 @@ jobs:
         with:
           node-version: 20
 
-      - name: Install desktop deps
-        run: npm install
-        working-directory: apps/desktop
+      - name: Install all deps (workspaces)
+        run: npm install --include=dev
 
       - name: Create .env
         working-directory: apps/desktop
