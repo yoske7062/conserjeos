@@ -1,6 +1,15 @@
 import { useState } from 'react';
 import { supabase } from '../lib/supabase';
-import logoImg from '../assets/logo_terracota.jpg';
+const GOLD = '#C8932F';
+
+function PortiaMark() {
+  return (
+    <svg width="32" height="32" viewBox="0 0 32 32" fill="none" style={{ flexShrink: 0 }}>
+      <rect width="32" height="32" rx="8" fill={GOLD}/>
+      <path d="M10 8h6.6c1.7 0 3 .45 4 1.35.9.9 1.4 2.1 1.4 3.65s-.5 2.75-1.4 3.65c-.9.9-2.3 1.35-4 1.35H12.8V24H10V8zm2.8 7.6h3.6c1 0 1.8-.25 2.3-.75.5-.5.75-1.15.75-1.95s-.25-1.45-.75-1.95c-.5-.5-1.3-.75-2.3-.75h-3.6v5.4z" fill="white"/>
+    </svg>
+  );
+}
 
 const ICONS = {
   home:   'home',
@@ -91,15 +100,7 @@ export default function Sidebar({ modulo, setModulo, perfil, turno, onAjustes })
         borderBottom: '1px solid rgba(25,24,26,0.07)',
         display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0,
       }}>
-        {/* Logo icon — cropped from full logo */}
-        <div style={{
-          width: 32, height: 32, borderRadius: 9, flexShrink: 0,
-          overflow: 'hidden',
-          backgroundImage: `url(${logoImg})`,
-          backgroundSize: '220%',
-          backgroundPosition: '48% 14%',
-          backgroundRepeat: 'no-repeat',
-        }} />
+        <PortiaMark />
         <div>
           <div style={{
             fontFamily: 'var(--font-heading)',
