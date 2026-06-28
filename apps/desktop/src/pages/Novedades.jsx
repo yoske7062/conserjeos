@@ -5,10 +5,12 @@ import { enqueue, fileToBase64 } from '../lib/offlineQueue';
 import FotoField from '../components/FotoField';
 
 const FRASES_RAPIDAS = [
-  'Ronda de seguridad realizada sin novedad.',
-  'Se cerró el acceso de servicio.',
-  'Aviso entregado al residente.',
-  'Mantención programada realizada.',
+  'Ronda de seguridad sin novedad.',
+  'Cerré el acceso de servicio / estacionamiento.',
+  'Aviso entregado al depto sobre encomienda o visita.',
+  'Vehículo mal estacionado en área común.',
+  'Reclamo de ruidos molestos.',
+  'Revisión o mantención técnica realizada.',
 ];
 
 function NovedadCard({ nov, perfil, onEditar }) {
@@ -70,11 +72,30 @@ function draftKey(edificioId) {
   return `portia:borrador-novedad:${edificioId}`;
 }
 
-const EXPLICACION_TIPO = {
-  urgente:     'Algo está pasando ahora y necesita atención inmediata (emergencia, accidente, situación de riesgo).',
-  incidente:   'Algo salió mal o se rompió, pero ya pasó o está controlado (filtración, ascensor detenido, ruido molesto).',
-  informativo: 'Para que quede registrado, sin que sea grave ni urgente (visita de mantención, aviso de un vecino).',
-};
+// Lo urgente real ya tiene su propio botón rojo de Emergencia. Acá el conserje
+// no tiene que pensar en categorías: por defecto es un registro normal, y solo
+// marca el toggle si algo salió mal o se rompió algo.
+function ToggleIncidente({ activo, onToggle }) {
+  return (
+    <button type="button" onClick={onToggle} style={{
+      display: 'flex', alignItems: 'center', gap: 12, width: '100%', padding: '13px 14px',
+      borderRadius: 10, cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left',
+      border: activo ? '1px solid var(--warn-tx)' : '1px solid var(--border)',
+      background: activo ? 'var(--warn-bg)' : 'var(--bg-input)',
+      transition: 'all 120ms',
+    }}>
+      <span style={{
+        width: 22, height: 22, borderRadius: 6, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
+        border: activo ? 'none' : '2px solid var(--border-strong)',
+        background: activo ? 'var(--warn-tx)' : 'transparent',
+        color: '#fff', fontSize: 14, fontWeight: 700,
+      }}>{activo ? '✓' : ''}</span>
+      <span style={{ fontSize: 14, fontWeight: 600, color: activo ? 'var(--warn-tx)' : 'var(--text)' }}>
+        Algo salió mal o se rompió algo
+      </span>
+    </button>
+  );
+}
 
 export default function Novedades({ perfil, turno, filtroInicial }) {
   const [novedades, setNovedades]       = useState([]);
@@ -335,20 +356,6 @@ export default function Novedades({ perfil, turno, filtroInicial }) {
         )}
       </div>
 
-      {/* FAB */}
-      {turno && (
-        <button onClick={() => setMostrarForm(true)} title="Nueva novedad" style={{
-          position: 'fixed', bottom: 28, right: 28, width: 52, height: 52,
-          background: 'var(--brand)', border: 'none', borderRadius: '50%',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          cursor: 'pointer', zIndex: 60, fontSize: 26, color: 'var(--brand-text-on)', fontWeight: 700,
-          boxShadow: '0 4px 20px rgba(var(--brand-rgb),0.3)', transition: 'transform 120ms',
-        }}
-        onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.08)'}
-        onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
-        >+</button>
-      )}
-
       {/* Modal: Nueva novedad */}
       {mostrarForm && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.65)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100, padding: 24 }}>
@@ -364,24 +371,15 @@ export default function Novedades({ perfil, turno, filtroInicial }) {
                 </div>
               )}
               <div>
-                <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>Tipo</label>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
-                  {Object.entries(TIPO_NOVEDAD).map(([id, t]) => (
-                    <button key={id} type="button" onClick={() => setTipo(id)} style={{
-                      minHeight: 44, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
-                      padding: '9px 8px', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer',
-                      background: tipo === id ? t.bg : 'transparent',
-                      color: tipo === id ? t.color : 'var(--text-muted)',
-                      border: tipo === id ? `1px solid ${t.border}` : '1px solid var(--border)',
-                      transition: 'all 100ms',
-                    }}><span>{t.icon}</span>{t.label}</button>
-                  ))}
-                </div>
-                <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 8, lineHeight: 1.4 }}>{EXPLICACION_TIPO[tipo]}</p>
-              </div>
-              <div>
-                <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>Frases rápidas</label>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>Descripción</label>
+                <textarea value={descripcion} onChange={e => setDescripcion(e.target.value)}
+                  placeholder="Describe la novedad con detalle…" required autoFocus
+                  style={{ width: '100%', height: 90, background: 'var(--bg-input)', border: '1px solid var(--border)', borderRadius: 8, padding: '10px 12px', color: 'var(--text)', fontSize: 16, resize: 'none', fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box', transition: 'border-color 120ms' }}
+                  onFocus={e => e.target.style.borderColor = 'var(--brand)'}
+                  onBlur={e => e.target.style.borderColor = 'var(--border)'}
+                />
+                <p style={{ fontSize: 12, color: 'var(--text-subtle)', marginTop: 6 }}>Toca para completar rápido:</p>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 6 }}>
                   {FRASES_RAPIDAS.map(frase => (
                     <button key={frase} type="button"
                       onClick={() => setDescripcion(prev => prev.trim() ? `${prev.trim()} ${frase}` : frase)}
@@ -392,15 +390,7 @@ export default function Novedades({ perfil, turno, filtroInicial }) {
                   ))}
                 </div>
               </div>
-              <div>
-                <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>Descripción</label>
-                <textarea value={descripcion} onChange={e => setDescripcion(e.target.value)}
-                  placeholder="Describe la novedad con detalle…" required autoFocus
-                  style={{ width: '100%', height: 110, background: 'var(--bg-input)', border: '1px solid var(--border)', borderRadius: 8, padding: '10px 12px', color: 'var(--text)', fontSize: 16, resize: 'none', fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box', transition: 'border-color 120ms' }}
-                  onFocus={e => e.target.style.borderColor = 'var(--brand)'}
-                  onBlur={e => e.target.style.borderColor = 'var(--border)'}
-                />
-              </div>
+              <ToggleIncidente activo={tipo === 'incidente'} onToggle={() => setTipo(t => t === 'incidente' ? 'informativo' : 'incidente')} />
               <div>
                 <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>Foto (opcional)</label>
                 <FotoField value={fotoFile} onChange={setFotoFile} />
@@ -423,20 +413,14 @@ export default function Novedades({ perfil, turno, filtroInicial }) {
               <button onClick={() => setEditTarget(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', fontSize: 20, lineHeight: 1 }}>✕</button>
             </div>
             <form onSubmit={guardarEdicion} style={{ padding: 22, display: 'flex', flexDirection: 'column', gap: 18 }}>
-              <div>
-                <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>Tipo</label>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
-                  {Object.entries(TIPO_NOVEDAD).map(([id, t]) => (
-                    <button key={id} type="button" onClick={() => setEditForm(f => ({ ...f, tipo: id }))} style={{
-                      minHeight: 44, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
-                      padding: '9px 8px', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer',
-                      background: editForm.tipo === id ? t.bg : 'transparent',
-                      color: editForm.tipo === id ? t.color : 'var(--text-muted)',
-                      border: editForm.tipo === id ? `1px solid ${t.border}` : '1px solid var(--border)',
-                    }}><span>{t.icon}</span>{t.label}</button>
-                  ))}
+              {editForm.tipo === 'urgente' ? (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', borderRadius: 10, background: 'var(--crit-bg)', border: '1px solid var(--crit-tx)' }}>
+                  <span style={{ fontFamily: 'Material Symbols Outlined', fontSize: 16, color: 'var(--crit-tx)' }}>{TIPO_NOVEDAD.urgente.icon}</span>
+                  <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--crit-tx)' }}>Urgente — registrada desde el botón de Emergencia</span>
                 </div>
-              </div>
+              ) : (
+                <ToggleIncidente activo={editForm.tipo === 'incidente'} onToggle={() => setEditForm(f => ({ ...f, tipo: f.tipo === 'incidente' ? 'informativo' : 'incidente' }))} />
+              )}
               <div>
                 <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>Descripción</label>
                 <textarea value={editForm.descripcion} onChange={e => setEditForm(f => ({ ...f, descripcion: e.target.value }))}
