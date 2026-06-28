@@ -16,7 +16,7 @@ jobs:
           node-version: 20
 
       - name: Install desktop deps
-        run: npm install
+        run: npm install --include=dev
         working-directory: apps/desktop
 
       - name: Create .env
@@ -27,7 +27,7 @@ jobs:
 
       - name: Build Mac
         working-directory: apps/desktop
-        run: ./node_modules/.bin/electron-builder --mac --arm64 --x64
+        run: npx electron-builder --mac --arm64 --x64
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -59,7 +59,7 @@ jobs:
 
       - name: Build Windows
         working-directory: apps/desktop
-        run: ./node_modules/.bin/electron-builder --win --x64
+        run: npx electron-builder --win --x64
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
