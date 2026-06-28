@@ -42,13 +42,13 @@ export default function EmergenciaButton({ perfil, turno }) {
         title="Emergencia"
         style={{
           display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-          height: 36, padding: '0 12px', flexShrink: 0,
-          background: 'transparent', border: `1px solid ${estados.emergency.border}`,
-          borderRadius: 8, color: estados.emergency.color, fontSize: 12, fontWeight: 600, cursor: 'pointer',
-          transition: 'background 120ms',
+          height: 36, padding: '0 14px', flexShrink: 0,
+          background: 'var(--crit-bg)', border: '1px solid var(--crit-border)',
+          borderRadius: 'var(--radius)', color: 'var(--crit-tx)', fontSize: 12, fontWeight: 700, cursor: 'pointer',
+          transition: 'opacity 120ms',
         }}
-        onMouseEnter={e => e.currentTarget.style.background = estados.emergency.bg}
-        onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+        onMouseEnter={e => e.currentTarget.style.opacity = 0.85}
+        onMouseLeave={e => e.currentTarget.style.opacity = 1}
       ><span style={{ fontSize: 14 }}>{estados.emergency.icon}</span> Emergencia</button>
 
       {abierto && (
@@ -86,12 +86,12 @@ export default function EmergenciaButton({ perfil, turno }) {
                   <p style={{ fontSize: 14, color: 'var(--text-body)', lineHeight: 1.6 }}>{protocolo.texto}</p>
                 </div>
                 {errorMsg && (
-                  <div style={{ margin: '0 22px 14px', display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(229,72,77,0.1)', borderLeft: '4px solid #E5484D', borderRadius: '0 8px 8px 0', padding: '10px 14px' }}>
-                    <span style={{ fontSize: 13, color: '#FF8A8A' }}>{errorMsg}</span>
+                  <div style={{ margin: '0 22px 14px', display: 'flex', alignItems: 'center', gap: 10, background: 'var(--crit-bg)', borderLeft: '4px solid var(--crit-tx)', borderRadius: '0 8px 8px 0', padding: '10px 14px' }}>
+                    <span style={{ fontSize: 13, color: 'var(--crit-tx)' }}>{errorMsg}</span>
                   </div>
                 )}
                 {!errorMsg && (
-                  <p style={{ margin: '0 22px 14px', fontSize: 13, color: '#2FBF71' }}>✓ Quedó registrado en Novedades como urgente.</p>
+                  <p style={{ margin: '0 22px 14px', fontSize: 13, color: 'var(--ok-tx)' }}>✓ Quedó registrado en Novedades como urgente.</p>
                 )}
                 <div style={{ padding: '0 22px 22px' }}>
                   <button onClick={cerrar} style={{

@@ -188,7 +188,7 @@ export default function Encomiendas({ perfil, turno }) {
                   <span style={{ fontSize: 16, fontWeight: 600, color: 'var(--text)' }}>{enc.destinatario}</span>
                   <span style={{ padding: '1px 7px', borderRadius: 5, background: 'var(--bg-surface-high)', border: '1px solid var(--border-strong)', fontSize: 11, fontWeight: 600, color: 'var(--text-secondary)' }}>Depto {enc.depto}</span>
                   {enc.entregada && (
-                    <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, color: '#2FBF71' }}>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, color: 'var(--ok-tx)' }}>
                       <span style={{ fontFamily: 'Material Symbols Outlined', fontSize: 14 }}>check_circle</span>
                       Entregada
                     </span>

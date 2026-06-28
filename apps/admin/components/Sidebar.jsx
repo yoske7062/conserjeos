@@ -8,7 +8,7 @@ const NAV = [
   { href: '/dashboard/visitas',     icon: 'group',        label: 'Visitas'       },
   { href: '/dashboard/encomiendas', icon: 'inventory_2',  label: 'Encomiendas'   },
   { href: '/dashboard/tareas',      icon: 'checklist',    label: 'Tareas'        },
-  { href: '/dashboard/perfiles',    icon: 'badge',        label: 'Conserjes'     },
+  { href: '/dashboard/conserjes',   icon: 'badge',        label: 'Conserjes'     },
 ];
 
 export default function Sidebar({ perfil }) {

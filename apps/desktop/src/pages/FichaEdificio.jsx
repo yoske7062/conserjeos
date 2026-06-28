@@ -104,10 +104,10 @@ export default function FichaEdificio({ perfil }) {
       {errorMsg && (
         <div style={{
           display: 'flex', alignItems: 'center', gap: 10,
-          background: 'rgba(229,72,77,0.1)', borderLeft: '4px solid #E5484D',
+          background: 'var(--crit-bg)', borderLeft: '4px solid var(--crit-tx)',
           borderRadius: '0 8px 8px 0', padding: '12px 16px', marginBottom: 20,
         }}>
-          <span style={{ fontSize: 14, color: '#FF8A8A' }}>{errorMsg}</span>
+          <span style={{ fontSize: 14, color: 'var(--crit-tx)', fontWeight: 600 }}>{errorMsg}</span>
         </div>
       )}
 

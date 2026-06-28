@@ -1,54 +1,109 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
-import { state as estados } from '../lib/tokens';
+
+function StatCard({ label, value, delta, deltaType }) {
+  const [hov, setHov] = useState(false);
+  const deltaColor = deltaType === 'pos' ? 'var(--brand)' : deltaType === 'neg' ? 'var(--crit-tx)' : 'var(--text-muted)';
+  return (
+    <div
+      onMouseEnter={() => setHov(true)}
+      onMouseLeave={() => setHov(false)}
+      style={{
+        background: 'var(--bg-surface)', border: `1px solid ${hov ? 'rgba(var(--brand-rgb),.28)' : 'var(--border)'}`,
+        borderRadius: 'var(--radius)', padding: '15px 17px',
+        transition: 'border-color .14s, transform .14s',
+        transform: hov ? 'translateY(-1.5px)' : 'none',
+        boxShadow: 'var(--shadow)',
+      }}
+    >
+      <div style={{ fontSize: 9.5, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '.5px' }}>{label}</div>
+      <div style={{ fontSize: 26, fontWeight: 800, color: 'var(--text)', margin: '5px 0 3px', letterSpacing: '-.5px', lineHeight: 1 }}>{value}</div>
+      {delta && <div style={{ fontSize: 11, fontWeight: 600, color: deltaColor }}>{delta}</div>}
+    </div>
+  );
+}
+
+function ModuloRow({ icon, accentBg, accentColor, titulo, subtitulo, subtituloColor, badges, onClick }) {
+  const [hov, setHov] = useState(false);
+  return (
+    <button
+      onClick={onClick}
+      onMouseEnter={() => setHov(true)}
+      onMouseLeave={() => setHov(false)}
+      style={{
+        display: 'flex', alignItems: 'center', gap: 14, width: '100%', textAlign: 'left',
+        minHeight: 68, padding: '14px 16px', borderRadius: 'var(--radius)',
+        background: 'var(--bg-surface)', border: `1px solid ${hov ? 'var(--brand)' : 'var(--border)'}`,
+        cursor: 'pointer', transition: 'border-color .12s, background .12s',
+        boxShadow: 'var(--shadow)',
+      }}
+    >
+      <div style={{
+        width: 42, height: 42, borderRadius: 10, flexShrink: 0,
+        background: accentBg, display: 'flex', alignItems: 'center', justifyContent: 'center',
+      }}>
+        <span style={{ fontFamily: 'Material Symbols Outlined', fontSize: 22, color: accentColor }}>{icon}</span>
+      </div>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <p style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)', marginBottom: 3 }}>{titulo}</p>
+        {badges ? (
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>{badges}</div>
+        ) : (
+          <p style={{ fontSize: 12, color: subtituloColor ?? 'var(--text-muted)', fontWeight: subtituloColor ? 600 : 400 }}>{subtitulo}</p>
+        )}
+      </div>
+      <span style={{ fontFamily: 'Material Symbols Outlined', fontSize: 20, color: 'var(--text-muted)', flexShrink: 0 }}>chevron_right</span>
+    </button>
+  );
+}
+
+function NarrLine({ tipo, children }) {
+  const styles = {
+    urgente:     { bg: 'var(--crit-bg)',  border: 'var(--crit-tx)',  dot: 'var(--crit-tx)'  },
+    incidente:   { bg: 'var(--warn-bg)',  border: 'var(--warn-tx)',  dot: 'var(--warn-tx)'  },
+    ok:          { bg: 'var(--ok-bg)',    border: 'var(--ok-tx)',    dot: 'var(--ok-tx)'    },
+    info:        { bg: 'rgba(var(--brand-rgb),.06)', border: 'var(--brand)', dot: 'var(--brand)' },
+  };
+  const s = styles[tipo] ?? styles.info;
+  return (
+    <div style={{
+      display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 12, lineHeight: 1.45,
+      padding: '7px 10px', borderLeft: `3px solid ${s.border}`, borderRadius: '0 7px 7px 0',
+      background: s.bg, color: 'var(--text)',
+    }}>
+      <div style={{ width: 7, height: 7, borderRadius: '50%', background: s.dot, flexShrink: 0, marginTop: 4 }} />
+      <span>{children}</span>
+    </div>
+  );
+}
 
 function Badge({ texto, color, bg, border, onClick }) {
   return (
     <button
       onClick={e => { e.stopPropagation(); onClick(); }}
       style={{
-        display: 'flex', alignItems: 'center', gap: 5, minHeight: 32,
-        padding: '4px 10px', borderRadius: 99, background: bg, border: `1px solid ${border}`,
-        color, fontSize: 13, fontWeight: 700, cursor: 'pointer',
+        display: 'inline-flex', alignItems: 'center', gap: 4, minHeight: 28,
+        padding: '2px 9px', borderRadius: 99, background: bg, border: `1px solid ${border}`,
+        color, fontSize: 11, fontWeight: 700, cursor: 'pointer',
       }}
     >{texto}</button>
   );
 }
 
-function ModuloRow({ icon, accent, titulo, subtitulo, subtituloColor, badges, onClick }) {
-  return (
-    <button
-      onClick={onClick}
-      style={{
-        display: 'flex', alignItems: 'center', gap: 16, width: '100%', textAlign: 'left',
-        minHeight: 76, padding: '16px 18px', borderRadius: 14,
-        background: 'var(--bg-surface)', border: '1px solid var(--border)',
-        cursor: 'pointer', transition: 'border-color 120ms, background 120ms',
-      }}
-      onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--brand)'; e.currentTarget.style.background = 'var(--bg-surface-high)'; }}
-      onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.background = 'var(--bg-surface)'; }}
-    >
-      <div style={{
-        width: 48, height: 48, borderRadius: 12, flexShrink: 0,
-        background: accent.bg, display: 'flex', alignItems: 'center', justifyContent: 'center',
-      }}>
-        <span style={{ fontFamily: 'Material Symbols Outlined', fontSize: 26, color: accent.color }}>{icon}</span>
-      </div>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <p style={{ fontSize: 17, fontWeight: 700, color: 'var(--text)', marginBottom: 3 }}>{titulo}</p>
-        {badges ? (
-          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>{badges}</div>
-        ) : (
-          <p style={{ fontSize: 14, color: subtituloColor ?? 'var(--text-muted)', fontWeight: subtituloColor ? 600 : 400 }}>{subtitulo}</p>
-        )}
-      </div>
-      <span style={{ fontFamily: 'Material Symbols Outlined', fontSize: 22, color: 'var(--text-subtle)', flexShrink: 0 }}>chevron_right</span>
-    </button>
-  );
+function duracionTurno(inicio) {
+  if (!inicio) return '—';
+  const mins = Math.floor((Date.now() - new Date(inicio)) / 60000);
+  const h = Math.floor(mins / 60);
+  const m = mins % 60;
+  return h > 0 ? `${h}h ${m}m` : `${m}m`;
 }
 
 export default function Inicio({ perfil, turno, navegarA }) {
-  const [resumen, setResumen] = useState({ urgente: 0, incidente: 0, informativo: 0, visitasActivas: 0, encomiendasPendientes: 0, tareasPendientes: 0, tareasVencidas: 0 });
+  const [resumen, setResumen] = useState({
+    urgente: 0, incidente: 0, informativo: 0,
+    visitasActivas: 0, encomiendasPendientes: 0,
+    tareasPendientes: 0, tareasVencidas: 0,
+  });
 
   useEffect(() => { cargarResumen(); }, [turno]);
 
@@ -76,91 +131,149 @@ export default function Inicio({ perfil, turno, navegarA }) {
   }
 
   const nombre = (perfil?.nombre || 'Conserje').split(' ')[0];
+  const totalNovedades = resumen.urgente + resumen.incidente + resumen.informativo;
 
   const novedadBadges = [];
   if (resumen.urgente > 0) novedadBadges.push(
-    <Badge key="u" texto={`${estados.emergency.icon} ${resumen.urgente} urgente${resumen.urgente !== 1 ? 's' : ''}`}
-      color={estados.emergency.color} bg={estados.emergency.bg} border={estados.emergency.border}
+    <Badge key="u" texto={`${resumen.urgente} urgente${resumen.urgente !== 1 ? 's' : ''}`}
+      color="var(--crit-tx)" bg="var(--crit-bg)" border="var(--crit-tx)"
       onClick={() => navegarA('novedades', 'urgente')} />
   );
   if (resumen.incidente > 0) novedadBadges.push(
-    <Badge key="i" texto={`${estados.incident.icon} ${resumen.incidente} incidente${resumen.incidente !== 1 ? 's' : ''}`}
-      color={estados.incident.color} bg={estados.incident.bg} border={estados.incident.border}
+    <Badge key="i" texto={`${resumen.incidente} incidente${resumen.incidente !== 1 ? 's' : ''}`}
+      color="var(--warn-tx)" bg="var(--warn-bg)" border="var(--warn-tx)"
       onClick={() => navegarA('novedades', 'incidente')} />
   );
   if (resumen.informativo > 0) novedadBadges.push(
-    <Badge key="n" texto={`${estados.info.icon} ${resumen.informativo} informativo${resumen.informativo !== 1 ? 's' : ''}`}
-      color={estados.info.color} bg={estados.info.bg} border={estados.info.border}
+    <Badge key="n" texto={`${resumen.informativo} informativo${resumen.informativo !== 1 ? 's' : ''}`}
+      color="var(--brand)" bg="rgba(var(--brand-rgb),.08)" border="rgba(var(--brand-rgb),.25)"
       onClick={() => navegarA('novedades', 'informativo')} />
   );
 
   return (
-    <div style={{ padding: '28px 32px', maxWidth: 720, margin: '0 auto' }}>
+    <div style={{ padding: '22px 24px 28px' }}>
 
-      {/* Saludo + estado de turno */}
-      <div style={{ marginBottom: 24 }}>
-        <h2 style={{ fontSize: 22, fontWeight: 700, color: 'var(--text)', marginBottom: 4 }}>Hola, {nombre}</h2>
+      {/* Page header */}
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 18 }}>
+        <div>
+          <div style={{ fontSize: 23, fontWeight: 800, letterSpacing: '-.5px', color: 'var(--text)' }}>
+            Hola, {nombre}
+          </div>
+          <div style={{ fontSize: 11.5, fontWeight: 600, color: 'var(--text-muted)', marginTop: 3 }}>
+            {turno
+              ? `Turno activo desde las ${new Date(turno.inicio).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })}`
+              : 'Sin turno activo'}
+          </div>
+        </div>
         {turno ? (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--brand)', display: 'inline-block' }} />
-            <p style={{ fontSize: 14, color: 'var(--text-secondary)' }}>
-              Turno activo desde {new Date(turno.inicio).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })}
-            </p>
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, fontWeight: 700,
+            background: 'var(--ok-bg)', color: 'var(--ok-tx)',
+            padding: '4px 12px', borderRadius: 20,
+          }}>
+            <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--ok-tx)' }} />
+            En curso
           </div>
         ) : (
-          <div style={{
-            display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap',
-            background: estados.warning.bg, border: `1px solid ${estados.warning.border}`, borderRadius: 10, padding: '12px 16px', marginTop: 8,
-          }}>
-            <p style={{ fontSize: 14, color: estados.warning.color, fontWeight: 600 }}>{estados.warning.icon} No tienes un turno activo</p>
-            <button onClick={() => navegarA('turno')} style={{
-              height: 40, padding: '0 16px', background: 'var(--brand)', border: 'none', borderRadius: 8,
-              color: 'var(--brand-text-on)', fontSize: 13, fontWeight: 700, cursor: 'pointer', flexShrink: 0,
-            }}>Iniciar turno</button>
-          </div>
+          <button
+            onClick={() => navegarA('turno')}
+            style={{
+              padding: '7px 16px', background: 'var(--brand)', border: 'none', borderRadius: 9,
+              color: 'var(--brand-text-on)', fontSize: 12.5, fontWeight: 700, cursor: 'pointer',
+            }}
+          >Iniciar turno</button>
         )}
       </div>
 
-      {/* Lo del día — toca cualquier tarjeta para entrar */}
-      <p style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>
-        Toca para ver el detalle
-      </p>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 28 }}>
+      {/* Stats grid */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 11, marginBottom: 16 }}>
+        <StatCard
+          label="Turno"
+          value={turno ? duracionTurno(turno.inicio) : '—'}
+          delta={turno ? 'En curso' : 'Sin turno'}
+          deltaType={turno ? 'pos' : 'neu'}
+        />
+        <StatCard
+          label="Novedades"
+          value={totalNovedades}
+          delta={resumen.urgente > 0 ? `${resumen.urgente} urgente${resumen.urgente !== 1 ? 's' : ''}` : 'Sin urgentes'}
+          deltaType={resumen.urgente > 0 ? 'neg' : 'neu'}
+        />
+        <StatCard
+          label="Visitas activas"
+          value={resumen.visitasActivas}
+          delta={resumen.visitasActivas > 0 ? 'En el edificio' : 'Nadie adentro'}
+          deltaType={resumen.visitasActivas > 0 ? 'pos' : 'neu'}
+        />
+        <StatCard
+          label="Encomiendas pend."
+          value={resumen.encomiendasPendientes}
+          delta={resumen.encomiendasPendientes > 0 ? 'Sin retirar' : 'Al día'}
+          deltaType={resumen.encomiendasPendientes > 0 ? 'neg' : 'neu'}
+        />
+      </div>
 
+      {/* Narr: alertas activas */}
+      {(resumen.urgente > 0 || resumen.encomiendasPendientes > 2 || resumen.tareasVencidas > 0) && (
+        <div style={{
+          background: 'var(--bg-surface)', border: '1px solid var(--border)',
+          borderRadius: 'var(--radius)', padding: '13px 15px', marginBottom: 16,
+          boxShadow: 'var(--shadow)', display: 'flex', flexDirection: 'column', gap: 6,
+        }}>
+          {resumen.urgente > 0 && (
+            <NarrLine tipo="urgente">
+              <strong>{resumen.urgente} novedad{resumen.urgente !== 1 ? 'es' : ''} urgente{resumen.urgente !== 1 ? 's' : ''}</strong> — revisa el módulo de Novedades.
+            </NarrLine>
+          )}
+          {resumen.tareasVencidas > 0 && (
+            <NarrLine tipo="incidente">
+              <strong>{resumen.tareasVencidas} tarea{resumen.tareasVencidas !== 1 ? 's' : ''} vencida{resumen.tareasVencidas !== 1 ? 's' : ''}</strong> — requieren atención.
+            </NarrLine>
+          )}
+          {resumen.encomiendasPendientes > 2 && (
+            <NarrLine tipo="info">
+              <strong>{resumen.encomiendasPendientes} encomiendas</strong> esperando retiro.
+            </NarrLine>
+          )}
+        </div>
+      )}
+
+      {/* Módulos */}
+      <div style={{ fontSize: 9.5, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '.5px', marginBottom: 10 }}>
+        Tu día
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 9, marginBottom: 20 }}>
         <ModuloRow
           icon="group"
-          accent={{ color: estados.success.color, bg: estados.success.bg }}
+          accentBg="rgba(var(--brand-rgb),.12)" accentColor="var(--brand)"
           titulo="Visitas"
           subtitulo={resumen.visitasActivas > 0 ? `${resumen.visitasActivas} persona${resumen.visitasActivas !== 1 ? 's' : ''} en el edificio ahora` : 'Sin visitas activas'}
-          subtituloColor={resumen.visitasActivas > 0 ? estados.success.color : null}
+          subtituloColor={resumen.visitasActivas > 0 ? 'var(--brand)' : null}
           onClick={() => navegarA('visitas')}
         />
-
         <ModuloRow
           icon="inventory_2"
-          accent={{ color: estados.warning.color, bg: estados.warning.bg }}
+          accentBg="rgba(var(--brand-rgb),.12)" accentColor="var(--brand)"
           titulo="Encomiendas"
           subtitulo={resumen.encomiendasPendientes > 0 ? `${resumen.encomiendasPendientes} pendiente${resumen.encomiendasPendientes !== 1 ? 's' : ''} de entregar` : 'Sin encomiendas pendientes'}
-          subtituloColor={resumen.encomiendasPendientes > 0 ? estados.warning.color : null}
+          subtituloColor={resumen.encomiendasPendientes > 0 ? 'var(--brand)' : null}
           onClick={() => navegarA('encomiendas')}
         />
-
         <ModuloRow
           icon="checklist"
-          accent={{ color: 'var(--brand)', bg: 'rgba(var(--brand-rgb),0.15)' }}
+          accentBg="rgba(var(--brand-rgb),.12)" accentColor="var(--brand)"
           titulo="Tareas"
           subtitulo={
             resumen.tareasVencidas > 0
-              ? `${estados.emergency.icon} ${resumen.tareasVencidas} vencida${resumen.tareasVencidas !== 1 ? 's' : ''} de ${resumen.tareasPendientes} pendiente${resumen.tareasPendientes !== 1 ? 's' : ''}`
+              ? `${resumen.tareasVencidas} vencida${resumen.tareasVencidas !== 1 ? 's' : ''} de ${resumen.tareasPendientes} pendiente${resumen.tareasPendientes !== 1 ? 's' : ''}`
               : resumen.tareasPendientes > 0 ? `${resumen.tareasPendientes} pendiente${resumen.tareasPendientes !== 1 ? 's' : ''}` : 'Sin tareas pendientes'
           }
-          subtituloColor={resumen.tareasVencidas > 0 ? estados.emergency.color : resumen.tareasPendientes > 0 ? 'var(--brand)' : null}
+          subtituloColor={resumen.tareasVencidas > 0 ? 'var(--crit-tx)' : resumen.tareasPendientes > 0 ? 'var(--brand)' : null}
           onClick={() => navegarA('tareas')}
         />
-
         <ModuloRow
           icon="campaign"
-          accent={{ color: estados.info.color, bg: estados.info.bg }}
+          accentBg="rgba(var(--brand-rgb),.12)" accentColor="var(--brand)"
           titulo="Novedades"
           subtitulo="Sin novedades en este turno"
           badges={novedadBadges.length > 0 ? novedadBadges : null}
@@ -168,21 +281,20 @@ export default function Inicio({ perfil, turno, navegarA }) {
         />
       </div>
 
-      {/* Secundario */}
-      <p style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>
+      <div style={{ fontSize: 9.5, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '.5px', marginBottom: 10 }}>
         Más
-      </p>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
         <ModuloRow
           icon="schedule"
-          accent={{ color: 'var(--text-secondary)', bg: 'var(--bg-surface-high)' }}
+          accentBg="rgba(var(--brand-rgb),.12)" accentColor="var(--brand)"
           titulo="Entrega de turno"
-          subtitulo="Cerrar tu turno y dejar pendientes para el siguiente"
+          subtitulo="Cerrar turno y dejar pendientes para el siguiente"
           onClick={() => navegarA('turno')}
         />
         <ModuloRow
           icon="apartment"
-          accent={{ color: 'var(--text-secondary)', bg: 'var(--bg-surface-high)' }}
+          accentBg="rgba(var(--brand-rgb),.12)" accentColor="var(--brand)"
           titulo="Edificio"
           subtitulo="Contactos y protocolos para casos puntuales"
           onClick={() => navegarA('edificio')}

@@ -266,7 +266,7 @@ export default function Novedades({ perfil, turno, filtroInicial }) {
             </div>
             <form onSubmit={enviarNovedad} style={{ padding: 22, display: 'flex', flexDirection: 'column', gap: 18 }}>
               {borradorRestaurado && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(245,165,36,0.1)', border: '1px solid rgba(245,165,36,0.3)', borderRadius: 8, padding: '8px 12px', fontSize: 13, color: '#F5A524' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--warn-bg)', border: '1px solid var(--warn-border)', borderRadius: 8, padding: '8px 12px', fontSize: 13, color: 'var(--warn-tx)' }}>
                   <span>▲</span> Recuperamos lo que estabas escribiendo
                 </div>
               )}

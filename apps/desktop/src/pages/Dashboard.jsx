@@ -12,6 +12,7 @@ import Inicio from './Inicio';
 import PendientesChecklist from '../components/PendientesChecklist';
 import EmergenciaButton from '../components/EmergenciaButton';
 import Ayuda from './Ayuda';
+import Ajustes from '../components/Ajustes';
 
 export default function Dashboard({ perfil }) {
   const [modulo, setModulo] = useState('inicio');
@@ -21,6 +22,7 @@ export default function Dashboard({ perfil }) {
   const [enLinea, setEnLinea] = useState(navigator.onLine);
   const [pendingCount, setPendingCount] = useState(count);
   const [sincronizando, setSincronizando] = useState(false);
+  const [showAjustes, setShowAjustes] = useState(false);
 
   useEffect(() => {
     const marcarOnline  = () => setEnLinea(true);
@@ -152,49 +154,41 @@ export default function Dashboard({ perfil }) {
 
   return (
     <div style={{ display:'flex', height:'100vh', background:'var(--bg-base)' }}>
-      <Sidebar perfil={perfil} modulo={modulo} setModulo={cambiarModulo} turno={turno} />
-      <main style={{ marginLeft:256, flex:1, display:'flex', flexDirection:'column', overflow:'hidden' }}>
-        {/* Top bar */}
+      <Sidebar perfil={perfil} modulo={modulo} setModulo={cambiarModulo} turno={turno} onAjustes={() => setShowAjustes(true)} />
+      <main style={{ marginLeft:240, flex:1, display:'flex', flexDirection:'column', overflow:'hidden' }}>
+        {/* Top bar — delgado, al estilo Catalina Hub */}
         <header style={{
-          height:56, flexShrink:0, display:'flex', alignItems:'center', justifyContent:'space-between',
-          padding:'0 24px', borderBottom:'1px solid var(--bg-surface-high)', background:'var(--bg-input)'
+          height:44, flexShrink:0, display:'flex', alignItems:'center', justifyContent:'space-between',
+          padding:'0 22px', borderBottom:'1px solid var(--border)', background:'var(--bg-surface)',
         }}>
-          <span style={{ fontSize:13, color:'var(--text-muted)' }}>
-            Portia / <span style={{ color:'var(--text)', fontWeight:600 }}>{labels[modulo]}</span>
+          <span style={{ fontSize:12, color:'var(--text-muted)', fontWeight:600 }}>
+            {labels[modulo]}
           </span>
-          <div style={{ display:'flex', alignItems:'center', gap:14 }}>
+          <div style={{ display:'flex', alignItems:'center', gap:12 }}>
             {pendingCount > 0 && (
               <span style={{
-                display:'flex', alignItems:'center', gap:5, fontSize:12, fontWeight:600,
-                color: sincronizando ? '#F5A524' : '#A8A8A8',
-                background: 'rgba(245,165,36,0.08)', border: '1px solid rgba(245,165,36,0.2)',
-                borderRadius:99, padding:'2px 10px',
+                display:'flex', alignItems:'center', gap:5, fontSize:11, fontWeight:700,
+                color: sincronizando ? 'var(--warn-tx)' : 'var(--text-secondary)',
+                background: 'var(--warn-bg)', border: '1px solid var(--warn-border)',
+                borderRadius:99, padding:'2px 9px',
               }}>
                 {sincronizando
-                  ? <span style={{ width:8, height:8, border:'1.5px solid #F5A524', borderTopColor:'transparent', borderRadius:'50%', display:'inline-block', animation:'spin 0.8s linear infinite' }} />
-                  : '▲'}
-                {sincronizando ? 'Sincronizando…' : `${pendingCount} pendiente${pendingCount !== 1 ? 's' : ''}`}
+                  ? <span style={{ width:7, height:7, border:'1.5px solid var(--warn-tx)', borderTopColor:'transparent', borderRadius:'50%', display:'inline-block', animation:'spin 0.8s linear infinite' }} />
+                  : null}
+                {sincronizando ? 'Sincronizando…' : `${pendingCount} pend.`}
               </span>
             )}
             <span style={{
-              display:'flex', alignItems:'center', gap:6, fontSize:12, fontWeight:600,
-              color: enLinea ? '#2FBF71' : '#E5484D',
+              display:'flex', alignItems:'center', gap:5, fontSize:11, fontWeight:700,
+              color: enLinea ? 'var(--ok-tx)' : 'var(--crit-tx)',
             }}>
-              <span style={{ width:6, height:6, borderRadius:'50%', background: enLinea ? '#2FBF71' : '#E5484D', display:'inline-block' }} />
+              <span style={{ width:6, height:6, borderRadius:'50%', background: enLinea ? 'var(--ok-tx)' : 'var(--crit-tx)', display:'inline-block' }} />
               {enLinea ? 'En línea' : 'Sin conexión'}
             </span>
             <EmergenciaButton perfil={perfil} turno={turno} />
-            <span style={{ fontSize:13, color:'var(--text-muted)' }}>{perfil?.nombre || perfil?.email}</span>
-            <div style={{
-              width:30, height:30, borderRadius:'50%', background:'rgba(var(--brand-rgb),0.1)',
-              border:'1px solid rgba(var(--brand-rgb),0.25)', display:'flex', alignItems:'center', justifyContent:'center',
-              fontSize:12, fontWeight:700, color:'var(--brand)'
-            }}>
-              {(perfil?.nombre || 'U').split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase()}
-            </div>
           </div>
         </header>
-        {/* Page content — key forces remount → triggers page-enter animation */}
+        {/* Page content */}
         <div key={modulo} className="page-enter" style={{ flex:1, overflowY:'auto' }}>
           {content[modulo]}
         </div>
@@ -203,6 +197,7 @@ export default function Dashboard({ perfil }) {
       {turnoPrevioConPendientes && (
         <PendientesChecklist turno={turnoPrevioConPendientes} onReconocido={reconocerPendientes} />
       )}
+      {showAjustes && <Ajustes perfil={perfil} onClose={() => setShowAjustes(false)} />}
     </div>
   );
 }

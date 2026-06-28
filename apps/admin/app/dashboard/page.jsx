@@ -30,8 +30,10 @@ export default function DashboardPage() {
   const [loading, setLoading]   = useState(true);
 
   useEffect(() => {
+    let channel;
+    const supabase = getSupabase();
+
     async function cargar() {
-      const supabase = getSupabase();
       const { data: { user } } = await supabase.auth.getUser();
       const { data: perfil }   = await supabase.from('perfiles').select('edificio_id').eq('id', user.id).single();
       const eid = perfil.edificio_id;
@@ -49,8 +51,46 @@ export default function DashboardPage() {
       setNovedades(n.data ?? []);
       setTurnos(tu.data ?? []);
       setLoading(false);
+
+      // Subscribe to Realtime novedades INSERT
+      channel = supabase
+        .channel(`dashboard-novedades-${eid}`)
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'novedades',
+            filter: `edificio_id=eq.${eid}`,
+          },
+          async () => {
+            // Refetch novedades
+            const { data: latestNovedades } = await supabase
+              .from('novedades')
+              .select('id,tipo,descripcion,created_at,perfiles(nombre)')
+              .eq('edificio_id', eid)
+              .order('created_at', { ascending: false })
+              .limit(8);
+            setNovedades(latestNovedades ?? []);
+
+            // Also refetch stats
+            const [vCount, eCount, tCount] = await Promise.all([
+              supabase.from('visitas').select('id', { count: 'exact' }).eq('edificio_id', eid).eq('activa', true),
+              supabase.from('encomiendas').select('id', { count: 'exact' }).eq('edificio_id', eid).eq('entregada', false),
+              supabase.from('tareas').select('id', { count: 'exact' }).eq('edificio_id', eid).eq('estado', 'pendiente'),
+            ]);
+            setStats({ visitas: vCount.count ?? 0, encomiendas: eCount.count ?? 0, tareas: tCount.count ?? 0 });
+          }
+        )
+        .subscribe();
     }
     cargar();
+
+    return () => {
+      if (channel) {
+        supabase.removeChannel(channel);
+      }
+    };
   }, []);
 
   if (loading) return (

@@ -1,25 +1,28 @@
-// Paleta de Portia — marca separada de estado (nunca el mismo verde para todo)
+// Portia Design Tokens — Warm White + Deep Navy
+// Hardcoded values for JS usage; CSS custom properties defined in index.css
+
 export const bg = {
-  base: '#0B0B0B',
-  surface: '#161616',
-  surfaceHigh: '#1F1F1F',
-  elevated: '#1F2225',
-  input: '#0D0D0D',
+  base: '#FAFAF8',
+  section: '#F3F0E9',
+  surface: '#FFFFFF',
+  surfaceHigh: '#F3F0E9',
+  elevated: '#FFFFFF',
+  input: '#FFFFFF',
 };
 
 export const border = {
-  default: '#2E2E2E',
-  strong: '#3D3D3D',
+  default: 'rgba(25,24,26,0.13)',
+  strong: 'rgba(25,24,26,0.2)',
 };
 
 export const text = {
-  primary: '#F5F5F5',
-  secondary: '#A8A8A8',
-  muted: '#636363',
-  subtle: '#4E4E4E',
+  primary: '#19181A',
+  secondary: '#6A6762',
+  muted: '#B4B0A9',
+  subtle: '#D4D2CE',
 };
 
-// Marca: solo logo, foco y CTAs primarios. Nunca representa "éxito" ni "todo bien".
+// Marca: navy profundo — solo logo, foco y CTAs primarios.
 export const brand = {
   color: 'var(--brand)',
   bg: 'var(--info-bg)',
@@ -35,7 +38,7 @@ export const state = {
   emergency: { color: 'var(--crit-tx)', bg: 'var(--crit-bg)',   border: 'var(--crit-border)',   icon: '◆' },
 };
 
-// Tipos de novedad → estado semántico (ver §10.2 research: emergencia nunca es verde)
+// Tipos de novedad → estado semántico
 export const TIPO_NOVEDAD = {
   urgente:     { ...state.emergency, label: 'Urgente' },
   incidente:   { ...state.incident,  label: 'Incidente' },
