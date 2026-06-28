@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { enqueue } from '../lib/offlineQueue';
+import { formatearRut, validarRut } from '../lib/rut';
 
 function Avatar({ nombre, size = 40 }) {
   const iniciales = nombre.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
@@ -59,6 +60,35 @@ const INPUT_STYLE = {
   fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box', transition: 'border-color 120ms',
 };
 
+function RutInput({ value, onChange }) {
+  const valido = validarRut(value);
+  const colorEstado = valido === true ? 'var(--brand)' : valido === false ? 'var(--crit-tx)' : 'var(--border)';
+  return (
+    <div>
+      <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>RUT del visitante</label>
+      <div style={{ position: 'relative' }}>
+        <input
+          style={{ ...INPUT_STYLE, paddingRight: 40, borderColor: colorEstado }}
+          placeholder="12.345.678-9" required
+          inputMode="text" autoComplete="off"
+          value={value}
+          onChange={e => onChange(formatearRut(e.target.value))}
+        />
+        {valido !== null && (
+          <span style={{
+            position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)',
+            fontFamily: 'Material Symbols Outlined', fontSize: 20,
+            color: valido ? 'var(--brand)' : 'var(--crit-tx)',
+          }}>{valido ? 'check_circle' : 'cancel'}</span>
+        )}
+      </div>
+      {valido === false && (
+        <p style={{ fontSize: 11, color: 'var(--crit-tx)', marginTop: 5 }}>Ese RUT no es válido. Revisa el número.</p>
+      )}
+    </div>
+  );
+}
+
 export default function Visitas({ perfil, turno }) {
   const [visitas, setVisitas]         = useState([]);
   const [loading, setLoading]         = useState(true);
@@ -80,6 +110,10 @@ export default function Visitas({ perfil, turno }) {
 
   async function registrarEntrada(e) {
     e.preventDefault();
+    if (validarRut(form.rut_visitante) !== true) {
+      setErrorMsg('El RUT del visitante no es válido. Revísalo antes de registrar la entrada.');
+      return;
+    }
     if (!navigator.onLine) {
       const ahora = new Date().toISOString();
       enqueue({ table: 'visitas', op: 'insert', payload: {
@@ -249,11 +283,19 @@ export default function Visitas({ perfil, turno }) {
               <button onClick={() => setMostrarForm(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', fontSize: 20 }}>✕</button>
             </div>
             <form onSubmit={registrarEntrada} style={{ padding: 22, display: 'flex', flexDirection: 'column', gap: 14 }}>
+              <div>
+                <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>Nombre del visitante</label>
+                <input
+                  style={INPUT_STYLE} placeholder="Juan Pérez" required
+                  value={form.nombre_visitante} onChange={e => setForm(f => ({ ...f, nombre_visitante: e.target.value }))}
+                  onFocus={e => e.target.style.borderColor = 'var(--brand)'}
+                  onBlur={e => e.target.style.borderColor = 'var(--border)'}
+                />
+              </div>
+              <RutInput value={form.rut_visitante} onChange={v => setForm(f => ({ ...f, rut_visitante: v }))} />
               {[
-                ['nombre_visitante', 'Nombre del visitante', 'Juan Pérez', true],
-                ['rut_visitante',    'RUT (opcional)',        '12.345.678-9', false],
-                ['destino',          'Depto / Oficina',       '201, Oficina 3…', true],
-                ['motivo',           'Motivo (opcional)',     'Visita personal, delivery…', false],
+                ['destino', 'Depto / Oficina',   '201, Oficina 3…', true],
+                ['motivo',  'Motivo (opcional)', 'Visita personal, delivery…', false],
               ].map(([key, label, placeholder, required]) => (
                 <div key={key}>
                   <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>{label}</label>

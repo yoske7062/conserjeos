@@ -69,7 +69,7 @@ create table public.visitas (
   turno_id        uuid references public.turnos(id),
   conserje_id     uuid not null references public.perfiles(id),
   nombre_visitante text not null,
-  rut_visitante   text,
+  rut_visitante   text not null check (rut_visitante ~ '^\d{1,3}(\.\d{3})*-[0-9kK]$'),
   destino         text not null,          -- depto/oficina
   motivo          text,
   entrada         timestamptz not null default now(),
@@ -86,6 +86,8 @@ create table public.encomiendas (
   edificio_id     uuid not null references public.edificios(id) on delete cascade,
   turno_id        uuid references public.turnos(id),
   conserje_id     uuid not null references public.perfiles(id),
+  tipo            text not null default 'paquete'
+                  check (tipo in ('paquete','comida','supermercado','otro')),
   remitente       text,
   destinatario    text not null,
   depto           text not null,
