@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 import { enqueue } from '../lib/offlineQueue';
+import { TIPOS_ENCOMIENDA, tipoInfo } from '../lib/tiposEncomienda';
 
 function tiempoDesde(fecha) {
   const min = Math.floor((Date.now() - new Date(fecha)) / 60000);
@@ -15,10 +16,11 @@ const INPUT_STYLE = {
   fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box', transition: 'border-color 120ms',
 };
 
-function PaqueteIcon() {
+function PaqueteIcon({ tipo }) {
+  const info = tipoInfo(tipo);
   return (
     <div style={{ width: 52, height: 52, background: 'var(--bg-surface-high)', border: '1px solid var(--border)', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-      <span style={{ fontFamily: 'Material Symbols Outlined', fontSize: 22, color: 'var(--text-muted)' }}>inventory_2</span>
+      <span style={{ fontFamily: 'Material Symbols Outlined', fontSize: 22, color: 'var(--text-muted)' }}>{info.icono}</span>
     </div>
   );
 }
@@ -28,7 +30,7 @@ export default function Encomiendas({ perfil, turno }) {
   const [loading, setLoading]         = useState(true);
   const [tab, setTab]                 = useState('pendientes');
   const [mostrarForm, setMostrarForm] = useState(false);
-  const [form, setForm]               = useState({ remitente: '', destinatario: '', depto: '' });
+  const [form, setForm]               = useState({ tipo: 'paquete', remitente: '', destinatario: '', depto: '' });
   const [fotoFile, setFotoFile]       = useState(null);
   const [enviando, setEnviando]       = useState(false);
   const [errorMsg, setErrorMsg]       = useState('');
@@ -58,7 +60,7 @@ export default function Encomiendas({ perfil, turno }) {
         recibida_at: new Date().toISOString(), ...form,
       }});
       setMostrarForm(false);
-      setForm({ remitente: '', destinatario: '', depto: '' });
+      setForm({ tipo: 'paquete', remitente: '', destinatario: '', depto: '' });
       setFotoFile(null);
       return;
     }
@@ -79,7 +81,7 @@ export default function Encomiendas({ perfil, turno }) {
     if (error) {
       setErrorMsg('No se pudo registrar la encomienda. Tus datos no se perdieron, intenta de nuevo.');
     } else {
-      setMostrarForm(false); setForm({ remitente: '', destinatario: '', depto: '' }); setFotoFile(null); cargarEncomiendas();
+      setMostrarForm(false); setForm({ tipo: 'paquete', remitente: '', destinatario: '', depto: '' }); setFotoFile(null); cargarEncomiendas();
     }
     setEnviando(false);
   }
@@ -97,9 +99,11 @@ export default function Encomiendas({ perfil, turno }) {
     else cargarEncomiendas();
   }
 
-  const pendientes = encomiendas.filter(e => !e.entregada);
+  const pendientes = encomiendas.filter(e => !e.entregada)
+    .sort((a, b) => (tipoInfo(b.tipo).urgente - tipoInfo(a.tipo).urgente));
   const entregadas = encomiendas.filter(e => e.entregada);
-  const lista      = tab === 'pendientes' ? pendientes : entregadas;
+  const lista       = tab === 'pendientes' ? pendientes : entregadas;
+  const urgentes    = pendientes.filter(e => tipoInfo(e.tipo).urgente);
 
   return (
     <div style={{ padding: '22px 24px 28px' }}>
@@ -117,6 +121,12 @@ export default function Encomiendas({ perfil, turno }) {
             {pendientes.length > 0 && (
               <span style={{ padding: '3px 10px', borderRadius: 6, background: 'rgba(var(--brand-rgb),0.14)', color: 'var(--brand)', border: '1px solid rgba(var(--brand-rgb),0.25)', fontSize: 11, fontWeight: 700 }}>
                 {pendientes.length} pendientes
+              </span>
+            )}
+            {urgentes.length > 0 && (
+              <span style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '3px 10px', borderRadius: 6, background: 'var(--crit-bg)', color: 'var(--crit-tx)', border: '1px solid var(--crit-tx)', fontSize: 11, fontWeight: 700 }}>
+                <span style={{ fontFamily: 'Material Symbols Outlined', fontSize: 13 }}>schedule</span>
+                {urgentes.length} urgente{urgentes.length !== 1 ? 's' : ''} (perecible)
               </span>
             )}
             <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>{entregadas.length} entregadas hoy</span>
@@ -168,25 +178,34 @@ export default function Encomiendas({ perfil, turno }) {
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          {lista.map(enc => (
+          {lista.map(enc => {
+            const info = tipoInfo(enc.tipo);
+            const urgente = info.urgente && !enc.entregada;
+            return (
             <div key={enc.id} style={{
-              background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 12,
+              background: 'var(--bg-surface)', border: urgente ? '1px solid var(--crit-tx)' : '1px solid var(--border)', borderRadius: 12,
               padding: '14px 20px', display: 'flex', alignItems: 'center', gap: 16,
               transition: 'border-color 120ms', opacity: enc.entregada ? 0.6 : 1,
             }}
-            onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--border-strong)'}
-            onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border)'}
+            onMouseEnter={e => e.currentTarget.style.borderColor = urgente ? 'var(--crit-tx)' : 'var(--border-strong)'}
+            onMouseLeave={e => e.currentTarget.style.borderColor = urgente ? 'var(--crit-tx)' : 'var(--border)'}
             >
               {/* Foto o icono */}
               {enc.foto_url ? (
                 <img src={enc.foto_url} alt="" style={{ width: 52, height: 52, borderRadius: 8, objectFit: 'cover', flexShrink: 0, border: '1px solid var(--border)' }} />
-              ) : <PaqueteIcon />}
+              ) : <PaqueteIcon tipo={enc.tipo} />}
 
               {/* Info */}
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 3 }}>
                   <span style={{ fontSize: 16, fontWeight: 600, color: 'var(--text)' }}>{enc.destinatario}</span>
                   <span style={{ padding: '1px 7px', borderRadius: 5, background: 'var(--bg-surface-high)', border: '1px solid var(--border-strong)', fontSize: 11, fontWeight: 600, color: 'var(--text-secondary)' }}>Depto {enc.depto}</span>
+                  {urgente && (
+                    <span style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '1px 7px', borderRadius: 5, background: 'var(--crit-bg)', border: '1px solid var(--crit-tx)', fontSize: 11, fontWeight: 700, color: 'var(--crit-tx)' }}>
+                      <span style={{ fontFamily: 'Material Symbols Outlined', fontSize: 13 }}>schedule</span>
+                      Entrega inmediata
+                    </span>
+                  )}
                   {enc.entregada && (
                     <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, color: 'var(--ok-tx)' }}>
                       <span style={{ fontFamily: 'Material Symbols Outlined', fontSize: 14 }}>check_circle</span>
@@ -194,6 +213,7 @@ export default function Encomiendas({ perfil, turno }) {
                     </span>
                   )}
                 </div>
+                <p style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 2 }}>{info.label}</p>
                 {enc.remitente && <p style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 2 }}>De: {enc.remitente}</p>}
                 <p style={{ fontSize: 11, color: 'var(--text-subtle)', display: 'flex', alignItems: 'center', gap: 4 }}>
                   <span style={{ fontFamily: 'Material Symbols Outlined', fontSize: 12 }}>schedule</span>
@@ -221,7 +241,7 @@ export default function Encomiendas({ perfil, turno }) {
                 </button>
               )}
             </div>
-          ))}
+          );})}
         </div>
       )}
 
@@ -240,16 +260,46 @@ export default function Encomiendas({ perfil, turno }) {
       {/* Modal */}
       {mostrarForm && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.65)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100, padding: 24 }}>
-          <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 16, width: '100%', maxWidth: 420, boxShadow: '0 24px 60px rgba(0,0,0,0.7)' }}>
+          <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 16, width: '100%', maxWidth: 460, boxShadow: '0 24px 60px rgba(0,0,0,0.7)' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 22px', borderBottom: '1px solid var(--border)' }}>
               <h2 style={{ fontSize: 16, fontWeight: 700, color: 'var(--text)' }}>Registrar encomienda</h2>
               <button onClick={() => setMostrarForm(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', fontSize: 20 }}>✕</button>
             </div>
             <form onSubmit={registrarEncomienda} style={{ padding: 22, display: 'flex', flexDirection: 'column', gap: 14 }}>
+              {/* Tipo de encomienda */}
+              <div>
+                <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>¿Qué tipo de encomienda es?</label>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                  {TIPOS_ENCOMIENDA.map(t => {
+                    const activo = form.tipo === t.id;
+                    return (
+                      <button key={t.id} type="button" onClick={() => setForm(f => ({ ...f, tipo: t.id }))}
+                        title={t.ejemplo}
+                        style={{
+                          display: 'flex', alignItems: 'center', gap: 8, padding: '10px 12px', minHeight: 48,
+                          borderRadius: 8, cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left',
+                          border: activo ? '1px solid var(--brand)' : '1px solid var(--border)',
+                          background: activo ? 'rgba(var(--brand-rgb),0.12)' : 'var(--bg-input)',
+                          color: activo ? 'var(--brand)' : 'var(--text-secondary)',
+                          transition: 'all 120ms',
+                        }}>
+                        <span style={{ fontFamily: 'Material Symbols Outlined', fontSize: 18, flexShrink: 0 }}>{t.icono}</span>
+                        <span style={{ fontSize: 13, fontWeight: 600 }}>{t.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+                {form.tipo && tipoInfo(form.tipo).urgente && (
+                  <p style={{ fontSize: 11, color: 'var(--crit-tx)', marginTop: 6, display: 'flex', alignItems: 'center', gap: 4 }}>
+                    <span style={{ fontFamily: 'Material Symbols Outlined', fontSize: 13 }}>schedule</span>
+                    Perecible — avisa al residente para que la retire al tiro, no la dejes en bodega.
+                  </p>
+                )}
+              </div>
               {[
                 ['destinatario', 'Destinatario', 'Nombre del residente', true],
                 ['depto',        'Depto / Oficina', '201', true],
-                ['remitente',    'Remitente (opcional)', 'Falabella, Amazon…', false],
+                ['remitente',    'Empresa / remitente (opcional)', 'Falabella, Rappi, Jumbo…', false],
               ].map(([key, label, placeholder, required]) => (
                 <div key={key}>
                   <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>{label}</label>
