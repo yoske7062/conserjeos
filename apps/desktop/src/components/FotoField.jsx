@@ -10,12 +10,15 @@ const BTN_STYLE = {
 // Permite adjuntar una foto tomando una con la cámara del equipo o eligiendo
 // un archivo. Tomar foto directo es más fácil para alguien con poco manejo
 // de PC que navegar el explorador de archivos de Windows.
-export default function FotoField({ value, onChange }) {
+// `compact`: en vez de ocupar todo el ancho, parte como un botón chico y se
+// expande solo cuando el conserje realmente quiere adjuntar algo.
+export default function FotoField({ value, onChange, compact = false }) {
   const fileRef  = useRef();
   const videoRef = useRef();
   const streamRef = useRef(null);
   const [camAbierta, setCamAbierta] = useState(false);
   const [camError, setCamError]     = useState('');
+  const [expandido, setExpandido]   = useState(false);
 
   useEffect(() => {
     if (camAbierta && videoRef.current && streamRef.current) {
@@ -57,7 +60,7 @@ export default function FotoField({ value, onChange }) {
 
   if (camAbierta) {
     return (
-      <div>
+      <div style={compact ? { position: 'absolute', zIndex: 5, background: 'var(--bg-surface)', width: 280 } : undefined}>
         <div style={{ position: 'relative', borderRadius: 8, overflow: 'hidden', border: '1px solid var(--border)', background: '#000' }}>
           <video ref={videoRef} autoPlay playsInline style={{ width: '100%', display: 'block', maxHeight: 220, objectFit: 'cover' }} />
         </div>
@@ -71,17 +74,46 @@ export default function FotoField({ value, onChange }) {
 
   if (value) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'var(--bg-input)', border: '1px solid var(--border)', borderRadius: 8, padding: '10px 12px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--bg-input)', border: '1px solid var(--border)', borderRadius: 99, padding: compact ? '6px 8px 6px 12px' : '10px 12px' }}>
         <span style={{ color: 'var(--brand)' }}>📎</span>
-        <span style={{ fontSize: 13, color: 'var(--text-body)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{value.name}</span>
-        <button type="button" onClick={() => onChange(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>✕</button>
+        <span style={{ fontSize: 12, color: 'var(--text-body)', maxWidth: compact ? 90 : undefined, flex: compact ? 'none' : 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{value.name}</span>
+        <button type="button" onClick={() => { onChange(null); setExpandido(false); }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>✕</button>
+      </div>
+    );
+  }
+
+  const inputFile = <input type="file" accept="image/*" ref={fileRef} style={{ display: 'none' }} onChange={e => { onChange(e.target.files?.[0] ?? null); setExpandido(false); }} />;
+
+  if (compact) {
+    return (
+      <div style={{ position: 'relative' }}>
+        {inputFile}
+        <button type="button" onClick={() => setExpandido(v => !v)} style={{
+          display: 'flex', alignItems: 'center', gap: 6, padding: '6px 12px', borderRadius: 99,
+          border: '1px solid var(--border)', background: 'transparent', color: 'var(--text-secondary)',
+          fontSize: 12, cursor: 'pointer', fontFamily: 'inherit',
+        }}
+        onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--brand)'; e.currentTarget.style.color = 'var(--brand)'; }}
+        onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.color = 'var(--text-secondary)'; }}
+        ><span style={{ fontFamily: 'Material Symbols Outlined', fontSize: 15 }}>add_a_photo</span>Foto</button>
+        {expandido && (
+          <div style={{
+            position: 'absolute', bottom: '120%', right: 0, zIndex: 5,
+            background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 10,
+            boxShadow: '0 8px 24px rgba(0,0,0,0.5)', padding: 6, display: 'flex', flexDirection: 'column', gap: 4, width: 160,
+          }}>
+            <button type="button" onClick={abrirCamara} style={{ ...BTN_STYLE, justifyContent: 'flex-start', border: 'none', height: 38 }}>📷 Tomar foto</button>
+            <button type="button" onClick={() => fileRef.current.click()} style={{ ...BTN_STYLE, justifyContent: 'flex-start', border: 'none', height: 38 }}>📁 Elegir archivo</button>
+            {camError && <p style={{ fontSize: 11, color: 'var(--crit-tx)', padding: '0 8px' }}>{camError}</p>}
+          </div>
+        )}
       </div>
     );
   }
 
   return (
-    <div>
-      <input type="file" accept="image/*" ref={fileRef} style={{ display: 'none' }} onChange={e => onChange(e.target.files?.[0] ?? null)} />
+    <div style={compact ? { position: 'relative' } : undefined}>
+      {inputFile}
       <div style={{ display: 'flex', gap: 8 }}>
         <button type="button" onClick={abrirCamara} style={BTN_STYLE}
           onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--brand)'; e.currentTarget.style.color = 'var(--text)'; }}

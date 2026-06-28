@@ -4,13 +4,15 @@ import { TIPO_NOVEDAD } from '../lib/tokens';
 import { enqueue, fileToBase64 } from '../lib/offlineQueue';
 import FotoField from '../components/FotoField';
 
+// Lo que un conserje anota de verdad, seguido, en el libro físico —
+// frases completas y listas para tocar, sin tener que rellenar nada después.
 const FRASES_RAPIDAS = [
-  'Ronda de seguridad sin novedad.',
-  'Cerré el acceso de servicio / estacionamiento.',
-  'Aviso entregado al depto sobre encomienda o visita.',
-  'Vehículo mal estacionado en área común.',
+  'Ronda realizada, todo en orden.',
+  'Puertas y accesos revisados y cerrados.',
+  'Ascensor fuera de servicio.',
+  'Filtración de agua detectada.',
+  'Vehículo desconocido estacionado en el edificio.',
   'Reclamo de ruidos molestos.',
-  'Revisión o mantención técnica realizada.',
 ];
 
 function NovedadCard({ nov, perfil, onEditar }) {
@@ -74,23 +76,21 @@ function draftKey(edificioId) {
 
 // Lo urgente real ya tiene su propio botón rojo de Emergencia. Acá el conserje
 // no tiene que pensar en categorías: por defecto es un registro normal, y solo
-// marca el toggle si algo salió mal o se rompió algo.
+// marca esto si algo salió mal o se rompió algo — es secundario, no compite
+// visualmente con escribir la nota.
 function ToggleIncidente({ activo, onToggle }) {
   return (
     <button type="button" onClick={onToggle} style={{
-      display: 'flex', alignItems: 'center', gap: 12, width: '100%', padding: '13px 14px',
-      borderRadius: 10, cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left',
-      border: activo ? '1px solid var(--warn-tx)' : '1px solid var(--border)',
-      background: activo ? 'var(--warn-bg)' : 'var(--bg-input)',
-      transition: 'all 120ms',
+      display: 'flex', alignItems: 'center', gap: 9, padding: 0,
+      background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit',
     }}>
       <span style={{
-        width: 22, height: 22, borderRadius: 6, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
-        border: activo ? 'none' : '2px solid var(--border-strong)',
+        width: 18, height: 18, borderRadius: 5, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
+        border: activo ? 'none' : '1.5px solid var(--border-strong)',
         background: activo ? 'var(--warn-tx)' : 'transparent',
-        color: '#fff', fontSize: 14, fontWeight: 700,
+        color: '#fff', fontSize: 12, fontWeight: 700,
       }}>{activo ? '✓' : ''}</span>
-      <span style={{ fontSize: 14, fontWeight: 600, color: activo ? 'var(--warn-tx)' : 'var(--text)' }}>
+      <span style={{ fontSize: 13, fontWeight: 500, color: activo ? 'var(--warn-tx)' : 'var(--text-secondary)' }}>
         Algo salió mal o se rompió algo
       </span>
     </button>
@@ -370,34 +370,29 @@ export default function Novedades({ perfil, turno, filtroInicial }) {
                   <span>▲</span> Recuperamos lo que estabas escribiendo
                 </div>
               )}
-              <div>
-                <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>Descripción</label>
-                <textarea value={descripcion} onChange={e => setDescripcion(e.target.value)}
-                  placeholder="Describe la novedad con detalle…" required autoFocus
-                  style={{ width: '100%', height: 90, background: 'var(--bg-input)', border: '1px solid var(--border)', borderRadius: 8, padding: '10px 12px', color: 'var(--text)', fontSize: 16, resize: 'none', fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box', transition: 'border-color 120ms' }}
-                  onFocus={e => e.target.style.borderColor = 'var(--brand)'}
-                  onBlur={e => e.target.style.borderColor = 'var(--border)'}
-                />
-                <p style={{ fontSize: 12, color: 'var(--text-subtle)', marginTop: 6 }}>Toca para completar rápido:</p>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 6 }}>
-                  {FRASES_RAPIDAS.map(frase => (
-                    <button key={frase} type="button"
-                      onClick={() => setDescripcion(prev => prev.trim() ? `${prev.trim()} ${frase}` : frase)}
-                      style={{ padding: '6px 10px', borderRadius: 99, border: '1px solid var(--border)', background: 'var(--bg-input)', color: 'var(--text-secondary)', fontSize: 12, cursor: 'pointer', fontFamily: 'inherit' }}
-                      onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--brand)'; e.currentTarget.style.color = 'var(--brand)'; }}
-                      onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.color = 'var(--text-secondary)'; }}
-                    >+ {frase}</button>
-                  ))}
-                </div>
+              <textarea value={descripcion} onChange={e => setDescripcion(e.target.value)}
+                placeholder="¿Qué pasó? Escríbelo como lo anotarías en el libro…" required autoFocus
+                style={{ width: '100%', height: 130, background: 'var(--bg-input)', border: '1px solid var(--border)', borderRadius: 10, padding: '14px', color: 'var(--text)', fontSize: 16, lineHeight: 1.5, resize: 'none', fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box', transition: 'border-color 120ms' }}
+                onFocus={e => e.target.style.borderColor = 'var(--brand)'}
+                onBlur={e => e.target.style.borderColor = 'var(--border)'}
+              />
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                {FRASES_RAPIDAS.map(frase => (
+                  <button key={frase} type="button"
+                    onClick={() => setDescripcion(prev => prev.trim() ? `${prev.trim()} ${frase}` : frase)}
+                    style={{ padding: '6px 10px', borderRadius: 99, border: '1px solid var(--border)', background: 'var(--bg-input)', color: 'var(--text-secondary)', fontSize: 12, cursor: 'pointer', fontFamily: 'inherit' }}
+                    onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--brand)'; e.currentTarget.style.color = 'var(--brand)'; }}
+                    onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.color = 'var(--text-secondary)'; }}
+                  >{frase}</button>
+                ))}
               </div>
-              <ToggleIncidente activo={tipo === 'incidente'} onToggle={() => setTipo(t => t === 'incidente' ? 'informativo' : 'incidente')} />
-              <div>
-                <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>Foto (opcional)</label>
-                <FotoField value={fotoFile} onChange={setFotoFile} />
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+                <ToggleIncidente activo={tipo === 'incidente'} onToggle={() => setTipo(t => t === 'incidente' ? 'informativo' : 'incidente')} />
+                <FotoField value={fotoFile} onChange={setFotoFile} compact />
               </div>
               <div style={{ display: 'flex', gap: 10 }}>
                 <button type="button" onClick={cancelarForm} style={{ flex: 1, height: 44, background: 'transparent', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 16, fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}>Cancelar</button>
-                <button type="submit" disabled={enviando} style={{ flex: 1, height: 48, background: 'var(--brand)', border: 'none', borderRadius: 8, color: 'var(--brand-text-on)', fontSize: 16, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>{enviando ? '...' : 'Registrar'}</button>
+                <button type="submit" disabled={enviando} style={{ flex: 1, height: 48, background: 'var(--brand)', border: 'none', borderRadius: 8, color: 'var(--brand-text-on)', fontSize: 16, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>{enviando ? '...' : 'Guardar'}</button>
               </div>
             </form>
           </div>
