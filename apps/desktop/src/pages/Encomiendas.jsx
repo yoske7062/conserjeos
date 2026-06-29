@@ -62,12 +62,17 @@ export default function Encomiendas({ perfil, turno }) {
     if (!q) { setResultadosBusqueda(null); return; }
     setBuscando(true);
     const t = setTimeout(async () => {
-      const { data } = await supabase.from('encomiendas').select('*')
-        .eq('edificio_id', perfil.edificio_id)
-        .or(`destinatario.ilike.%${q}%,remitente.ilike.%${q}%,depto.ilike.%${q}%`)
-        .order('recibida_at', { ascending: false }).limit(50);
-      setResultadosBusqueda(data ?? []);
-      setBuscando(false);
+      try {
+        const { data } = await supabase.from('encomiendas').select('*')
+          .eq('edificio_id', perfil.edificio_id)
+          .or(`destinatario.ilike.%${q}%,remitente.ilike.%${q}%,depto.ilike.%${q}%`)
+          .order('recibida_at', { ascending: false }).limit(50);
+        setResultadosBusqueda(data ?? []);
+      } catch {
+        setResultadosBusqueda([]);
+      } finally {
+        setBuscando(false);
+      }
     }, 350);
     return () => clearTimeout(t);
   }, [busqueda, perfil.edificio_id]);

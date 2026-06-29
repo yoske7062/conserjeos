@@ -127,12 +127,17 @@ export default function Visitas({ perfil, turno }) {
     if (!q) { setResultadosBusqueda(null); return; }
     setBuscando(true);
     const t = setTimeout(async () => {
-      const { data } = await supabase.from('visitas').select('*')
-        .eq('edificio_id', perfil.edificio_id)
-        .or(`nombre_visitante.ilike.%${q}%,destino.ilike.%${q}%,rut_visitante.ilike.%${q}%`)
-        .order('entrada', { ascending: false }).limit(50);
-      setResultadosBusqueda(data ?? []);
-      setBuscando(false);
+      try {
+        const { data } = await supabase.from('visitas').select('*')
+          .eq('edificio_id', perfil.edificio_id)
+          .or(`nombre_visitante.ilike.%${q}%,destino.ilike.%${q}%,rut_visitante.ilike.%${q}%`)
+          .order('entrada', { ascending: false }).limit(50);
+        setResultadosBusqueda(data ?? []);
+      } catch {
+        setResultadosBusqueda([]);
+      } finally {
+        setBuscando(false);
+      }
     }, 350);
     return () => clearTimeout(t);
   }, [busqueda, perfil.edificio_id]);

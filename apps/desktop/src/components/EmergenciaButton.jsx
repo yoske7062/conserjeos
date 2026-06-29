@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { supabase } from '../lib/supabase';
+import { enqueue } from '../lib/offlineQueue';
 
 const PROTOCOLOS = [
   { id: 'incendio',   label: 'Incendio',                     texto: 'Activa la alarma, evacúa por las escaleras (nunca el ascensor) y llama a Bomberos (132).' },
@@ -31,11 +32,22 @@ export default function EmergenciaButton({ perfil, turno }) {
     setEnviando(true);
     setErrorMsg('');
     const label = custom || p.label;
-    const { data, error } = await supabase.from('novedades').insert({
+    const payload = {
       edificio_id: perfil.edificio_id, conserje_id: perfil.id,
       turno_id: turno?.id ?? null, tipo: 'urgente',
       descripcion: `🆘 EMERGENCIA: ${label}`,
-    }).select('id').single();
+      created_at: new Date().toISOString(),
+    };
+
+    if (!navigator.onLine) {
+      enqueue({ table: 'novedades', op: 'insert', payload });
+      setProtocolo(p);
+      setPaso('protocol');
+      setEnviando(false);
+      return;
+    }
+
+    const { data, error } = await supabase.from('novedades').insert(payload).select('id').single();
     if (error) setErrorMsg('No se pudo registrar automáticamente. El protocolo sigue siendo válido.');
     if (data) setNovId(data.id);
     setProtocolo(p);

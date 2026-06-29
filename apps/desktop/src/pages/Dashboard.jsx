@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 import { getAll, remove, count, onCountChange, base64ToBlob } from '../lib/offlineQueue';
 import Sidebar from '../components/Sidebar';
@@ -22,6 +22,7 @@ export default function Dashboard({ perfil }) {
   const [enLinea, setEnLinea] = useState(navigator.onLine);
   const [pendingCount, setPendingCount] = useState(count);
   const [sincronizando, setSincronizando] = useState(false);
+  const flushingRef = useRef(false);
   const [showAjustes, setShowAjustes] = useState(false);
 
   useEffect(() => {
@@ -38,21 +39,37 @@ export default function Dashboard({ perfil }) {
   // Reaccionar a cambios en la cola (enqueues desde páginas hijas)
   useEffect(() => onCountChange(setPendingCount), []);
 
-  // Al reconectar, vaciar la cola
+  // Al reconectar (o al agregar items estando ya online), vaciar la cola.
+  // flushingRef previene ejecuciones concurrentes si pendingCount baja
+  // a mitad de flush y re-dispara el efecto.
   useEffect(() => {
-    if (!enLinea || pendingCount === 0) return;
+    if (!enLinea || pendingCount === 0 || flushingRef.current) return;
     async function flush() {
+      flushingRef.current = true;
       setSincronizando(true);
+
+      // Garantiza que el JWT esté vigente antes de intentar writes.
+      // Si el dispositivo estuvo offline > 1h el token puede haber expirado.
+      const { error: sessionErr } = await supabase.auth.refreshSession();
+      if (sessionErr) {
+        setSincronizando(false);
+        flushingRef.current = false;
+        return;
+      }
+
       for (const item of getAll()) {
         let error;
         let payload = item.payload;
         if (item.fotoBase64) {
-          const ext  = item.fotoName?.split('.').pop() || 'jpg';
-          const path = `${item.table}/${payload.edificio_id}/${Date.now()}.${ext}`;
-          const { data: up, error: upError } = await supabase.storage.from('fotos').upload(path, base64ToBlob(item.fotoBase64));
-          if (!upError && up) {
-            const { data: pub } = supabase.storage.from('fotos').getPublicUrl(path);
-            payload = { ...payload, foto_url: pub.publicUrl };
+          const blob = base64ToBlob(item.fotoBase64);
+          if (blob) {
+            const ext  = item.fotoName?.split('.').pop() || 'jpg';
+            const path = `${item.table}/${payload.edificio_id}/${Date.now()}.${ext}`;
+            const { data: up, error: upError } = await supabase.storage.from('fotos').upload(path, blob);
+            if (!upError && up) {
+              const { data: pub } = supabase.storage.from('fotos').getPublicUrl(path);
+              payload = { ...payload, foto_url: pub.publicUrl };
+            }
           }
         }
         if (item.op === 'insert') {
@@ -62,10 +79,12 @@ export default function Dashboard({ perfil }) {
         }
         if (!error) remove(item._id);
       }
+
       setSincronizando(false);
+      flushingRef.current = false;
     }
     flush();
-  }, [enLinea]);
+  }, [enLinea, pendingCount]);
 
   useEffect(() => {
     // Buscar turno activo del conserje
