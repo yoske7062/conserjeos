@@ -68,14 +68,15 @@ export default function Dashboard({ perfil }) {
   }, [enLinea]);
 
   useEffect(() => {
-    // Buscar turno activo del conserje
+    // limit(1)+order en lugar de maybeSingle para no crashear si hay filas duplicadas (PGRST116)
     supabase
       .from('turnos')
       .select('*')
       .eq('conserje_id', perfil.id)
       .eq('activo', true)
-      .maybeSingle()
-      .then(({ data }) => setTurno(data));
+      .order('inicio', { ascending: false })
+      .limit(1)
+      .then(({ data }) => setTurno(data?.[0] ?? null));
   }, [perfil.id]);
 
   useEffect(() => {

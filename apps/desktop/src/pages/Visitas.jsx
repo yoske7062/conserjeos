@@ -200,7 +200,8 @@ export default function Visitas({ perfil, turno }) {
 
   async function guardarEdicion(e) {
     e.preventDefault();
-    if (validarRut(editForm.rut_visitante) !== true) {
+    const rutFormateado = formatearRut(editForm.rut_visitante);
+    if (validarRut(rutFormateado) !== true) {
       setErrorMsg('El RUT del visitante no es válido.');
       return;
     }
@@ -210,6 +211,7 @@ export default function Visitas({ perfil, turno }) {
     const { id, ...valorAnterior } = editTarget;
     const { error } = await supabase.from('visitas').update({
       ...editForm,
+      rut_visitante: rutFormateado,
       editado_por: perfil.id, editado_at: new Date().toISOString(), valor_anterior: valorAnterior,
     }).eq('id', editTarget.id);
     if (error) setErrorMsg('No se pudo guardar la edición. Intenta de nuevo.');
