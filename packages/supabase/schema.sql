@@ -359,3 +359,43 @@ alter table public.encomiendas add column if not exists retirado_tipo text
   check (retirado_tipo in ('residente','tercero'));
 
 create index if not exists tareas_edificio_estado_idx on public.tareas (edificio_id, estado);
+
+-- ============================================================
+-- STORAGE — Bucket de fotos (29-jun-2026)
+-- ============================================================
+-- El desktop sube fotos de novedades y encomiendas a un bucket 'fotos' y usa
+-- getPublicUrl(), por lo que el bucket es público para LECTURA. La ESCRITURA
+-- está restringida por edificio: el path es {tabla}/{edificio_id}/{archivo},
+-- así que el 2do segmento de la ruta debe coincidir con mi_edificio_id().
+--
+-- Aplicado en producción (proyecto cpxywvxwdnpsrxqjoqjl) el 29-jun-2026
+-- vía Supabase Management API.
+--
+-- NOTA DE PRIVACIDAD (Ley 21.719): las fotos quedan accesibles por URL pública
+-- (no adivinable, pero no protegida). Endurecimiento futuro recomendado:
+-- bucket privado + createSignedUrl() en lugar de getPublicUrl(), y una limpieza
+-- de objetos antiguos análoga al cron de visitas.
+
+insert into storage.buckets (id, name, public)
+values ('fotos', 'fotos', true)
+on conflict (id) do update set public = true;
+
+-- Subir: solo a la carpeta del propio edificio.
+drop policy if exists "fotos: subir a mi edificio" on storage.objects;
+create policy "fotos: subir a mi edificio" on storage.objects
+  for insert to authenticated
+  with check (
+    bucket_id = 'fotos'
+    and (storage.foldername(name))[2] = public.mi_edificio_id()::text
+  );
+
+-- Modificar / borrar: solo dentro de la carpeta del propio edificio.
+drop policy if exists "fotos: modificar mi edificio" on storage.objects;
+create policy "fotos: modificar mi edificio" on storage.objects
+  for update to authenticated
+  using (bucket_id = 'fotos' and (storage.foldername(name))[2] = public.mi_edificio_id()::text);
+
+drop policy if exists "fotos: borrar mi edificio" on storage.objects;
+create policy "fotos: borrar mi edificio" on storage.objects
+  for delete to authenticated
+  using (bucket_id = 'fotos' and (storage.foldername(name))[2] = public.mi_edificio_id()::text);
