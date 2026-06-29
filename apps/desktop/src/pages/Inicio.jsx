@@ -57,6 +57,44 @@ function ModuloRow({ icon, accentBg, accentColor, titulo, subtitulo, subtituloCo
   );
 }
 
+// Tarjeta grande para los 4 módulos de uso diario: harto espacio para tocar,
+// color propio por módulo para reconocerlo de un vistazo sin tener que leer.
+function ModuloTile({ icon, accentBg, accentColor, accentBorder, titulo, subtitulo, subtituloColor, badges, onClick }) {
+  const [hov, setHov] = useState(false);
+  return (
+    <button
+      onClick={onClick}
+      onMouseEnter={() => setHov(true)}
+      onMouseLeave={() => setHov(false)}
+      style={{
+        display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
+        alignItems: 'flex-start', textAlign: 'left', minHeight: 140,
+        padding: '20px 22px', borderRadius: 18,
+        background: 'var(--bg-surface)', border: `1.5px solid ${hov ? accentBorder : 'var(--border)'}`,
+        cursor: 'pointer', transition: 'border-color .14s, transform .14s, box-shadow .14s',
+        boxShadow: hov ? '0 10px 28px rgba(0,0,0,0.28)' : 'var(--shadow)',
+        transform: hov ? 'translateY(-2px)' : 'none',
+      }}
+    >
+      <div style={{
+        width: 54, height: 54, borderRadius: 14, flexShrink: 0,
+        background: accentBg, display: 'flex', alignItems: 'center', justifyContent: 'center',
+        marginBottom: 14,
+      }}>
+        <span style={{ fontFamily: 'Material Symbols Outlined', fontSize: 28, color: accentColor }}>{icon}</span>
+      </div>
+      <div>
+        <p style={{ fontSize: 19, fontWeight: 800, color: 'var(--text)', marginBottom: 5, letterSpacing: '-0.3px' }}>{titulo}</p>
+        {badges ? (
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>{badges}</div>
+        ) : (
+          <p style={{ fontSize: 13.5, color: subtituloColor ?? 'var(--text-muted)', fontWeight: subtituloColor ? 700 : 500 }}>{subtitulo}</p>
+        )}
+      </div>
+    </button>
+  );
+}
+
 function NarrLine({ tipo, children }) {
   const styles = {
     urgente:     { bg: 'var(--crit-bg)',  border: 'var(--crit-tx)',  dot: 'var(--crit-tx)'  },
@@ -238,42 +276,42 @@ export default function Inicio({ perfil, turno, navegarA }) {
         </div>
       )}
 
-      {/* Módulos */}
+      {/* Módulos principales — tarjetas grandes, las usa todo el turno */}
       <div style={{ fontSize: 9.5, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '.5px', marginBottom: 10 }}>
         Tu día
       </div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 9, marginBottom: 20 }}>
-        <ModuloRow
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 20 }}>
+        <ModuloTile
           icon="group"
-          accentBg="rgba(var(--brand-rgb),.12)" accentColor="var(--brand)"
+          accentBg="rgba(var(--brand-rgb),.14)" accentColor="var(--brand)" accentBorder="var(--brand)"
           titulo="Visitas"
           subtitulo={resumen.visitasActivas > 0 ? `${resumen.visitasActivas} persona${resumen.visitasActivas !== 1 ? 's' : ''} en el edificio ahora` : 'Sin visitas activas'}
           subtituloColor={resumen.visitasActivas > 0 ? 'var(--brand)' : null}
           onClick={() => navegarA('visitas')}
         />
-        <ModuloRow
+        <ModuloTile
           icon="inventory_2"
-          accentBg="rgba(var(--brand-rgb),.12)" accentColor="var(--brand)"
+          accentBg="var(--warn-bg)" accentColor="var(--warn-tx)" accentBorder="var(--warn-tx)"
           titulo="Encomiendas"
           subtitulo={resumen.encomiendasPendientes > 0 ? `${resumen.encomiendasPendientes} pendiente${resumen.encomiendasPendientes !== 1 ? 's' : ''} de entregar` : 'Sin encomiendas pendientes'}
-          subtituloColor={resumen.encomiendasPendientes > 0 ? 'var(--brand)' : null}
+          subtituloColor={resumen.encomiendasPendientes > 0 ? 'var(--warn-tx)' : null}
           onClick={() => navegarA('encomiendas')}
         />
-        <ModuloRow
+        <ModuloTile
           icon="checklist"
-          accentBg="rgba(var(--brand-rgb),.12)" accentColor="var(--brand)"
+          accentBg="var(--info-bg)" accentColor="var(--info-tx)" accentBorder="var(--info-tx)"
           titulo="Tareas"
           subtitulo={
             resumen.tareasVencidas > 0
               ? `${resumen.tareasVencidas} vencida${resumen.tareasVencidas !== 1 ? 's' : ''} de ${resumen.tareasPendientes} pendiente${resumen.tareasPendientes !== 1 ? 's' : ''}`
               : resumen.tareasPendientes > 0 ? `${resumen.tareasPendientes} pendiente${resumen.tareasPendientes !== 1 ? 's' : ''}` : 'Sin tareas pendientes'
           }
-          subtituloColor={resumen.tareasVencidas > 0 ? 'var(--crit-tx)' : resumen.tareasPendientes > 0 ? 'var(--brand)' : null}
+          subtituloColor={resumen.tareasVencidas > 0 ? 'var(--crit-tx)' : resumen.tareasPendientes > 0 ? 'var(--info-tx)' : null}
           onClick={() => navegarA('tareas')}
         />
-        <ModuloRow
+        <ModuloTile
           icon="campaign"
-          accentBg="rgba(var(--brand-rgb),.12)" accentColor="var(--brand)"
+          accentBg="var(--crit-bg)" accentColor="var(--crit-tx)" accentBorder="var(--crit-tx)"
           titulo="Novedades"
           subtitulo="Sin novedades en este turno"
           badges={novedadBadges.length > 0 ? novedadBadges : null}

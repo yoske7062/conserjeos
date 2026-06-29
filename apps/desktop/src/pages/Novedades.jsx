@@ -1,12 +1,25 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { TIPO_NOVEDAD } from '../lib/tokens';
-import { enqueue } from '../lib/offlineQueue';
+import { enqueue, fileToBase64 } from '../lib/offlineQueue';
+import FotoField from '../components/FotoField';
 
-function NovedadCard({ nov }) {
+// Lo que un conserje anota de verdad, seguido, en el libro físico —
+// frases completas y listas para tocar, sin tener que rellenar nada después.
+const FRASES_RAPIDAS = [
+  'Ronda realizada, todo en orden.',
+  'Puertas y accesos revisados y cerrados.',
+  'Ascensor fuera de servicio.',
+  'Filtración de agua detectada.',
+  'Vehículo desconocido estacionado en el edificio.',
+  'Reclamo de ruidos molestos.',
+];
+
+function NovedadCard({ nov, perfil, onEditar }) {
   const t = TIPO_NOVEDAD[nov.tipo] || TIPO_NOVEDAD.informativo;
   const hora  = new Date(nov.created_at).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' });
   const fecha = new Date(nov.created_at).toLocaleDateString('es-CL', { day: '2-digit', month: 'short' });
+  const puedeEditar = nov.conserje_id === perfil.id;
 
   return (
     <div style={{
@@ -43,6 +56,15 @@ function NovedadCard({ nov }) {
           <img src={nov.foto_url} alt="foto"
             style={{ width: 80, height: 80, borderRadius: 8, objectFit: 'cover', flexShrink: 0, border: '1px solid var(--border)' }} />
         )}
+        {puedeEditar && (
+          <button onClick={() => onEditar(nov)} title="Editar" style={{
+            flexShrink: 0, width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center',
+            background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)',
+          }}
+          onMouseEnter={e => e.currentTarget.style.color = 'var(--brand)'}
+          onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}
+          ><span style={{ fontFamily: 'Material Symbols Outlined', fontSize: 18 }}>edit</span></button>
+        )}
       </div>
     </div>
   );
@@ -52,11 +74,28 @@ function draftKey(edificioId) {
   return `portia:borrador-novedad:${edificioId}`;
 }
 
-const EXPLICACION_TIPO = {
-  urgente:     'Algo está pasando ahora y necesita atención inmediata (emergencia, accidente, situación de riesgo).',
-  incidente:   'Algo salió mal o se rompió, pero ya pasó o está controlado (filtración, ascensor detenido, ruido molesto).',
-  informativo: 'Para que quede registrado, sin que sea grave ni urgente (visita de mantención, aviso de un vecino).',
-};
+// Lo urgente real ya tiene su propio botón rojo de Emergencia. Acá el conserje
+// no tiene que pensar en categorías: por defecto es un registro normal, y solo
+// marca esto si algo salió mal o se rompió algo — es secundario, no compite
+// visualmente con escribir la nota.
+function ToggleIncidente({ activo, onToggle }) {
+  return (
+    <button type="button" onClick={onToggle} style={{
+      display: 'flex', alignItems: 'center', gap: 9, padding: 0,
+      background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit',
+    }}>
+      <span style={{
+        width: 18, height: 18, borderRadius: 5, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
+        border: activo ? 'none' : '1.5px solid var(--border-strong)',
+        background: activo ? 'var(--warn-tx)' : 'transparent',
+        color: '#fff', fontSize: 12, fontWeight: 700,
+      }}>{activo ? '✓' : ''}</span>
+      <span style={{ fontSize: 13, fontWeight: 500, color: activo ? 'var(--warn-tx)' : 'var(--text-secondary)' }}>
+        Algo salió mal o se rompió algo
+      </span>
+    </button>
+  );
+}
 
 export default function Novedades({ perfil, turno, filtroInicial }) {
   const [novedades, setNovedades]       = useState([]);
@@ -66,10 +105,19 @@ export default function Novedades({ perfil, turno, filtroInicial }) {
   const [descripcion, setDescripcion]   = useState('');
   const [enviando, setEnviando]         = useState(false);
   const [filtro, setFiltro]             = useState(filtroInicial || 'todos');
-  const fileRef = useRef();
   const [fotoFile, setFotoFile]         = useState(null);
   const [errorMsg, setErrorMsg]         = useState('');
   const [borradorRestaurado, setBorradorRestaurado] = useState(false);
+
+  // Búsqueda
+  const [busqueda, setBusqueda]                     = useState('');
+  const [resultadosBusqueda, setResultadosBusqueda] = useState(null);
+  const [buscando, setBuscando]                     = useState(false);
+
+  // Edición
+  const [editTarget, setEditTarget]       = useState(null);
+  const [editForm, setEditForm]           = useState({ tipo: 'informativo', descripcion: '' });
+  const [guardandoEdit, setGuardandoEdit] = useState(false);
 
   // Restaura un borrador si el conserje fue interrumpido a mitad de una novedad
   useEffect(() => {
@@ -115,21 +163,54 @@ export default function Novedades({ perfil, turno, filtroInicial }) {
     setLoading(false);
   }
 
+  useEffect(() => {
+    const q = busqueda.replace(/[,()%]/g, '').trim();
+    if (!q) { setResultadosBusqueda(null); return; }
+    setBuscando(true);
+    const t = setTimeout(async () => {
+      const { data } = await supabase.from('novedades').select('*, perfiles(nombre)')
+        .eq('edificio_id', perfil.edificio_id)
+        .ilike('descripcion', `%${q}%`)
+        .order('created_at', { ascending: false }).limit(50);
+      setResultadosBusqueda(data ?? []);
+      setBuscando(false);
+    }, 350);
+    return () => clearTimeout(t);
+  }, [busqueda, perfil.edificio_id]);
+
+  function abrirEdicion(nov) {
+    setEditForm({ tipo: nov.tipo, descripcion: nov.descripcion });
+    setEditTarget(nov);
+  }
+
+  async function guardarEdicion(e) {
+    e.preventDefault();
+    if (!editForm.descripcion.trim()) return;
+    if (!navigator.onLine) { setErrorMsg('Necesitas conexión a internet para editar un registro.'); return; }
+    setGuardandoEdit(true);
+    setErrorMsg('');
+    const { id, ...valorAnterior } = editTarget;
+    const { error } = await supabase.from('novedades').update({
+      tipo: editForm.tipo, descripcion: editForm.descripcion.trim(),
+      editado_por: perfil.id, editado_at: new Date().toISOString(), valor_anterior: valorAnterior,
+    }).eq('id', editTarget.id);
+    if (error) setErrorMsg('No se pudo guardar la edición. Intenta de nuevo.');
+    else { setEditTarget(null); cargarNovedades(); }
+    setGuardandoEdit(false);
+  }
+
   async function enviarNovedad(e) {
     e.preventDefault();
     if (!descripcion.trim()) return;
 
     if (!navigator.onLine) {
-      if (fotoFile) {
-        setErrorMsg('Sin conexión: registra sin foto. Puedes adjuntarla cuando vuelva la red.');
-        return;
-      }
+      const fotoBase64 = fotoFile ? await fileToBase64(fotoFile) : null;
       enqueue({ table: 'novedades', op: 'insert', payload: {
         edificio_id: perfil.edificio_id, conserje_id: perfil.id,
         turno_id: turno?.id ?? null, tipo,
         descripcion: descripcion.trim(), foto_url: null,
         created_at: new Date().toISOString(),
-      }});
+      }, fotoBase64, fotoName: fotoFile?.name });
       localStorage.removeItem(draftKey(perfil.edificio_id));
       setDescripcion(''); setFotoFile(null); setTipo('informativo');
       setBorradorRestaurado(false); setMostrarForm(false);
@@ -166,16 +247,27 @@ export default function Novedades({ perfil, turno, filtroInicial }) {
     setMostrarForm(false);
   }
 
-  const counts    = novedades.reduce((acc, n) => { acc[n.tipo] = (acc[n.tipo] ?? 0) + 1; return acc; }, {});
-  const filtradas = filtro === 'todos' ? novedades : novedades.filter(n => n.tipo === filtro);
+  const counts         = novedades.reduce((acc, n) => { acc[n.tipo] = (acc[n.tipo] ?? 0) + 1; return acc; }, {});
+  const filtradas      = filtro === 'todos' ? novedades : novedades.filter(n => n.tipo === filtro);
+  const buscandoActivo = resultadosBusqueda !== null;
+  const lista          = buscandoActivo ? resultadosBusqueda : filtradas;
 
   return (
     <div style={{ padding: '22px 24px 28px' }}>
 
       {/* Page header */}
-      <div style={{ marginBottom: 16 }}>
-        <div style={{ fontSize: 23, fontWeight: 800, color: 'var(--text)', marginBottom: 4, letterSpacing: '-0.5px' }}>Libro de Novedades</div>
-        <p style={{ fontSize: 13, color: 'var(--text-muted)' }}>Registra todo lo que pasa en tu turno — es tu respaldo si después hay un reclamo</p>
+      <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 16, gap: 16 }}>
+        <div>
+          <div style={{ fontSize: 23, fontWeight: 800, color: 'var(--text)', marginBottom: 4, letterSpacing: '-0.5px' }}>Libro de Novedades</div>
+          <p style={{ fontSize: 13, color: 'var(--text-muted)' }}>Registra todo lo que pasa en tu turno — es tu respaldo si después hay un reclamo</p>
+        </div>
+        {turno && (
+          <button onClick={() => setMostrarForm(true)} style={{
+            flexShrink: 0, display: 'flex', alignItems: 'center', gap: 8, height: 48, padding: '0 20px',
+            background: 'var(--brand)', border: 'none', borderRadius: 8,
+            color: 'var(--brand-text-on)', fontSize: 16, fontWeight: 700, cursor: 'pointer',
+          }}>+ Nueva novedad</button>
+        )}
       </div>
 
       {/* Error banner */}
@@ -190,38 +282,56 @@ export default function Novedades({ perfil, turno, filtroInicial }) {
         </div>
       )}
 
-      {/* Filter bar */}
-      <div style={{
-        background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 12,
-        padding: '12px 16px', display: 'flex', alignItems: 'center',
-        justifyContent: 'space-between', flexWrap: 'wrap', gap: 12, marginBottom: 20,
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 3, background: 'var(--bg-input)', border: '1px solid var(--bg-surface-high)', borderRadius: 8, padding: 3 }}>
-          {[['todos','Todos'],['urgente','Urgentes'],['incidente','Incidentes'],['informativo','Informativos']].map(([id, label]) => (
-            <button key={id} onClick={() => setFiltro(id)} style={{
-              minHeight: 36, padding: '6px 14px', borderRadius: 6, fontSize: 13, fontWeight: filtro === id ? 600 : 400,
-              background: filtro === id ? 'var(--brand)' : 'transparent',
-              color: filtro === id ? 'var(--brand-text-on)' : 'var(--text-muted)',
-              border: 'none', cursor: 'pointer', transition: 'all 100ms',
-            }}>{label}</button>
-          ))}
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          {counts.urgente > 0 && (
-            <span style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '3px 10px', borderRadius: 99, background: 'var(--crit-bg)', border: '1px solid var(--crit-border)', fontSize: 11, fontWeight: 600, color: 'var(--crit-tx)' }}>
-              <span>◆</span>
-              Urgentes: {counts.urgente}
-            </span>
-          )}
-          {counts.incidente > 0 && (
-            <span style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '3px 10px', borderRadius: 99, background: 'var(--warn-bg)', border: '1px solid var(--warn-border)', fontSize: 11, fontWeight: 600, color: 'var(--warn-tx)' }}>
-              <span>!</span>
-              Incidentes: {counts.incidente}
-            </span>
-          )}
-          <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{novedades.length} novedades</span>
-        </div>
+      {/* Búsqueda */}
+      <div style={{ position: 'relative', marginBottom: 16 }}>
+        <span style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', fontFamily: 'Material Symbols Outlined', fontSize: 18, color: 'var(--text-muted)' }}>search</span>
+        <input
+          style={{ width: '100%', height: 48, background: 'var(--bg-input)', border: '1px solid var(--border)', borderRadius: 8, padding: '0 12px 0 40px', color: 'var(--text)', fontSize: 16, fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box', transition: 'border-color 120ms' }}
+          placeholder="Buscar en el libro de novedades…"
+          value={busqueda} onChange={e => setBusqueda(e.target.value)}
+          onFocus={e => e.target.style.borderColor = 'var(--brand)'}
+          onBlur={e => e.target.style.borderColor = 'var(--border)'}
+        />
       </div>
+
+      {/* Filter bar (oculta mientras se busca) */}
+      {!buscandoActivo ? (
+        <div style={{
+          background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 12,
+          padding: '12px 16px', display: 'flex', alignItems: 'center',
+          justifyContent: 'space-between', flexWrap: 'wrap', gap: 12, marginBottom: 20,
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 3, background: 'var(--bg-input)', border: '1px solid var(--bg-surface-high)', borderRadius: 8, padding: 3 }}>
+            {[['todos','Todos'],['urgente','Urgentes'],['incidente','Incidentes'],['informativo','Informativos']].map(([id, label]) => (
+              <button key={id} onClick={() => setFiltro(id)} style={{
+                minHeight: 36, padding: '6px 14px', borderRadius: 6, fontSize: 13, fontWeight: filtro === id ? 600 : 400,
+                background: filtro === id ? 'var(--brand)' : 'transparent',
+                color: filtro === id ? 'var(--brand-text-on)' : 'var(--text-muted)',
+                border: 'none', cursor: 'pointer', transition: 'all 100ms',
+              }}>{label}</button>
+            ))}
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            {counts.urgente > 0 && (
+              <span style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '3px 10px', borderRadius: 99, background: 'var(--crit-bg)', border: '1px solid var(--crit-border)', fontSize: 11, fontWeight: 600, color: 'var(--crit-tx)' }}>
+                <span>◆</span>
+                Urgentes: {counts.urgente}
+              </span>
+            )}
+            {counts.incidente > 0 && (
+              <span style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '3px 10px', borderRadius: 99, background: 'var(--warn-bg)', border: '1px solid var(--warn-border)', fontSize: 11, fontWeight: 600, color: 'var(--warn-tx)' }}>
+                <span>!</span>
+                Incidentes: {counts.incidente}
+              </span>
+            )}
+            <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{novedades.length} novedades</span>
+          </div>
+        </div>
+      ) : (
+        <p style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 20 }}>
+          {buscando ? 'Buscando…' : `${resultadosBusqueda.length} resultado${resultadosBusqueda.length !== 1 ? 's' : ''} para "${busqueda}"`}
+        </p>
+      )}
 
       {/* List */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -229,32 +339,22 @@ export default function Novedades({ perfil, turno, filtroInicial }) {
           <div style={{ display: 'flex', justifyContent: 'center', padding: 60 }}>
             <div style={{ width: 24, height: 24, border: '2px solid var(--border)', borderTopColor: 'var(--brand)', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
           </div>
-        ) : filtradas.length === 0 ? (
+        ) : lista.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '60px 24px' }}>
             <div style={{ width: 52, height: 52, background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', fontSize: 22 }}>📋</div>
-            <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-muted)', marginBottom: 6 }}>Sin novedades registradas</p>
-            <p style={{ fontSize: 13, color: 'var(--text-subtle)' }}>
-              {turno ? 'Registra la primera novedad de este turno' : 'Inicia tu turno en "Entrega de turno" para comenzar a registrar'}
+            <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-muted)', marginBottom: 6 }}>
+              {buscandoActivo ? 'Sin resultados' : 'Sin novedades registradas'}
             </p>
+            {!buscandoActivo && (
+              <p style={{ fontSize: 13, color: 'var(--text-subtle)' }}>
+                {turno ? 'Registra la primera novedad de este turno' : 'Inicia tu turno en "Entrega de turno" para comenzar a registrar'}
+              </p>
+            )}
           </div>
         ) : (
-          filtradas.map(n => <NovedadCard key={n.id} nov={n} />)
+          lista.map(n => <NovedadCard key={n.id} nov={n} perfil={perfil} onEditar={abrirEdicion} />)
         )}
       </div>
-
-      {/* FAB */}
-      {turno && (
-        <button onClick={() => setMostrarForm(true)} title="Nueva novedad" style={{
-          position: 'fixed', bottom: 28, right: 28, width: 52, height: 52,
-          background: 'var(--brand)', border: 'none', borderRadius: '50%',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          cursor: 'pointer', zIndex: 60, fontSize: 26, color: 'var(--brand-text-on)', fontWeight: 700,
-          boxShadow: '0 4px 20px rgba(var(--brand-rgb),0.3)', transition: 'transform 120ms',
-        }}
-        onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.08)'}
-        onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
-        >+</button>
-      )}
 
       {/* Modal: Nueva novedad */}
       {mostrarForm && (
@@ -270,50 +370,62 @@ export default function Novedades({ perfil, turno, filtroInicial }) {
                   <span>▲</span> Recuperamos lo que estabas escribiendo
                 </div>
               )}
-              <div>
-                <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>Tipo</label>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
-                  {Object.entries(TIPO_NOVEDAD).map(([id, t]) => (
-                    <button key={id} type="button" onClick={() => setTipo(id)} style={{
-                      minHeight: 44, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
-                      padding: '9px 8px', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer',
-                      background: tipo === id ? t.bg : 'transparent',
-                      color: tipo === id ? t.color : 'var(--text-muted)',
-                      border: tipo === id ? `1px solid ${t.border}` : '1px solid var(--border)',
-                      transition: 'all 100ms',
-                    }}><span>{t.icon}</span>{t.label}</button>
-                  ))}
-                </div>
-                <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 8, lineHeight: 1.4 }}>{EXPLICACION_TIPO[tipo]}</p>
+              <textarea value={descripcion} onChange={e => setDescripcion(e.target.value)}
+                placeholder="¿Qué pasó? Escríbelo como lo anotarías en el libro…" required autoFocus
+                style={{ width: '100%', height: 130, background: 'var(--bg-input)', border: '1px solid var(--border)', borderRadius: 10, padding: '14px', color: 'var(--text)', fontSize: 16, lineHeight: 1.5, resize: 'none', fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box', transition: 'border-color 120ms' }}
+                onFocus={e => e.target.style.borderColor = 'var(--brand)'}
+                onBlur={e => e.target.style.borderColor = 'var(--border)'}
+              />
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                {FRASES_RAPIDAS.map(frase => (
+                  <button key={frase} type="button"
+                    onClick={() => setDescripcion(prev => prev.trim() ? `${prev.trim()} ${frase}` : frase)}
+                    style={{ padding: '6px 10px', borderRadius: 99, border: '1px solid var(--border)', background: 'var(--bg-input)', color: 'var(--text-secondary)', fontSize: 12, cursor: 'pointer', fontFamily: 'inherit' }}
+                    onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--brand)'; e.currentTarget.style.color = 'var(--brand)'; }}
+                    onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.color = 'var(--text-secondary)'; }}
+                  >{frase}</button>
+                ))}
               </div>
-              <div>
-                <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>Descripción</label>
-                <textarea value={descripcion} onChange={e => setDescripcion(e.target.value)}
-                  placeholder="Describe la novedad con detalle…" required autoFocus
-                  style={{ width: '100%', height: 110, background: 'var(--bg-input)', border: '1px solid var(--border)', borderRadius: 8, padding: '10px 12px', color: 'var(--text)', fontSize: 16, resize: 'none', fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box', transition: 'border-color 120ms' }}
-                  onFocus={e => e.target.style.borderColor = 'var(--brand)'}
-                  onBlur={e => e.target.style.borderColor = 'var(--border)'}
-                />
-              </div>
-              <div>
-                <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>Foto (opcional)</label>
-                <input type="file" accept="image/*" ref={fileRef} style={{ display: 'none' }} onChange={e => setFotoFile(e.target.files?.[0] ?? null)} />
-                {fotoFile ? (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'var(--bg-input)', border: '1px solid var(--border)', borderRadius: 8, padding: '10px 12px' }}>
-                    <span style={{ color: 'var(--brand)' }}>📎</span>
-                    <span style={{ fontSize: 13, color: 'var(--text-body)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{fotoFile.name}</span>
-                    <button type="button" onClick={() => setFotoFile(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>✕</button>
-                  </div>
-                ) : (
-                  <button type="button" onClick={() => fileRef.current.click()} style={{ width: '100%', padding: '10px', border: '1px dashed var(--border)', borderRadius: 8, background: 'transparent', color: 'var(--text-muted)', fontSize: 13, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 100ms' }}
-                    onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--brand)'; e.currentTarget.style.color = 'var(--text)'; }}
-                    onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.color = 'var(--text-muted)'; }}
-                  >+ Adjuntar foto</button>
-                )}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+                <ToggleIncidente activo={tipo === 'incidente'} onToggle={() => setTipo(t => t === 'incidente' ? 'informativo' : 'incidente')} />
+                <FotoField value={fotoFile} onChange={setFotoFile} compact />
               </div>
               <div style={{ display: 'flex', gap: 10 }}>
                 <button type="button" onClick={cancelarForm} style={{ flex: 1, height: 44, background: 'transparent', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 16, fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}>Cancelar</button>
-                <button type="submit" disabled={enviando} style={{ flex: 1, height: 48, background: 'var(--brand)', border: 'none', borderRadius: 8, color: 'var(--brand-text-on)', fontSize: 16, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>{enviando ? '...' : 'Registrar'}</button>
+                <button type="submit" disabled={enviando} style={{ flex: 1, height: 48, background: 'var(--brand)', border: 'none', borderRadius: 8, color: 'var(--brand-text-on)', fontSize: 16, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>{enviando ? '...' : 'Guardar'}</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal: Editar */}
+      {editTarget && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.65)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 110, padding: 24 }}>
+          <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 16, width: '100%', maxWidth: 440, boxShadow: '0 24px 60px rgba(0,0,0,0.7)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 22px', borderBottom: '1px solid var(--border)' }}>
+              <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)' }}>Editar novedad</div>
+              <button onClick={() => setEditTarget(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', fontSize: 20, lineHeight: 1 }}>✕</button>
+            </div>
+            <form onSubmit={guardarEdicion} style={{ padding: 22, display: 'flex', flexDirection: 'column', gap: 18 }}>
+              {editForm.tipo === 'urgente' ? (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', borderRadius: 10, background: 'var(--crit-bg)', border: '1px solid var(--crit-tx)' }}>
+                  <span style={{ fontFamily: 'Material Symbols Outlined', fontSize: 16, color: 'var(--crit-tx)' }}>{TIPO_NOVEDAD.urgente.icon}</span>
+                  <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--crit-tx)' }}>Urgente — registrada desde el botón de Emergencia</span>
+                </div>
+              ) : (
+                <ToggleIncidente activo={editForm.tipo === 'incidente'} onToggle={() => setEditForm(f => ({ ...f, tipo: f.tipo === 'incidente' ? 'informativo' : 'incidente' }))} />
+              )}
+              <div>
+                <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>Descripción</label>
+                <textarea value={editForm.descripcion} onChange={e => setEditForm(f => ({ ...f, descripcion: e.target.value }))}
+                  required autoFocus
+                  style={{ width: '100%', height: 110, background: 'var(--bg-input)', border: '1px solid var(--border)', borderRadius: 8, padding: '10px 12px', color: 'var(--text)', fontSize: 16, resize: 'none', fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box' }}
+                />
+              </div>
+              <div style={{ display: 'flex', gap: 10 }}>
+                <button type="button" onClick={() => setEditTarget(null)} style={{ flex: 1, height: 44, background: 'transparent', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 16, fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}>Cancelar</button>
+                <button type="submit" disabled={guardandoEdit} style={{ flex: 1, height: 48, background: 'var(--brand)', border: 'none', borderRadius: 8, color: 'var(--brand-text-on)', fontSize: 16, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>{guardandoEdit ? '...' : 'Guardar cambios'}</button>
               </div>
             </form>
           </div>
