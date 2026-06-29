@@ -3,10 +3,28 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { getSupabase } from '../../lib/supabase';
 
+const BG   = '#FFFFFF';
+const INK  = '#0F172A';
+const INK2 = 'rgba(15,23,42,0.5)';
+const INK3 = 'rgba(15,23,42,0.22)';
+const ORG  = '#E64E1B';
+const HEAD = "'Inter', system-ui, sans-serif";
+const BODY = "'Inter', system-ui, sans-serif";
+
+function Mark({ size = 26 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 28 28" fill="none" aria-hidden="true">
+      <rect width="28" height="28" rx="7" fill={ORG} />
+      <path d="M9 7h5.8c1.5 0 2.7.4 3.5 1.2.8.8 1.2 1.8 1.2 3.1s-.4 2.4-1.2 3.1c-.8.8-2 1.2-3.5 1.2H11.4V21H9V7zm2.4 6.6h3.2c.9 0 1.5-.2 2-.6.4-.4.6-.9.6-1.7s-.2-1.3-.6-1.7c-.4-.4-1.1-.6-2-.6h-3.2v4.6z" fill="white" />
+    </svg>
+  );
+}
+
 export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail]       = useState('');
   const [password, setPassword] = useState('');
+  const [showPw, setShowPw]     = useState(false);
   const [error, setError]       = useState('');
   const [loading, setLoading]   = useState(false);
 
@@ -16,8 +34,7 @@ export default function LoginPage() {
     setLoading(true);
     const supabase = getSupabase();
     const { error: authErr } = await supabase.auth.signInWithPassword({ email, password });
-    if (authErr) { setError('Credenciales incorrectas.'); setLoading(false); return; }
-
+    if (authErr) { setError('Email o contraseña incorrectos.'); setLoading(false); return; }
     const { data: { user } } = await supabase.auth.getUser();
     const { data: perfil } = await supabase.from('perfiles').select('rol').eq('id', user.id).single();
     if (perfil?.rol !== 'admin') {
@@ -29,138 +46,199 @@ export default function LoginPage() {
     router.push('/dashboard');
   }
 
-  const inputSt = {
-    width: '100%', height: 48,
-    background: '#fff',
-    border: '1.5px solid rgba(25,24,26,0.14)',
-    borderRadius: 12, padding: '0 16px',
-    color: '#19181A', fontSize: 15,
-    fontFamily: "'DM Sans', system-ui, sans-serif",
-    outline: 'none', transition: 'border-color .2s',
-  };
-
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=DM+Sans:wght@400;500;600&display=swap');
-        @import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@400,0&display=swap');
-        @keyframes fadeUp { from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none} }
-        @keyframes spin   { to { transform:rotate(360deg) } }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        @keyframes fadeUp  { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:none} }
+        @keyframes spin    { to{transform:rotate(360deg)} }
+        @keyframes gridIn  { from{opacity:0} to{opacity:1} }
+
+        .pl-input {
+          width: 100%; height: 50px;
+          background: #fff;
+          border: 1.5px solid rgba(10,10,10,0.12);
+          border-radius: 10px; padding: 0 16px;
+          color: #0A0A0A; font-size: 15px;
+          font-family: ${BODY};
+          outline: none;
+          transition: border-color .2s, box-shadow .2s;
+          caret-color: ${ORG};
+        }
+        .pl-input::placeholder { color: rgba(10,10,10,0.3); }
+        .pl-input:focus { border-color: ${ORG}; box-shadow: 0 0 0 3px rgba(230,78,27,0.1); }
+        .pl-input:-webkit-autofill,
+        .pl-input:-webkit-autofill:focus {
+          -webkit-box-shadow: 0 0 0 100px #fff inset;
+          -webkit-text-fill-color: #0A0A0A;
+        }
+
+        .pl-btn-primary {
+          height: 50px; width: 100%;
+          background: #0A0A0A; border: none; border-radius: 10px;
+          color: #fff; font-size: 15px; font-weight: 600;
+          font-family: ${BODY}; cursor: pointer;
+          display: flex; align-items: center; justify-content: center; gap: 8px;
+          transition: opacity .2s, transform .15s;
+          margin-top: 4px;
+        }
+        .pl-btn-primary:hover:not(:disabled) { opacity: .85; transform: translateY(-1px); }
+        .pl-btn-primary:disabled { opacity: .5; cursor: not-allowed; }
+
+        .pl-pw-wrap { position: relative; }
+        .pl-pw-wrap .pl-input { padding-right: 48px; }
+        .pl-pw-eye {
+          position: absolute; right: 14px; top: 50%; transform: translateY(-50%);
+          background: none; border: none; cursor: pointer; padding: 4px;
+          color: rgba(10,10,10,0.3); transition: color .2s; line-height: 1;
+        }
+        .pl-pw-eye:hover { color: rgba(10,10,10,0.7); }
+
+        @media (max-width: 720px) {
+          .pl-left { display: none !important; }
+        }
       `}</style>
-      <div style={{
-        minHeight: '100vh', display: 'flex',
-        background: '#FAFAF8',
-        fontFamily: "'DM Sans', system-ui, sans-serif",
-      }}>
-        {/* Left panel — brand */}
-        <div style={{
-          flex: '0 0 420px', background: '#1B2A4A', display: 'flex',
-          flexDirection: 'column', justifyContent: 'space-between',
-          padding: '48px 48px 40px',
-        }} className="p-login-left">
-          <div>
-            <span style={{ fontFamily: "'Bricolage Grotesque', system-ui, sans-serif", fontWeight: 800, fontSize: 22, color: '#fff', letterSpacing: '-.02em' }}>
-              Portia
-            </span>
+
+      <div style={{ minHeight: '100dvh', display: 'flex', background: '#FAFAF8', fontFamily: BODY }}>
+
+        {/* ── LEFT PANEL ─────────────────────────────────────────────────── */}
+        <div className="pl-left" style={{
+          flex: '0 0 480px', background: '#0A0A0A', borderRight: `1px solid rgba(255,255,255,0.08)`,
+          display: 'flex', flexDirection: 'column',
+          padding: '48px', position: 'relative', overflow: 'hidden',
+        }}>
+          {/* subtle grid bg */}
+          <div style={{
+            position: 'absolute', inset: 0, opacity: 0.06,
+            backgroundImage: `
+              linear-gradient(rgba(255,255,255,0.3) 1px, transparent 1px),
+              linear-gradient(90deg, rgba(255,255,255,0.3) 1px, transparent 1px)
+            `,
+            backgroundSize: '40px 40px',
+          }} />
+
+          {/* logo */}
+          <div style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 10 }}>
+            <Mark size={28} />
+            <span style={{ fontFamily: HEAD, fontWeight: 300, fontSize: 18, letterSpacing: '0.08em', color: '#F5F5F3' }}>PORTIA</span>
           </div>
-          <div>
-            <p style={{ fontFamily: "'Bricolage Grotesque', system-ui, sans-serif", fontWeight: 700, fontSize: 'clamp(28px,3.5vw,42px)', color: '#fff', letterSpacing: '-.03em', lineHeight: 1.15, margin: '0 0 16px' }}>
-              Tu edificio.<br />Todo en orden.
+
+          {/* main copy */}
+          <div style={{ position: 'relative', marginTop: 'auto', marginBottom: 'auto', paddingTop: 80 }}>
+            <p style={{
+              fontFamily: HEAD, fontWeight: 200,
+              fontSize: 'clamp(32px,3.2vw,48px)',
+              letterSpacing: '-0.03em', lineHeight: 1.1,
+              color: '#F5F5F3', margin: '0 0 20px',
+            }}>
+              Gestiona tu<br />
+              edificio desde<br />
+              <span style={{ color: ORG, fontWeight: 400 }}>cualquier lugar.</span>
             </p>
-            <p style={{ fontFamily: "'DM Sans', system-ui, sans-serif", fontSize: 15, color: 'rgba(255,255,255,0.5)', lineHeight: 1.6, margin: 0 }}>
-              Panel de administración para edificios residenciales en Chile.
+            <p style={{ fontFamily: BODY, fontWeight: 300, fontSize: 15, color: 'rgba(245,245,243,0.5)', lineHeight: 1.7 }}>
+              Panel de administración para edificios<br />residenciales en Chile.
             </p>
           </div>
-          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-            {['Novedades', 'Visitas', 'Encomiendas', 'Tareas'].map(tag => (
+
+          {/* feature tags */}
+          <div style={{ position: 'relative', display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            {['Novedades', 'Visitas', 'Encomiendas', 'Tareas', 'Turnos'].map(tag => (
               <span key={tag} style={{
-                fontFamily: "'DM Sans', system-ui, sans-serif", fontSize: 12, fontWeight: 500,
-                color: 'rgba(255,255,255,0.45)', background: 'rgba(255,255,255,0.07)',
-                borderRadius: 980, padding: '4px 12px',
-                border: '1px solid rgba(255,255,255,0.1)',
+                fontFamily: BODY, fontSize: 11, fontWeight: 500,
+                color: 'rgba(245,245,243,0.45)', background: 'rgba(245,245,243,0.06)',
+                border: '1px solid rgba(245,245,243,0.12)', borderRadius: 100, padding: '5px 13px',
               }}>{tag}</span>
             ))}
           </div>
         </div>
 
-        {/* Right panel — form */}
+        {/* ── RIGHT PANEL — FORM ─────────────────────────────────────────── */}
         <div style={{
           flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center',
-          padding: '40px 40px',
+          padding: '40px 48px', background: '#FAFAF8',
         }}>
-          <div style={{ width: '100%', maxWidth: 380, animation: 'fadeUp .6s both' }}>
-            <h1 style={{
-              fontFamily: "'Bricolage Grotesque', system-ui, sans-serif",
-              fontWeight: 700, fontSize: 26, color: '#19181A',
-              letterSpacing: '-.02em', margin: '0 0 6px',
-            }}>Bienvenido de vuelta</h1>
-            <p style={{ fontSize: 15, color: '#6A6762', margin: '0 0 36px', lineHeight: 1.5 }}>
-              Ingresa con tu cuenta de administrador
-            </p>
+          <div style={{ width: '100%', maxWidth: 360, animation: 'fadeUp .6s cubic-bezier(.16,1,.3,1) both' }}>
 
-            <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            {/* header */}
+            <div style={{ marginBottom: 40 }}>
+              <h1 style={{
+                fontFamily: HEAD, fontWeight: 300, fontSize: 28,
+                color: '#0A0A0A', letterSpacing: '-0.025em', marginBottom: 8,
+              }}>Bienvenido de vuelta</h1>
+              <p style={{ fontFamily: BODY, fontWeight: 300, fontSize: 14, color: 'rgba(10,10,10,0.5)', lineHeight: 1.5 }}>
+                Ingresa con tu cuenta de administrador
+              </p>
+            </div>
+
+            <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+
+              {/* email */}
               <div>
-                <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#19181A', marginBottom: 7 }}>Email</label>
+                <label style={{ display: 'block', fontFamily: BODY, fontSize: 12, fontWeight: 600, color: 'rgba(10,10,10,0.45)', letterSpacing: '0.04em', textTransform: 'uppercase', marginBottom: 8 }}>
+                  Email
+                </label>
                 <input
-                  type="email" style={inputSt}
+                  className="pl-input" type="email"
                   placeholder="admin@edificio.cl"
                   value={email} onChange={e => setEmail(e.target.value)}
-                  required autoFocus
-                  onFocus={e => e.target.style.borderColor = '#1B2A4A'}
-                  onBlur={e => e.target.style.borderColor = 'rgba(25,24,26,0.14)'}
-                />
-              </div>
-              <div>
-                <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#19181A', marginBottom: 7 }}>Contraseña</label>
-                <input
-                  type="password" style={inputSt}
-                  placeholder="••••••••"
-                  value={password} onChange={e => setPassword(e.target.value)}
-                  required
-                  onFocus={e => e.target.style.borderColor = '#1B2A4A'}
-                  onBlur={e => e.target.style.borderColor = 'rgba(25,24,26,0.14)'}
+                  required autoFocus autoComplete="email"
                 />
               </div>
 
+              {/* password */}
+              <div>
+                <label style={{ display: 'block', fontFamily: BODY, fontSize: 12, fontWeight: 600, color: 'rgba(10,10,10,0.45)', letterSpacing: '0.04em', textTransform: 'uppercase', marginBottom: 8 }}>
+                  Contraseña
+                </label>
+                <div className="pl-pw-wrap">
+                  <input
+                    className="pl-input"
+                    type={showPw ? 'text' : 'password'}
+                    placeholder="••••••••"
+                    value={password} onChange={e => setPassword(e.target.value)}
+                    required autoComplete="current-password"
+                  />
+                  <button type="button" className="pl-pw-eye" onClick={() => setShowPw(s => !s)} aria-label={showPw ? 'Ocultar contraseña' : 'Mostrar contraseña'}>
+                    {showPw
+                      ? <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                      : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                    }
+                  </button>
+                </div>
+              </div>
+
+              {/* error */}
               {error && (
                 <div style={{
-                  display: 'flex', alignItems: 'center', gap: 10,
-                  background: '#FEF0F0', border: '1px solid rgba(196,43,43,0.15)',
-                  borderRadius: 10, padding: '11px 14px',
+                  display: 'flex', alignItems: 'flex-start', gap: 10,
+                  background: 'rgba(220,38,38,0.08)', border: '1px solid rgba(220,38,38,0.2)',
+                  borderRadius: 8, padding: '11px 14px',
                 }}>
-                  <span style={{ fontFamily: 'Material Symbols Outlined', fontSize: 16, color: '#C42B2B', flexShrink: 0 }}>error</span>
-                  <span style={{ fontSize: 13, color: '#C42B2B' }}>{error}</span>
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#f87171" strokeWidth="2" style={{ flexShrink: 0, marginTop: 1 }}><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                  <span style={{ fontFamily: BODY, fontSize: 13, color: '#f87171', lineHeight: 1.5 }}>{error}</span>
                 </div>
               )}
 
-              <button
-                type="submit" disabled={loading}
-                style={{
-                  height: 50, background: '#1B2A4A', border: 'none', borderRadius: 12,
-                  color: '#fff', fontSize: 15, fontWeight: 600,
-                  cursor: loading ? 'not-allowed' : 'pointer',
-                  opacity: loading ? 0.7 : 1,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                  fontFamily: "'DM Sans', system-ui, sans-serif",
-                  marginTop: 4, transition: 'opacity .2s',
-                }}
-                onMouseEnter={e => { if (!loading) e.currentTarget.style.opacity = '.86'; }}
-                onMouseLeave={e => { e.currentTarget.style.opacity = loading ? '.7' : '1'; }}
-              >
+              {/* submit */}
+              <button type="submit" className="pl-btn-primary" disabled={loading}>
                 {loading
-                  ? <><div style={{ width: 16, height: 16, border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin .8s linear infinite' }} />Ingresando…</>
-                  : 'Ingresar'}
+                  ? <><div style={{ width: 15, height: 15, border: '2px solid rgba(12,12,12,0.3)', borderTopColor: BG, borderRadius: '50%', animation: 'spin .7s linear infinite' }} />Ingresando…</>
+                  : 'Ingresar al panel'
+                }
               </button>
             </form>
+
+            <p style={{ fontFamily: BODY, fontWeight: 300, fontSize: 12, color: 'rgba(10,10,10,0.3)', textAlign: 'center', marginTop: 28 }}>
+              ¿No tienes acceso?{' '}
+              <a href="mailto:hola@portia.cl" style={{ color: INK2, textDecoration: 'none' }}
+                onMouseEnter={e => e.currentTarget.style.color = INK}
+                onMouseLeave={e => e.currentTarget.style.color = INK2}
+              >Contacta a tu administrador</a>
+            </p>
           </div>
         </div>
       </div>
-
-      <style>{`
-        @media (max-width: 720px) {
-          .p-login-left { display: none !important; }
-        }
-      `}</style>
     </>
   );
 }

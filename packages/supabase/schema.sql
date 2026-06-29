@@ -325,3 +325,24 @@ create policy "tareas del edificio" on public.tareas
 -- edificios: la lectura sigue restringida al edificio propio.
 -- La escritura de edificios queda reservada al backend (service_role), que salta RLS.
 -- No se agrega policy de escritura para usuarios anon a propósito.
+
+-- ============================================================
+-- MIGRACIÓN — Cron de retención Ley 21.719 (29-jun-2026)
+-- ============================================================
+-- La función cleanup_old_visitas() ya existía pero no se ejecutaba sola.
+-- Se habilita pg_cron y se programa la limpieza diaria de visitas > 30 días.
+--
+-- Aplicado en producción (proyecto cpxywvxwdnpsrxqjoqjl) el 29-jun-2026
+-- vía Supabase Management API. Job id: 1.
+
+create extension if not exists pg_cron;
+
+select cron.schedule(
+  'cleanup-old-visitas',
+  '0 4 * * *',                                   -- todos los días a las 04:00 UTC
+  $$select public.cleanup_old_visitas();$$
+);
+
+-- Para revisar el job: select * from cron.job;
+-- Para ver ejecuciones:  select * from cron.job_run_details order by start_time desc limit 20;
+-- Para desactivar:       select cron.unschedule('cleanup-old-visitas');

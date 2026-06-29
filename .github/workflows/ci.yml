@@ -38,9 +38,6 @@ jobs:
   admin:
     name: admin (build)
     runs-on: ubuntu-latest
-    # Fallo preexistente: el build de admin lanza React #31 al prerenderizar /404.
-    # No bloquea mientras se arregla en su propio PR. No es un check requerido.
-    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
 
