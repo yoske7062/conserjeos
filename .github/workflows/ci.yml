@@ -1,0 +1,60 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+# Mínimo privilegio: CI solo necesita leer el repo.
+permissions:
+  contents: read
+
+jobs:
+  desktop:
+    name: desktop (build + test)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/desktop
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: apps/desktop/package-lock.json
+
+      - name: Instalación limpia
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Pruebas
+        run: npm test
+
+  admin:
+    name: admin (build)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Instalación limpia (workspace)
+        run: npm ci
+
+      - name: Build admin
+        working-directory: apps/admin
+        # Valores placeholder: el build no contacta Supabase, solo necesita que
+        # las variables existan para no romper en tiempo de compilación.
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: https://placeholder.supabase.co
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: placeholder-anon-key
+          SUPABASE_SERVICE_ROLE_KEY: placeholder-service-key
+        run: npm run build

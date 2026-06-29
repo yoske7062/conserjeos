@@ -1,175 +1,198 @@
 import { useState } from 'react';
 import { supabase } from '../lib/supabase';
+import logoPortia from '../assets/logo_portia.png';
 
-const GOLD  = '#C8932F';
-const NAVY  = '#1B2A4A';
-const BODY  = "'DM Sans', -apple-system, sans-serif";
-const ICON  = 'Material Symbols Outlined';
+const NAVY   = '#0A1C40';
+const ORANGE = '#E6701E';
+const BLUE   = '#2471E7';
+const HEAD   = "'Sora', system-ui, sans-serif";
+const BODY   = "'DM Sans', -apple-system, sans-serif";
+const ICON   = 'Material Symbols Outlined';
 
-function PortiaLogo() {
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 48 }}>
-      <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
-        <rect width="36" height="36" rx="9" fill={GOLD}/>
-        <path d="M11 9h7.4c1.9 0 3.4.5 4.5 1.5 1 1 1.5 2.4 1.5 4s-.5 3-1.5 4c-1 1-2.6 1.5-4.5 1.5h-3.7V27H11V9zm3.2 8.4h4c1.1 0 2-.3 2.5-.8.6-.5.8-1.2.8-2.1 0-.9-.2-1.6-.8-2.1-.5-.5-1.4-.8-2.5-.8h-4v5.8z" fill="white"/>
-      </svg>
-      <span style={{ fontFamily: BODY, fontWeight: 700, fontSize: 22, letterSpacing: '0.06em', color: '#fff' }}>PORTIA</span>
-    </div>
-  );
-}
+const FEATURES = [
+  { label: 'Novedades',   sub: 'Libro digital',   dot: ORANGE },
+  { label: 'Visitas',     sub: 'RUT validado',     dot: BLUE   },
+  { label: 'Encomiendas', sub: 'Alertas urgentes', dot: '#5BB3FD' },
+  { label: 'Tareas',      sub: 'Del administrador',dot: 'rgba(255,255,255,0.35)' },
+];
+
+const INPUT_BASE = {
+  width: '100%', height: 48, padding: '0 14px', borderRadius: 12,
+  background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.1)',
+  color: '#fff', fontSize: 14, fontFamily: BODY, outline: 'none',
+  boxSizing: 'border-box', transition: 'border-color .15s, background .15s',
+  WebkitFontSmoothing: 'antialiased',
+};
 
 export default function Login() {
-  const [email, setEmail]       = useState('');
+  const [email,    setEmail]    = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError]       = useState('');
-  const [loading, setLoading]   = useState(false);
-  const [showPwd, setShowPwd]   = useState(false);
+  const [error,    setError]    = useState('');
+  const [loading,  setLoading]  = useState(false);
+  const [showPwd,  setShowPwd]  = useState(false);
 
   async function handleLogin(e) {
     e.preventDefault();
     setError('');
     setLoading(true);
     const { error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) setError('Credenciales incorrectas. Verifica tu email y contraseña.');
+    if (error) setError('Credenciales incorrectas.');
     setLoading(false);
   }
 
   return (
-    <div style={{ display: 'flex', height: '100vh', fontFamily: BODY }}>
+    <div style={{ display: 'flex', height: '100vh', background: NAVY, fontFamily: BODY, position: 'relative' }}>
 
-      {/* ── Panel izquierdo — branding ──────────────────────────────────── */}
+      {/* Drag strip — full width, no bloquea contenido */}
+      <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 28, WebkitAppRegion: 'drag', zIndex: 10 }} />
+
+      {/* ── Panel izquierdo — branding ── */}
       <div style={{
-        width: 400, background: NAVY, flexShrink: 0,
-        padding: '48px 44px 40px',
-        display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
+        width: 400, flexShrink: 0,
+        padding: '52px 44px 44px',
+        display: 'flex', flexDirection: 'column', gap: 0,
+        borderRight: '1px solid rgba(255,255,255,0.05)',
       }}>
-        <div>
-          <PortiaLogo />
 
-          <p style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.4)', letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 14 }}>
-            Conserjería digital
-          </p>
-          <h2 style={{ fontFamily: BODY, fontSize: 24, fontWeight: 700, color: '#fff', lineHeight: 1.3, marginBottom: 14 }}>
-            El orden que tu edificio siempre mereció.
-          </h2>
-          <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.5)', lineHeight: 1.7 }}>
-            Novedades, visitas, encomiendas y turnos — todo trazado, sin papel.
-          </p>
+        {/* Logo */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 56 }}>
+          <img src={logoPortia} width={52} height={52} style={{ borderRadius: 12, display: 'block', flexShrink: 0 }} alt="Portia" />
+          <span style={{ fontFamily: HEAD, fontWeight: 700, fontSize: 26, letterSpacing: '0.08em', color: '#fff' }}>
+            PORTIA
+          </span>
+        </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 40 }}>
-            {[
-              { icon: 'campaign',    text: 'Libro de novedades digital' },
-              { icon: 'group',       text: 'Control de visitas con RUT validado' },
-              { icon: 'inventory_2', text: 'Encomiendas con alerta de perecibles' },
-              { icon: 'task_alt',    text: 'Tareas asignadas por el administrador' },
-            ].map(({ icon, text }) => (
-              <div key={text} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                <span style={{
-                  fontFamily: ICON, fontSize: 18,
-                  color: GOLD, flexShrink: 0,
-                }}>{icon}</span>
-                <span style={{ fontSize: 13.5, color: 'rgba(255,255,255,0.6)', fontWeight: 400 }}>{text}</span>
-              </div>
-            ))}
+        {/* Headline */}
+        <div style={{ marginBottom: 16 }}>
+          <div style={{ fontFamily: HEAD, fontSize: 38, fontWeight: 700, color: '#fff', lineHeight: 1.1, letterSpacing: '-0.03em' }}>
+            Tu edificio.
+          </div>
+          <div style={{ fontFamily: HEAD, fontSize: 38, fontWeight: 700, color: ORANGE, lineHeight: 1.1, letterSpacing: '-0.03em' }}>
+            En orden.
           </div>
         </div>
 
-        <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.2)', borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 16 }}>
-          ¿Eres administrador? Accede desde el panel web.
+        {/* Tagline */}
+        <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.42)', lineHeight: 1.6, margin: '0 0 52px', fontWeight: 400 }}>
+          Todo lo que necesita un conserje,<br/>en una sola pantalla.
         </p>
+
+        {/* Feature grid 2x2 */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+          {FEATURES.map(f => (
+            <div key={f.label} style={{
+              background: 'rgba(255,255,255,0.04)',
+              border: '1px solid rgba(255,255,255,0.07)',
+              borderRadius: 12, padding: '14px 16px',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 4 }}>
+                <span style={{ width: 6, height: 6, borderRadius: '50%', background: f.dot, flexShrink: 0, display: 'inline-block' }} />
+                <span style={{ fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,0.88)', letterSpacing: '-0.01em' }}>{f.label}</span>
+              </div>
+              <div style={{ fontSize: 11.5, color: 'rgba(255,255,255,0.3)', fontWeight: 400, paddingLeft: 13 }}>{f.sub}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* Admin link */}
+        <div style={{ marginTop: 'auto', paddingTop: 44 }}>
+          <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.2)', margin: 0 }}>
+            ¿Administrador? Accede desde el panel web.
+          </p>
+        </div>
       </div>
 
-      {/* ── Panel derecho — formulario ──────────────────────────────────── */}
-      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 40, background: '#FAFAF8' }}>
-        <div style={{ width: '100%', maxWidth: 360 }}>
-          <h1 style={{ fontFamily: BODY, fontSize: 26, fontWeight: 700, color: '#19181A', marginBottom: 6, letterSpacing: '-0.3px' }}>
-            Bienvenido
-          </h1>
-          <p style={{ fontSize: 14, color: '#6A6762', marginBottom: 36 }}>
-            Ingresa tus credenciales para comenzar el turno
-          </p>
+      {/* ── Panel derecho — formulario ── */}
+      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 60px', background: '#FAFAF8' }}>
+        <div style={{ width: '100%', maxWidth: 340 }}>
 
-          <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-            {/* Email */}
+          {/* Micro label */}
+          <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(25,24,26,0.35)', marginBottom: 10 }}>
+            Acceso conserje
+          </p>
+          <h1 style={{ fontFamily: HEAD, fontSize: 28, fontWeight: 700, color: '#19181A', letterSpacing: '-0.03em', lineHeight: 1.1, marginBottom: 40 }}>
+            Iniciar turno
+          </h1>
+
+          <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+
             <div>
-              <label style={{ display: 'block', fontSize: 11, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#6A6762', marginBottom: 8 }}>Email</label>
+              <label style={{ display: 'block', fontSize: 11, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(25,24,26,0.45)', marginBottom: 8 }}>
+                Email
+              </label>
               <input
-                type="email" placeholder="conserje@edificio.cl"
+                type="email" placeholder="conserje@edificio.cl" autoFocus required
                 value={email} onChange={e => setEmail(e.target.value)}
-                required autoFocus
-                style={{
-                  width: '100%', height: 46, padding: '0 14px',
-                  background: '#fff', border: '1.5px solid rgba(25,24,26,0.13)',
-                  borderRadius: 10, color: '#19181A', fontSize: 14, fontFamily: BODY,
-                  outline: 'none', boxSizing: 'border-box',
-                  transition: 'border-color .15s, box-shadow .15s',
-                }}
-                onFocus={e => { e.target.style.borderColor = NAVY; e.target.style.boxShadow = `0 0 0 3px rgba(27,42,74,0.1)`; }}
-                onBlur={e => { e.target.style.borderColor = 'rgba(25,24,26,0.13)'; e.target.style.boxShadow = 'none'; }}
+                style={{ width: '100%', height: 48, padding: '0 14px', borderRadius: 12, background: '#fff', border: '1.5px solid rgba(25,24,26,0.12)', color: '#19181A', fontSize: 14, fontFamily: BODY, outline: 'none', boxSizing: 'border-box', transition: 'border-color .15s' }}
+                onFocus={e => e.target.style.borderColor = ORANGE}
+                onBlur={e => e.target.style.borderColor = 'rgba(25,24,26,0.12)'}
               />
             </div>
 
-            {/* Contraseña */}
             <div>
-              <label style={{ display: 'block', fontSize: 11, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#6A6762', marginBottom: 8 }}>Contraseña</label>
+              <label style={{ display: 'block', fontSize: 11, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(25,24,26,0.45)', marginBottom: 8 }}>
+                Contraseña
+              </label>
               <div style={{ position: 'relative' }}>
                 <input
-                  type={showPwd ? 'text' : 'password'} placeholder="••••••••"
+                  type={showPwd ? 'text' : 'password'} placeholder="••••••••" required
                   value={password} onChange={e => setPassword(e.target.value)}
-                  required
-                  style={{
-                    width: '100%', height: 46, padding: '0 46px 0 14px',
-                    background: '#fff', border: '1.5px solid rgba(25,24,26,0.13)',
-                    borderRadius: 10, color: '#19181A', fontSize: 14, fontFamily: BODY,
-                    outline: 'none', boxSizing: 'border-box',
-                    transition: 'border-color .15s, box-shadow .15s',
-                  }}
-                  onFocus={e => { e.target.style.borderColor = NAVY; e.target.style.boxShadow = `0 0 0 3px rgba(27,42,74,0.1)`; }}
-                  onBlur={e => { e.target.style.borderColor = 'rgba(25,24,26,0.13)'; e.target.style.boxShadow = 'none'; }}
+                  style={{ width: '100%', height: 48, padding: '0 46px 0 14px', borderRadius: 12, background: '#fff', border: '1.5px solid rgba(25,24,26,0.12)', color: '#19181A', fontSize: 14, fontFamily: BODY, outline: 'none', boxSizing: 'border-box', transition: 'border-color .15s' }}
+                  onFocus={e => e.target.style.borderColor = ORANGE}
+                  onBlur={e => e.target.style.borderColor = 'rgba(25,24,26,0.12)'}
                 />
-                <button type="button" onClick={() => setShowPwd(v => !v)} style={{ position: 'absolute', right: 13, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#B4B0A9', padding: 0 }}>
+                <button
+                  type="button" onClick={() => setShowPwd(v => !v)}
+                  style={{ position: 'absolute', right: 13, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#B4B0A9', padding: 0, display: 'flex', alignItems: 'center' }}
+                >
                   <span style={{ fontFamily: ICON, fontSize: 20 }}>{showPwd ? 'visibility_off' : 'visibility'}</span>
                 </button>
               </div>
             </div>
 
             {error && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(229,72,77,0.06)', borderLeft: '3px solid #E5484D', borderRadius: '0 8px 8px 0', padding: '12px 14px' }}>
-                <span style={{ fontFamily: ICON, fontSize: 18, color: '#E5484D', flexShrink: 0 }}>error</span>
-                <span style={{ fontSize: 13.5, color: '#E5484D', fontWeight: 500 }}>{error}</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 9, background: 'rgba(196,43,43,0.06)', border: '1px solid rgba(196,43,43,0.2)', borderRadius: 10, padding: '11px 14px' }}>
+                <span style={{ fontFamily: ICON, fontSize: 17, color: '#C42B2B', flexShrink: 0 }}>error</span>
+                <span style={{ fontSize: 13, color: '#C42B2B', fontWeight: 500 }}>{error}</span>
               </div>
             )}
 
             <button
               type="submit" disabled={loading}
               style={{
-                height: 46, background: NAVY, color: '#fff',
-                border: 'none', borderRadius: 980,
-                fontSize: 14, fontWeight: 600, fontFamily: BODY,
-                cursor: loading ? 'not-allowed' : 'pointer',
+                height: 50, background: ORANGE, color: '#fff', border: 'none',
+                borderRadius: 12, fontSize: 15, fontWeight: 700, fontFamily: BODY,
+                cursor: loading ? 'not-allowed' : 'pointer', marginTop: 4,
                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                transition: 'filter .15s', marginTop: 4,
-                opacity: loading ? 0.65 : 1,
+                opacity: loading ? 0.7 : 1, transition: 'filter .15s, opacity .15s',
+                letterSpacing: '0.01em',
               }}
-              onMouseEnter={e => { if (!loading) e.currentTarget.style.filter = 'brightness(1.2)'; }}
-              onMouseLeave={e => { e.currentTarget.style.filter = 'none'; }}
+              onMouseEnter={e => { if (!loading) e.currentTarget.style.filter = 'brightness(1.1)'; }}
+              onMouseLeave={e => e.currentTarget.style.filter = 'none'}
             >
-              {loading ? (
-                <>
-                  <div style={{ width: 17, height: 17, border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin .8s linear infinite' }} />
-                  Ingresando…
-                </>
-              ) : 'Iniciar sesión'}
+              {loading
+                ? <><div style={{ width: 17, height: 17, border: '2px solid rgba(255,255,255,0.35)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin .8s linear infinite' }} /> Ingresando…</>
+                : 'Ingresar'
+              }
             </button>
+
           </form>
 
-          <p style={{ textAlign: 'center', fontSize: 12, color: '#B4B0A9', marginTop: 28 }}>
-            ¿Problemas para ingresar? Contacta a tu administrador.
+          <p style={{ textAlign: 'center', fontSize: 12, color: '#B4B0A9', marginTop: 28, lineHeight: 1.5 }}>
+            ¿Problemas para ingresar?<br/>
+            Contacta a tu administrador.
           </p>
         </div>
       </div>
 
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      <style>{`
+        @keyframes spin { to { transform: rotate(360deg); } }
+        input::placeholder { color: rgba(25,24,26,0.28); }
+        input:-webkit-autofill {
+          -webkit-box-shadow: 0 0 0 1000px #fff inset;
+          -webkit-text-fill-color: #19181A;
+        }
+      `}</style>
     </div>
   );
 }

@@ -106,7 +106,7 @@ export default function Visitas({ perfil, turno }) {
   const [visitas, setVisitas]         = useState([]);
   const [loading, setLoading]         = useState(true);
   const [mostrarForm, setMostrarForm] = useState(false);
-  const [form, setForm]               = useState({ nombre_visitante: '', rut_visitante: '', destino: '', motivo: '' });
+  const [form, setForm]               = useState({ nombre_visitante: '', rut_visitante: '', destino: '', motivo: '', consentimiento_ley: false });
   const [enviando, setEnviando]       = useState(false);
   const [errorMsg, setErrorMsg]       = useState('');
 
@@ -152,6 +152,10 @@ export default function Visitas({ perfil, turno }) {
       setErrorMsg('El RUT del visitante no es válido. Revísalo antes de registrar la entrada.');
       return;
     }
+    if (!form.consentimiento_ley) {
+      setErrorMsg('Debe confirmar que el visitante consiente el registro de sus datos según Ley 21.719.');
+      return;
+    }
     if (!navigator.onLine) {
       const ahora = new Date().toISOString();
       enqueue({ table: 'visitas', op: 'insert', payload: {
@@ -159,7 +163,7 @@ export default function Visitas({ perfil, turno }) {
         turno_id: turno?.id ?? null, entrada: ahora, activa: true, ...form,
       }});
       setMostrarForm(false);
-      setForm({ nombre_visitante: '', rut_visitante: '', destino: '', motivo: '' });
+      setForm({ nombre_visitante: '', rut_visitante: '', destino: '', motivo: '', consentimiento_ley: false });
       return;
     }
     setEnviando(true);
@@ -171,7 +175,7 @@ export default function Visitas({ perfil, turno }) {
     if (error) {
       setErrorMsg('No se pudo registrar la visita. Tus datos no se perdieron, intenta de nuevo.');
     } else {
-      setMostrarForm(false); setForm({ nombre_visitante: '', rut_visitante: '', destino: '', motivo: '' }); cargarVisitas();
+      setMostrarForm(false); setForm({ nombre_visitante: '', rut_visitante: '', destino: '', motivo: '', consentimiento_ley: false }); cargarVisitas();
     }
     setEnviando(false);
   }
@@ -402,6 +406,22 @@ export default function Visitas({ perfil, turno }) {
                   />
                 </div>
               ))}
+              <label style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '8px 0 12px', cursor: 'pointer' }}>
+                <input
+                  type="checkbox"
+                  checked={form.consentimiento_ley}
+                  onChange={e => setForm(f => ({ ...f, consentimiento_ley: e.target.checked }))}
+                  style={{ width: 16, height: 16, cursor: 'pointer' }}
+                />
+                <span style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.3 }}>
+                  El visitante consiente el registro de datos (Ley 21.719). Se eliminarán en 30 días.
+                </span>
+              </label>
+              {errorMsg && (
+                <div style={{ color: 'var(--crit-tx)', background: 'var(--crit-bg)', border: '1px solid var(--crit-border)', padding: '10px 12px', borderRadius: 8, fontSize: 13 }}>
+                  {errorMsg}
+                </div>
+              )}
               <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
                 <button type="button" onClick={() => setMostrarForm(false)} style={{ flex: 1, height: 48, background: 'transparent', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 16, cursor: 'pointer', fontFamily: 'inherit' }}>Cancelar</button>
                 <button type="submit" disabled={enviando} style={{ flex: 1, height: 48, background: 'var(--brand)', border: 'none', borderRadius: 8, color: 'var(--brand-text-on)', fontSize: 16, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>{enviando ? '...' : 'Registrar entrada'}</button>

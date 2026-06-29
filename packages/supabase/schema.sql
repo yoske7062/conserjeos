@@ -250,6 +250,105 @@ alter table public.tareas enable row level security;
 create policy "tareas del edificio" on public.tareas
   for all using (edificio_id = public.mi_edificio_id());
 
+-- Contexto: Ley 21.719 (28-jun-2026)
+
+-- ============================================================
+-- MIGRACIÓN — Consentimiento y Retención Ley 21.719 (28-jun-2026)
+-- ============================================================
+-- 1. Agregar columna para registrar consentimiento
+alter table public.visitas add column if not exists consentimiento_ley boolean not null default false;
+
+-- 2. Función de limpieza de visitas antiguas (retención de 30 días)
+create or replace function public.cleanup_old_visitas()
+returns void language plpgsql security definer as $$
+begin
+  delete from public.visitas where entrada < now() - interval '30 days';
+end;
+$$;
+
+-- ============================================================
+-- MIGRACIÓN — RLS con WITH CHECK en escritura (28-jun-2026)
+-- ============================================================
+-- Hallazgo (revisión técnica): las políticas usaban `for all using (...)`
+-- SIN `with check`. La cláusula `using` no se evalúa en INSERT, por lo que
+-- un usuario autenticado podía INSERTAR filas con un edificio_id ajeno
+-- (y reasignar filas a otro edificio en UPDATE). `with check` cierra ese hueco.
+--
+-- Estado previo: lectura aislada por edificio OK; escritura no validada.
+-- Estado nuevo: lectura y escritura validadas por edificio en todas las tablas.
+--
+-- Reversible: sí. Para revertir, recrear cada policy con solo `using (...)`.
+-- No destructivo: no borra datos, solo refuerza la validación de escritura.
+--
+-- Ejecutar en Supabase → SQL Editor. Se recrea cada policy de forma idempotente.
+
+-- perfiles
+drop policy if exists "perfiles del edificio" on public.perfiles;
+create policy "perfiles del edificio" on public.perfiles
+  for all
+  using      (edificio_id = public.mi_edificio_id())
+  with check (edificio_id = public.mi_edificio_id());
+
+-- turnos
+drop policy if exists "turnos del edificio" on public.turnos;
+create policy "turnos del edificio" on public.turnos
+  for all
+  using      (edificio_id = public.mi_edificio_id())
+  with check (edificio_id = public.mi_edificio_id());
+
+-- novedades
+drop policy if exists "novedades del edificio" on public.novedades;
+create policy "novedades del edificio" on public.novedades
+  for all
+  using      (edificio_id = public.mi_edificio_id())
+  with check (edificio_id = public.mi_edificio_id());
+
+-- visitas
+drop policy if exists "visitas del edificio" on public.visitas;
+create policy "visitas del edificio" on public.visitas
+  for all
+  using      (edificio_id = public.mi_edificio_id())
+  with check (edificio_id = public.mi_edificio_id());
+
+-- encomiendas
+drop policy if exists "encomiendas del edificio" on public.encomiendas;
+create policy "encomiendas del edificio" on public.encomiendas
+  for all
+  using      (edificio_id = public.mi_edificio_id())
+  with check (edificio_id = public.mi_edificio_id());
+
+-- tareas
+drop policy if exists "tareas del edificio" on public.tareas;
+create policy "tareas del edificio" on public.tareas
+  for all
+  using      (edificio_id = public.mi_edificio_id())
+  with check (edificio_id = public.mi_edificio_id());
+
+-- edificios: la lectura sigue restringida al edificio propio.
+-- La escritura de edificios queda reservada al backend (service_role), que salta RLS.
+-- No se agrega policy de escritura para usuarios anon a propósito.
+
+-- ============================================================
+-- MIGRACIÓN — Cron de retención Ley 21.719 (29-jun-2026)
+-- ============================================================
+-- La función cleanup_old_visitas() ya existía pero no se ejecutaba sola.
+-- Se habilita pg_cron y se programa la limpieza diaria de visitas > 30 días.
+--
+-- Aplicado en producción (proyecto cpxywvxwdnpsrxqjoqjl) el 29-jun-2026
+-- vía Supabase Management API. Job id: 1.
+
+create extension if not exists pg_cron;
+
+select cron.schedule(
+  'cleanup-old-visitas',
+  '0 4 * * *',                                   -- todos los días a las 04:00 UTC
+  $$select public.cleanup_old_visitas();$$
+);
+
+-- Para revisar el job: select * from cron.job;
+-- Para ver ejecuciones:  select * from cron.job_run_details order by start_time desc limit 20;
+-- Para desactivar:       select cron.unschedule('cleanup-old-visitas');
+
 -- ============================================================
 -- MIGRACIÓN — Trazabilidad de retiro de encomiendas (28-jun-2026)
 -- ============================================================

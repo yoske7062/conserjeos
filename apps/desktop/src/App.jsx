@@ -47,10 +47,6 @@ export default function App() {
     return <Dashboard session={session} perfil={perfil} />;
   })();
 
-  return (
-    <>
-      <div className="drag-region" />
-      {content}
-    </>
-  );
+  return <>{content}</>;
+
 }

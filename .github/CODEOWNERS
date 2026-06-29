@@ -1,0 +1,15 @@
+# CODEOWNERS — responsables por área.
+# Se solicita revisión automática del owner cuando un PR toca estos archivos.
+
+# Por defecto, todo lo revisa Diego.
+*                       @yoske7062
+
+# Backend / base de datos
+/packages/supabase/     @yoske7062
+
+# Infraestructura y CI/CD
+/.github/               @yoske7062
+
+# Documentación de ingeniería y seguridad
+/docs/engineering/      @yoske7062
+/docs/security/         @yoske7062

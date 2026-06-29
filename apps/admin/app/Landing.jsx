@@ -1,277 +1,570 @@
 'use client';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import { motion } from 'framer-motion';
 
-const INK    = '#0a0a0a';
-const INK2   = '#555';
-const INK3   = '#999';
-const ORANGE = '#E64E1B';
-const LINE   = 'rgba(0,0,0,0.08)';
-const HEAD   = "'Sora', system-ui, sans-serif";
-const BODY   = "'Manrope', system-ui, sans-serif";
-const EYE    = { fontFamily: BODY, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.26em', fontWeight: 500, color: ORANGE };
+/* ── DESIGN SYSTEM — UI/UX Pro Max: Feature-Rich Showcase + Swiss Modernism 2.0 ─
+   Style:   Editorial bold + Feature-Rich Showcase
+   Color:   Warm off-white bg, #0F172A navy ink, #E64E1B orange accent
+            Each feature module gets its own color identity
+   Font:    Inter (Google Fonts)
+   Pattern: Scroll-Triggered Storytelling — problema → solución → funciones → CTA
+   Logo:    Official Vector SVG PortiaLogo
+   Anim:    transform/opacity only, 150-400ms, cubic-bezier(.16,1,.3,1)
+            prefers-reduced-motion fully respected
+ ───────────────────────────────────────────────────────────────────────────── */
 
-const GH_BASE = 'https://github.com/yoske7062/conserjeos/releases/download/v1.1.8';
-function descargar() {
-  const ua = navigator.userAgent;
-  if (/Win/i.test(ua)) { window.location.href = `${GH_BASE}/Portia-Setup-1.1.0.exe`; return; }
-  const isArm = /arm64|aarch64/i.test(navigator.platform + ua) || typeof navigator.gpu !== 'undefined';
-  window.location.href = isArm ? `${GH_BASE}/Portia-1.1.0-arm64.dmg` : `${GH_BASE}/Portia-1.1.0-x64.dmg`;
-}
+const T = {
+  bg:       '#FFFFFF',
+  bgWarm:   '#FFFAF8',
+  bgDark:   '#0F172A',
+  bgSubtle: '#F8FAFC',
+  ink:      '#0F172A',
+  inkMid:   '#64748B',
+  inkSub:   '#94A3B8',
+  border:   '#E2E8F0',
+  accent:   '#E64E1B',
+  accentBg: 'rgba(230,78,27,0.07)',
+  font:     "'Inter', system-ui, -apple-system, sans-serif",
+};
 
-function Mark({ size = 28 }) {
+/* ── PORTIA OFFICIAL LOGO SVG ────────────────────────────────────────────── */
+function PortiaLogo({ dark = false, size = 32 }) {
+  const markColor = '#E64E1B'; // Terracota Accent
+  const textColor = dark ? '#FFFFFF' : '#0F172A'; // White or Navy
   return (
-    <svg width={size} height={size} viewBox="0 0 28 28" fill="none">
-      <rect width="28" height="28" rx="7" fill={ORANGE}/>
-      <path d="M9 7h5.8c1.5 0 2.7.4 3.5 1.2.8.8 1.2 1.8 1.2 3.1s-.4 2.4-1.2 3.1c-.8.8-2 1.2-3.5 1.2H11.4V21H9V7zm2.4 6.6h3.2c.9 0 1.5-.2 2-.6.4-.4.6-.9.6-1.7s-.2-1.3-.6-1.7c-.4-.4-1.1-.6-2-.6h-3.2v4.6z" fill="white"/>
-    </svg>
-  );
-}
-
-function Logo({ size = 'nav' }) {
-  const s = size === 'nav' ? { mark: 24, font: 19, gap: 10 } : { mark: 30, font: 24, gap: 12 };
-  return (
-    <span style={{ display: 'inline-flex', alignItems: 'center', gap: s.gap }}>
-      <Mark size={s.mark} />
-      <span style={{ fontFamily: HEAD, fontWeight: 300, fontSize: s.font, letterSpacing: '0.08em', color: INK }}>PORTIA</span>
+    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 10, textDecoration: 'none' }}>
+      <svg width={size} height={size} viewBox="0 0 28 28" fill="none" style={{ flexShrink: 0 }}>
+        <rect width="28" height="28" rx="7" fill={markColor}/>
+        <path d="M9 7h5.8c1.5 0 2.7.4 3.5 1.2.8.8 1.2 1.8 1.2 3.1s-.4 2.4-1.2 3.1c-.8.8-2 1.2-3.5 1.2H11.4V21H9V7zm2.4 6.6h3.2c.9 0 1.5-.2 2-.6.4-.4.6-.9.6-1.7s-.2-1.3-.6-1.7c-.4-.4-1.1-.6-2-.6h-3.2v4.6z" fill="white"/>
+      </svg>
+      <span style={{
+        fontFamily: T.font,
+        fontWeight: 300,
+        fontSize: size * 0.65,
+        letterSpacing: '0.08em',
+        color: textColor,
+        textTransform: 'uppercase'
+      }}>
+        Portia
+      </span>
     </span>
   );
 }
 
+/* ── SCROLL FADE-UP ──────────────────────────────────────────────────────── */
+function useFadeUp(delay = 0, threshold = 0.12) {
+  const ref = useRef(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    el.style.opacity = '0';
+    el.style.transform = 'translateY(28px)';
+    el.style.transition = `opacity .55s ${delay}ms cubic-bezier(.16,1,.3,1), transform .55s ${delay}ms cubic-bezier(.16,1,.3,1)`;
+    const obs = new IntersectionObserver(([e]) => {
+      if (e.isIntersecting) {
+        el.style.opacity = '1';
+        el.style.transform = 'translateY(0)';
+        obs.disconnect();
+      }
+    }, { threshold });
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, [delay]);
+  return ref;
+}
+
+/* ── HERO LOAD-IN ────────────────────────────────────────────────────────── */
+function useHeroIn(delay = 0) {
+  const ref = useRef(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    el.style.opacity = '0';
+    el.style.transform = 'translateY(20px)';
+    const timer = setTimeout(() => {
+      el.style.transition = `opacity .7s cubic-bezier(.16,1,.3,1), transform .7s cubic-bezier(.16,1,.3,1)`;
+      el.style.opacity = '1';
+      el.style.transform = 'translateY(0)';
+    }, delay);
+    return () => clearTimeout(timer);
+  }, [delay]);
+  return ref;
+}
+
+/* ── COUNT-UP ────────────────────────────────────────────────────────────── */
+function CountUp({ end, suffix = '', duration = 1800 }) {
+  const [count, setCount] = useState(0);
+  const ref = useRef(null);
+  const started = useRef(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(([e]) => {
+      if (e.isIntersecting && !started.current) {
+        started.current = true;
+        const start = Date.now();
+        const tick = () => {
+          const p = Math.min((Date.now() - start) / duration, 1);
+          const ease = 1 - Math.pow(1 - p, 3);
+          setCount(Math.floor(ease * end));
+          if (p < 1) requestAnimationFrame(tick);
+          else setCount(end);
+        };
+        requestAnimationFrame(tick);
+        obs.disconnect();
+      }
+    }, { threshold: 0.5 });
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, [end, duration]);
+  return <span ref={ref}>{count}{suffix}</span>;
+}
+
+/* ── FEATURES — cada módulo con su propio color ──────────────────────────── */
 const FEATURES = [
-  { i: '01', t: 'Novedades',   d: 'El libro de la portería, ahora imborrable. Urgentes, incidentes y avisos con foto y hora exacta.' },
-  { i: '02', t: 'Visitas',     d: 'Quién entra y quién sale, con RUT validado. La trazabilidad que un edificio moderno necesita.' },
-  { i: '03', t: 'Encomiendas', d: 'Cada paquete que llega queda anotado. Perecibles marcados como urgentes, aviso automático.' },
-  { i: '04', t: 'Tareas',      d: 'El administrador asigna, el conserje ejecuta. Nada se pierde en WhatsApp.' },
-  { i: '05', t: 'Turnos',      d: 'El cambio de turno deja de perder información. Resumen automático al siguiente conserje.' },
-  { i: '06', t: 'Panel admin', d: 'El administrador ve todo en tiempo real desde el navegador. Sin instalar nada.' },
+  {
+    n: '01', t: 'Novedades',
+    d: 'Registro digital del libro de novedades. Urgentes, incidentes y avisos con foto, hora y firma — inmutable.',
+    color: '#E64E1B', colorBg: 'rgba(230,78,27,0.10)',
+    icon: (
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
+      </svg>
+    ),
+  },
+  {
+    n: '02', t: 'Visitas',
+    d: 'Control de acceso con RUT validado y consentimiento integrado. Quién entró, a qué hora y a qué departamento.',
+    color: '#3B82F6', colorBg: 'rgba(59,130,246,0.10)',
+    icon: (
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+      </svg>
+    ),
+  },
+  {
+    n: '03', t: 'Encomiendas',
+    d: 'Cada paquete que llega queda registrado. Perecibles marcados como urgentes de forma automática.',
+    color: '#10B981', colorBg: 'rgba(16,185,129,0.10)',
+    icon: (
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/>
+      </svg>
+    ),
+  },
+  {
+    n: '04', t: 'Tareas',
+    d: 'El administrador asigna, el conserje ejecuta y confirma. Sin WhatsApp, sin papel.',
+    color: '#8B5CF6', colorBg: 'rgba(139,92,246,0.10)',
+    icon: (
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+      </svg>
+    ),
+  },
+  {
+    n: '05', t: 'Turnos',
+    d: 'Traspaso de turno digital. El siguiente conserje recibe un resumen automático sin gaps.',
+    color: '#F59E0B', colorBg: 'rgba(245,158,11,0.10)',
+    icon: (
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+      </svg>
+    ),
+  },
+  {
+    n: '06', t: 'Panel admin',
+    d: 'Vista en tiempo real para el administrador desde cualquier navegador. Sin instalar nada.',
+    color: '#0EA5E9', colorBg: 'rgba(14,165,233,0.10)',
+    icon: (
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>
+      </svg>
+    ),
+  },
 ];
 
-const PASOS = [
-  { n: '01', t: 'Instala en portería',     d: 'El conserje descarga Portia. Mac o Windows, dos minutos de configuración.' },
-  { n: '02', t: 'El admin entra a la web', d: 'Desde cualquier navegador. Sin contraseñas manuales.' },
-  { n: '03', t: 'Todo en tiempo real',     d: 'Lo que ocurre en portería aparece al instante en el panel.' },
-];
-
-const fadeUp   = { hidden: { opacity: 0, y: 28 }, show: { opacity: 1, y: 0, transition: { duration: 0.85, ease: [0.16, 0.84, 0.44, 1] } } };
-const stag     = (d = 0) => ({ hidden: { opacity: 0, y: 22 }, show: { opacity: 1, y: 0, transition: { duration: 0.8, ease: [0.16, 0.84, 0.44, 1], delay: d } } });
-const listCont = { hidden: {}, show: { transition: { staggerChildren: 0.06 } } };
-const listItem = { hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.16, 0.84, 0.44, 1] } } };
-
-export default function Landing() {
+/* ── FEATURE CARD — siempre coloreado, no solo en hover ─────────────────── */
+function FeatureCard({ n, t, d, icon, color, colorBg, delay }) {
+  const ref = useFadeUp(delay);
+  const [hovered, setHovered] = useState(false);
   return (
-    <div style={{ background: '#fff', color: INK, fontFamily: BODY, overflowX: 'hidden' }}>
+    <div ref={ref}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        padding: '32px 28px 36px',
+        background: hovered ? T.bg : 'rgba(255,255,255,0.7)',
+        border: `1.5px solid ${hovered ? color : 'rgba(255,255,255,0.9)'}`,
+        borderRadius: 20,
+        transition: 'background .2s, border-color .2s, box-shadow .2s, transform .22s',
+        boxShadow: hovered
+          ? `0 8px 32px rgba(0,0,0,0.09), 0 2px 8px ${colorBg}`
+          : '0 1px 4px rgba(15,23,42,0.05)',
+        transform: hovered ? 'translateY(-4px)' : 'none',
+        cursor: 'default',
+        backdropFilter: 'blur(8px)',
+      }}
+    >
+      <div style={{
+        width: 52, height: 52, borderRadius: 14,
+        background: colorBg,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        marginBottom: 22,
+        color: color,
+        transition: 'transform .2s',
+        transform: hovered ? 'scale(1.08)' : 'none',
+      }}>
+        {icon}
+      </div>
+      <div style={{ fontSize: 11, fontWeight: 700, color: color, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 10 }}>{n}</div>
+      <h3 style={{ fontSize: 18, fontWeight: 700, color: T.ink, margin: '0 0 10px', letterSpacing: '-0.02em', lineHeight: 1.25 }}>{t}</h3>
+      <p style={{ fontSize: 14, color: T.inkMid, lineHeight: 1.75, margin: 0 }}>{d}</p>
+    </div>
+  );
+}
+
+/* ── STEP CARD — rediseñado sin marcas de agua y profesional ────────────── */
+function StepCard({ n, t, d, delay }) {
+  const ref = useFadeUp(delay);
+  const cardBg = 'rgba(255,255,255,0.02)';
+  const borderColor = 'rgba(255,255,255,0.08)';
+  return (
+    <div ref={ref}
+      style={{
+        background: cardBg,
+        border: `1px solid ${borderColor}`,
+        borderRadius: 24,
+        padding: '48px 36px',
+        position: 'relative',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'space-between',
+        transition: 'border-color 0.25s, transform 0.25s, background-color 0.25s',
+        cursor: 'default',
+      }}
+      onMouseEnter={e => {
+        e.currentTarget.style.borderColor = 'rgba(230,78,27,0.4)';
+        e.currentTarget.style.transform = 'translateY(-6px)';
+        e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.04)';
+      }}
+      onMouseLeave={e => {
+        e.currentTarget.style.borderColor = borderColor;
+        e.currentTarget.style.transform = 'none';
+        e.currentTarget.style.backgroundColor = cardBg;
+      }}
+    >
+      <div>
+        <div style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          background: 'transparent',
+          color: 'transparent',
+          fontSize: 12,
+          fontWeight: 700,
+          padding: '6px 14px',
+          borderRadius: 100,
+          marginBottom: 28,
+        }}>
+          {/* Number omitted for premium look */}
+        </div>
+        <h3 style={{ fontSize: 24, fontWeight: 700, color: '#fff', margin: '0 0 16px', letterSpacing: '-0.02em', lineHeight: 1.2 }}>{t}</h3>
+        <p style={{ fontSize: 15, lineHeight: 1.7, color: 'rgba(255,255,255,0.7)', margin: 0 }}>{d}</p>
+      </div>
+    </div>
+  );
+}
+
+/* ── NAV ─────────────────────────────────────────────────────────────────── */
+function Nav() {
+  return (
+    <nav style={{ position: 'sticky', top: 0, zIndex: 100, background: T.bgDark, borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+      <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 40px', height: 72, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }} className="pp">
+        <Link href="/" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
+          <PortiaLogo dark size={48} />
+        </Link>
+        <div className="nav-links" style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+          {[['#funciones', 'Funciones'], ['#como', 'Cómo funciona']].map(([href, label]) => (
+            <a key={href} href={href} style={{ fontFamily: T.font, fontSize: 14, color: 'rgba(255,255,255,0.6)', textDecoration: 'none', padding: '8px 14px', borderRadius: 8, transition: 'color .15s, background .15s' }}
+              onMouseEnter={e => { e.currentTarget.style.color = '#fff'; e.currentTarget.style.background = 'rgba(255,255,255,0.08)'; }}
+              onMouseLeave={e => { e.currentTarget.style.color = 'rgba(255,255,255,0.6)'; e.currentTarget.style.background = 'transparent'; }}
+            >{label}</a>
+          ))}
+          <Link href="/login" style={{ fontFamily: T.font, fontSize: 14, fontWeight: 600, color: '#fff', background: T.accent, textDecoration: 'none', borderRadius: 9, padding: '9px 20px', marginLeft: 8, transition: 'opacity .15s, transform .15s', boxShadow: '0 2px 12px rgba(230,78,27,0.35)' }}
+            onMouseEnter={e => { e.currentTarget.style.opacity = '.88'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
+            onMouseLeave={e => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.transform = 'none'; }}
+          >Panel admin</Link>
+        </div>
+      </div>
+    </nav>
+  );
+}
+
+/* ── MAIN ────────────────────────────────────────────────────────────────── */
+export default function Landing() {
+  const badge   = useHeroIn(80);
+  const h1      = useHeroIn(180);
+  const sub     = useHeroIn(280);
+  const ctas    = useHeroIn(360);
+  const trust   = useHeroIn(460);
+
+  const probRef  = useFadeUp(0);
+  const featHead = useFadeUp(0);
+  const stepsRef = useFadeUp(0);
+  const ctaRef   = useFadeUp(0);
+
+  return (
+    <div style={{ background: T.bg, color: T.ink, fontFamily: T.font, overflowX: 'hidden' }}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600&family=Manrope:wght@300;400;500;600&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        html { scroll-behavior: smooth; }
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-        @keyframes portiaScroll {
-          0%   { transform:scaleY(0); transform-origin:top }
-          45%  { transform:scaleY(1); transform-origin:top }
-          55%  { transform:scaleY(1); transform-origin:bottom }
-          100% { transform:scaleY(0); transform-origin:bottom }
+        @keyframes badge-pulse { 0%,100%{opacity:1} 50%{opacity:.55} }
+        @keyframes ticker      { from{transform:translateX(0)} to{transform:translateX(-50%)} }
+        @keyframes float-blob  { 0%,100%{transform:scale(1) translate(0,0)} 50%{transform:scale(1.06) translate(14px,10px)} }
+
+        @media (prefers-reduced-motion: reduce) {
+          *, *::before, *::after { animation-duration:0.01ms!important; transition-duration:0.01ms!important; }
         }
-
-        .pnl { position:relative; text-decoration:none; }
-        .pnl::after { content:''; position:absolute; left:0; bottom:-3px; height:1.5px; width:100%; background:${ORANGE}; transform:scaleX(0); transform-origin:right; transition:transform .4s cubic-bezier(.16,.84,.44,1); }
-        .pnl:hover::after { transform:scaleX(1); transform-origin:left; }
-
-        .pbtn-fill { transition:transform .2s ease, box-shadow .3s ease; }
-        .pbtn-fill:hover { transform:translateY(-2px); box-shadow:0 16px 36px -10px rgba(230,78,27,0.44); }
-        .pbtn-ghost { transition:background .22s, color .22s, border-color .22s, transform .2s; }
-        .pbtn-ghost:hover { background:${INK}!important; color:#fff!important; border-color:${INK}!important; transform:translateY(-2px); }
-
-        .pf-row { transition:background .3s; cursor:default; }
-        .pf-row:hover { background:rgba(0,0,0,0.025); }
-        .pf-row:hover .pf-t { color:${ORANGE}!important; }
-        .pf-row:hover .pf-arr { opacity:1!important; transform:none!important; }
-
-        .pfl { text-decoration:none; color:${INK2}; transition:color .2s; display:block; }
-        .pfl:hover { color:${INK}!important; }
-
-        @media(max-width:860px){
-          .pmob-hide { display:none!important; }
-          .pp { padding-left:22px!important; padding-right:22px!important; }
-          .psteps { grid-template-columns:1fr!important; gap:40px!important; }
-          .pfgrid { grid-template-columns:44px 1fr 40px!important; }
-          .pf-desc { display:none!important; }
-          .pfootg { grid-template-columns:1fr!important; gap:28px!important; }
-          .phero-h1 { font-size: clamp(64px,18vw,160px)!important; }
+        @media (max-width: 860px) {
+          .pp      { padding-left:20px!important; padding-right:20px!important; }
+          .pfgrid  { grid-template-columns:1fr!important; }
+          .psteps  { grid-template-columns:1fr!important; gap:20px!important; }
+          .pfootg  { grid-template-columns:1fr!important; gap:32px!important; }
+          .nav-links { display:none!important; }
         }
       `}</style>
 
-      {/* ── TOPBAR ───────────────────────────────────────────────────────── */}
-      <div style={{ borderBottom: `1px solid ${LINE}` }}>
-        <div className="pp" style={{ maxWidth: 1280, margin: '0 auto', padding: '10px 48px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span style={{ fontFamily: BODY, fontSize: 13, color: INK2 }}>hola@portia.cl</span>
-          <span className="pmob-hide" style={{ ...EYE, fontSize: 11, color: INK3 }}>Santiago de Chile</span>
-        </div>
-      </div>
-
-      {/* ── NAV ──────────────────────────────────────────────────────────── */}
-      <nav style={{ position: 'sticky', top: 0, zIndex: 50, background: 'rgba(255,255,255,0.92)', backdropFilter: 'blur(16px)', borderBottom: `1px solid ${LINE}` }}>
-        <div className="pp" style={{ maxWidth: 1280, margin: '0 auto', padding: '0 48px', height: 68, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <Logo size="nav" />
-          <div style={{ display: 'flex', alignItems: 'center', gap: 28 }}>
-            <a href="#funciones" className="pnl pmob-hide" style={{ fontFamily: BODY, fontSize: 14, color: INK, fontWeight: 400 }}>Funciones</a>
-            <a href="#como" className="pnl pmob-hide" style={{ fontFamily: BODY, fontSize: 14, color: INK, fontWeight: 400 }}>Cómo funciona</a>
-            <button onClick={descargar} className="pnl pmob-hide" style={{ fontFamily: BODY, fontSize: 14, color: INK, fontWeight: 400, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>Descargar</button>
-            <Link href="/login" className="pbtn-ghost" style={{ fontFamily: BODY, fontSize: 13, fontWeight: 500, color: INK, textDecoration: 'none', border: `1.5px solid ${INK}`, borderRadius: 100, padding: '8px 20px' }}>Panel admin</Link>
-          </div>
-        </div>
-      </nav>
+      <Nav />
 
       {/* ── HERO ─────────────────────────────────────────────────────────── */}
-      <section className="pp" style={{ maxWidth: 1280, margin: '0 auto', padding: '100px 48px 80px', minHeight: 'calc(100vh - 112px)', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-        <motion.p variants={stag(0)} initial="hidden" animate="show" style={{ ...EYE, marginBottom: 40 }}>
-          Conserjería digital · Chile
-        </motion.p>
+      <section style={{ position: 'relative', overflow: 'hidden', background: T.bgWarm, minHeight: 'calc(100dvh - 72px)', display: 'flex', alignItems: 'center' }}>
+        {/* Naranja más visible — 16% opacidad */}
+        <div aria-hidden="true" style={{ position: 'absolute', top: '-10%', right: '-5%', width: 640, height: 640, borderRadius: '50%', background: 'radial-gradient(circle, rgba(230,78,27,0.16) 0%, transparent 70%)', animation: 'float-blob 12s ease-in-out infinite', pointerEvents: 'none' }} />
+        <div aria-hidden="true" style={{ position: 'absolute', bottom: '-15%', left: '-8%', width: 520, height: 520, borderRadius: '50%', background: 'radial-gradient(circle, rgba(230,78,27,0.07) 0%, transparent 70%)', animation: 'float-blob 18s ease-in-out infinite reverse', pointerEvents: 'none' }} />
 
-        <motion.h1
-          variants={stag(0.1)} initial="hidden" animate="show"
-          className="phero-h1"
-          style={{ fontFamily: HEAD, fontWeight: 300, fontSize: 'clamp(72px,14vw,180px)', letterSpacing: '-0.03em', lineHeight: 0.9, color: INK, margin: '0 0 48px', maxWidth: 1100 }}
-        >
-          Tu edificio.<br/>
-          <span style={{ color: ORANGE }}>En orden.</span>
-        </motion.h1>
+        <div className="pp" style={{ position: 'relative', maxWidth: 1200, margin: '0 auto', padding: '80px 40px 96px', width: '100%' }}>
+          {/* eyebrow */}
+          <div ref={badge} style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: T.accentBg, border: `1px solid rgba(230,78,27,0.2)`, borderRadius: 100, padding: '6px 16px', marginBottom: 36 }}>
+            <span style={{ width: 6, height: 6, borderRadius: '50%', background: T.accent, display: 'block', animation: 'badge-pulse 2s ease-in-out infinite', flexShrink: 0 }} />
+            <span style={{ fontSize: 12, fontWeight: 600, color: T.accent, letterSpacing: '0.02em' }}>Disponible en Mac y Windows · Portería digital</span>
+          </div>
 
-        <motion.p variants={stag(0.22)} initial="hidden" animate="show" style={{ fontFamily: BODY, fontWeight: 300, fontSize: 'clamp(17px,1.8vw,22px)', color: INK2, maxWidth: 480, lineHeight: 1.6, margin: '0 0 48px' }}>
-          Portia reemplaza el cuaderno de la portería. Novedades, visitas, encomiendas y turnos — todo digital, todo trazado.
-        </motion.p>
+          {/* headline */}
+          <h1 ref={h1} style={{ fontSize: 'clamp(36px, 5vw, 64px)', fontWeight: 700, letterSpacing: '-0.03em', lineHeight: 1.05, color: T.ink, margin: '0 0 28px', maxWidth: 860 }}>
+            La portería chilena,<br />
+            <span style={{ color: T.accent }}>por fin digital.</span>
+          </h1>
 
-        <motion.div variants={stag(0.34)} initial="hidden" animate="show" style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-          <button onClick={descargar} className="pbtn-fill" style={{ fontFamily: BODY, fontWeight: 500, fontSize: 16, color: '#fff', background: ORANGE, border: `1.5px solid ${ORANGE}`, borderRadius: 100, padding: '14px 34px', cursor: 'pointer' }}>
-            Descargar gratis
-          </button>
-          <Link href="/login" className="pbtn-ghost" style={{ fontFamily: BODY, fontWeight: 500, fontSize: 16, color: INK, textDecoration: 'none', border: `1.5px solid ${INK}`, borderRadius: 100, padding: '14px 34px', display: 'inline-block' }}>
-            Soy administrador
-          </Link>
-        </motion.div>
+          {/* sub */}
+          <p ref={sub} style={{ fontSize: 'clamp(16px,1.5vw,20px)', color: T.inkMid, maxWidth: 500, lineHeight: 1.65, margin: '0 0 40px' }}>
+            Portia reemplaza el cuaderno, el WhatsApp y los post-its.<br />
+            Cada visita, novedad y encomienda — registrada con hora y RUT.
+          </p>
 
-        <div style={{ marginTop: 'auto', paddingTop: 64, display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 12 }}>
-          <span style={{ ...EYE, fontSize: 10, color: INK3 }}>Scroll</span>
-          <div style={{ width: 1, height: 52, background: LINE, position: 'relative', overflow: 'hidden' }}>
-            <div style={{ position: 'absolute', inset: 0, background: ORANGE, animation: 'portiaScroll 2.6s ease-in-out infinite' }} />
+          {/* CTAs — sin "Descargar gratis" */}
+          <div ref={ctas} style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+            <Link href="/login" style={{ fontFamily: T.font, fontSize: 16, fontWeight: 700, color: '#fff', background: T.accent, textDecoration: 'none', borderRadius: 12, padding: '14px 32px', transition: 'opacity .15s, transform .2s, box-shadow .2s', display: 'inline-block', cursor: 'pointer', boxShadow: '0 4px 20px rgba(230,78,27,0.3)' }}
+              onMouseEnter={e => { e.currentTarget.style.opacity = '.9'; e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 8px 30px rgba(230,78,27,0.4)' }}
+              onMouseLeave={e => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 4px 20px rgba(230,78,27,0.3)' }}
+            >Entrar al panel</Link>
+            <a href="mailto:hola@portia.cl" style={{ fontFamily: T.font, fontSize: 16, fontWeight: 500, color: T.ink, textDecoration: 'none', border: `1.5px solid ${T.border}`, background: T.bg, borderRadius: 12, padding: '14px 32px', transition: 'border-color .15s, transform .2s, box-shadow .2s', display: 'inline-block' }}
+              onMouseEnter={e => { e.currentTarget.style.borderColor = T.ink; e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 4px 16px rgba(15,23,42,0.08)' }}
+              onMouseLeave={e => { e.currentTarget.style.borderColor = T.border; e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = 'none' }}
+            >Solicitar demo →</a>
+          </div>
+
+          {/* trust line */}
+          <div ref={trust} style={{ display: 'flex', gap: 24, marginTop: 48, flexWrap: 'wrap' }}>
+            {['Mac + Windows', 'Offline disponible', 'Hecho en Chile', 'Soporte real'].map(item => (
+              <span key={item} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: T.inkMid }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={T.accent} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+                {item}
+              </span>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* ── STATS BAR ────────────────────────────────────────────────────── */}
-      <div style={{ borderTop: `1px solid ${LINE}`, borderBottom: `1px solid ${LINE}`, background: '#fafafa' }}>
-        <div className="pp" style={{ maxWidth: 1280, margin: '0 auto', padding: '32px 48px', display: 'flex', gap: 0, justifyContent: 'space-around', flexWrap: 'wrap' }}>
+      {/* ── TICKER ───────────────────────────────────────────────────────── */}
+      <div style={{
+        borderTop: `1px solid ${T.border}`,
+        borderBottom: `1px solid ${T.border}`,
+        overflow: 'hidden',
+        padding: '14px 0',
+        background: T.bg,
+        position: 'relative',
+      }}>
+        {/* Faded edges to blend marquee with background */}
+        <div style={{ position: 'absolute', top: 0, bottom: 0, left: 0, width: 80, background: 'linear-gradient(to right, #FFFFFF, transparent)', zIndex: 10, pointerEvents: 'none' }} />
+        <div style={{ position: 'absolute', top: 0, bottom: 0, right: 0, width: 80, background: 'linear-gradient(to left, #FFFFFF, transparent)', zIndex: 10, pointerEvents: 'none' }} />
+
+        <div style={{ display: 'flex', animation: 'ticker 360s linear infinite', whiteSpace: 'nowrap' }}>
+          {[...Array(2)].flatMap((_, ai) =>
+            ['Novedades', 'Visitas', 'Encomiendas', 'Tareas', 'Turnos', 'Panel admin', 'Sin papel', 'Sin WhatsApp', 'Hecho en Chile'].map((item, i) => (
+              <span key={`${ai}-${i}`} style={{ fontSize: 11, fontWeight: 600, color: T.inkSub, letterSpacing: '0.12em', textTransform: 'uppercase', padding: '0 24px' }}>
+                {item}&nbsp;&nbsp;<span style={{ color: T.accent }}>·</span>
+              </span>
+            ))
+          )}
+        </div>
+      </div>
+
+      {/* ── DARK STATS GRID — rediseñado como tarjetas ────────────────────── */}
+      <section style={{ background: T.bgDark, borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+        <div className="pp pfgrid" style={{ maxWidth: 1200, margin: '0 auto', padding: '80px 40px', display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 24 }}>
           {[
-            ['Mac + Windows', 'Corre en cualquier equipo'],
-            ['100% offline', 'Sin internet, sigue andando'],
-            ['Gratis', 'Sin contratos ni tarjetas'],
-          ].map(([val, label]) => (
-            <div key={val} style={{ textAlign: 'center', padding: '8px 24px' }}>
-              <div style={{ fontFamily: HEAD, fontWeight: 300, fontSize: 28, letterSpacing: '-0.02em', color: INK }}>{val}</div>
-              <div style={{ fontFamily: BODY, fontWeight: 400, fontSize: 13, color: INK3, marginTop: 4 }}>{label}</div>
+            { n: 2,  suf: ' min',       label: 'Para estar listo' },
+            { n: 6,  suf: ' módulos',   label: 'Cubiertos desde día 1' },
+            { n: 0,  suf: ' papel',     label: 'Todo digital' },
+            { n: 1,  suf: ' plataforma',label: 'Para conserje y admin' },
+          ].map(({ n, suf, label }, i) => (
+            <div key={label} style={{
+              opacity: 0,
+              background: 'rgba(255,255,255,0.02)',
+              border: '1px solid rgba(255,255,255,0.08)',
+              borderRadius: 16,
+              padding: '32px 24px',
+              transition: 'transform 0.3s ease, border-color 0.3s ease, background-color 0.3s ease',
+              cursor: 'default',
+            }}
+            onMouseEnter={e => {
+              e.currentTarget.style.transform = 'translateY(-4px)';
+              e.currentTarget.style.borderColor = 'rgba(230,78,27,0.3)';
+              e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.04)';
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.transform = 'none';
+              e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)';
+              e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.02)';
+            }}
+            ref={(el) => {
+              if (!el) return;
+              const obs = new IntersectionObserver(([e]) => {
+                if (e.isIntersecting) {
+                  el.style.transition = `opacity .6s ${i * 100}ms ease-out, transform .6s ${i * 100}ms ease-out, border-color 0.3s ease, background-color 0.3s ease`;
+                  el.style.opacity = '1';
+                  el.style.transform = 'none';
+                  obs.disconnect();
+                }
+              }, { threshold: 0.3 });
+              el.style.transform = 'translateY(16px)';
+              obs.observe(el);
+            }}>
+              <div style={{ fontSize: 'clamp(28px,2.5vw,40px)', fontWeight: 800, color: '#fff', letterSpacing: '-0.03em', lineHeight: 1 }}>
+                <CountUp end={n} suffix={suf} />
+              </div>
+              <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.5)', marginTop: 12, lineHeight: 1.4, fontWeight: 500 }}>{label}</div>
             </div>
           ))}
         </div>
-      </div>
-
-      {/* ── MANIFIESTO ───────────────────────────────────────────────────── */}
-      <section className="pp" style={{ maxWidth: 1280, margin: '0 auto', padding: '120px 48px' }}>
-        <motion.div initial="hidden" whileInView="show" viewport={{ once: true, margin: '-80px' }} variants={fadeUp}>
-          <p style={{ ...EYE, marginBottom: 28 }}>El problema</p>
-          <p style={{ fontFamily: HEAD, fontWeight: 300, fontSize: 'clamp(28px,4vw,54px)', lineHeight: 1.15, letterSpacing: '-0.02em', color: INK, margin: 0, maxWidth: 820 }}>
-            Los conserjes de Chile gestionan visitas, encomiendas y novedades en <span style={{ textDecoration: 'line-through', color: INK3 }}>cuadernos y WhatsApp</span>.{' '}
-            <span style={{ color: ORANGE, fontWeight: 500 }}>Portia lo cambia.</span>
-          </p>
-        </motion.div>
       </section>
 
-      {/* ── FUNCIONES ────────────────────────────────────────────────────── */}
-      <section id="funciones" style={{ borderTop: `1px solid ${LINE}`, padding: '80px 48px 100px' }} className="pp">
-        <div style={{ maxWidth: 1280, margin: '0 auto' }}>
-          <motion.div initial="hidden" whileInView="show" viewport={{ once: true, margin: '-60px' }} variants={fadeUp}
-            style={{ marginBottom: 64 }}>
-            <p style={{ ...EYE, marginBottom: 20 }}>Funciones</p>
-            <h2 style={{ fontFamily: HEAD, fontWeight: 300, fontSize: 'clamp(32px,4vw,56px)', letterSpacing: '-0.025em', lineHeight: 1.05, margin: 0, color: INK, maxWidth: 640 }}>
-              Todo lo que pasa en portería,{' '}<span style={{ fontWeight: 600 }}>en un solo lugar.</span>
-            </h2>
-          </motion.div>
-
-          <motion.div initial="hidden" whileInView="show" viewport={{ once: true, margin: '-40px' }} variants={listCont} style={{ borderTop: `1px solid ${LINE}` }}>
-            {FEATURES.map((f) => (
-              <motion.div key={f.i} variants={listItem} className="pf-row" style={{ borderBottom: `1px solid ${LINE}` }}>
-                <div className="pfgrid" style={{ display: 'grid', gridTemplateColumns: '60px 1.2fr 2fr 48px', alignItems: 'center', gap: 24, padding: '24px 12px' }}>
-                  <span style={{ ...EYE, fontSize: 11, color: INK3 }}>{f.i}</span>
-                  <h3 className="pf-t" style={{ fontFamily: HEAD, fontWeight: 300, fontSize: 'clamp(20px,2.2vw,30px)', letterSpacing: '-0.015em', color: INK, margin: 0, transition: 'color .3s' }}>{f.t}</h3>
-                  <p className="pf-desc" style={{ fontFamily: BODY, fontWeight: 300, fontSize: 15, lineHeight: 1.65, color: INK2, margin: 0 }}>{f.d}</p>
-                  <span className="pf-arr" style={{ justifySelf: 'end', fontSize: 20, color: ORANGE, opacity: 0, transform: 'translate(-6px,6px)', transition: 'opacity .3s, transform .3s' }}>↗</span>
-                </div>
-              </motion.div>
-            ))}
-          </motion.div>
+      {/* ── PROBLEMA ─────────────────────────────────────────────────────── */}
+      <section style={{ borderBottom: `1px solid ${T.border}` }}>
+        <div ref={probRef} className="pp" style={{ maxWidth: 1200, margin: '0 auto', padding: '96px 40px' }}>
+          <span style={{ fontSize: 11, fontWeight: 700, color: T.accent, letterSpacing: '0.12em', textTransform: 'uppercase', display: 'block', marginBottom: 24 }}>El problema</span>
+          <p style={{ fontSize: 'clamp(24px,3.5vw,48px)', fontWeight: 300, lineHeight: 1.2, letterSpacing: '-0.02em', color: T.ink, maxWidth: 820, margin: 0 }}>
+            Los conserjes de Chile gestionan visitas, encomiendas y novedades en{' '}
+            <span style={{ textDecoration: 'line-through', color: T.inkSub, fontWeight: 400 }}>cuadernos, WhatsApp y papel</span>.{' '}
+            <span style={{ color: T.accent, fontWeight: 600 }}>Portia termina con eso.</span>
+          </p>
         </div>
       </section>
 
-      {/* ── CÓMO FUNCIONA ────────────────────────────────────────────────── */}
-      <section id="como" style={{ borderTop: `1px solid ${LINE}`, background: '#fafafa', padding: '80px 48px 100px' }} className="pp">
-        <div style={{ maxWidth: 1280, margin: '0 auto' }}>
-          <motion.div initial="hidden" whileInView="show" viewport={{ once: true, margin: '-60px' }} variants={fadeUp} style={{ marginBottom: 72 }}>
-            <p style={{ ...EYE, marginBottom: 20 }}>Cómo funciona</p>
-            <h2 style={{ fontFamily: HEAD, fontWeight: 300, fontSize: 'clamp(32px,4vw,56px)', letterSpacing: '-0.025em', margin: 0, color: INK }}>
-              Tres pasos.{' '}<span style={{ fontWeight: 600 }}>Una tarde.</span>
+      {/* ── FUNCIONES — fondo cálido con blob naranja ────────────────────── */}
+      <section id="funciones" style={{ background: T.bgWarm, borderBottom: `1px solid ${T.border}`, position: 'relative', overflow: 'hidden' }}>
+        {/* blob de fondo — da profundidad a las tarjetas */}
+        <div aria-hidden="true" style={{ position: 'absolute', top: '-20%', right: '-10%', width: 700, height: 700, borderRadius: '50%', background: 'radial-gradient(circle, rgba(230,78,27,0.08) 0%, transparent 65%)', pointerEvents: 'none' }} />
+        <div aria-hidden="true" style={{ position: 'absolute', bottom: '-10%', left: '-5%', width: 400, height: 400, borderRadius: '50%', background: 'radial-gradient(circle, rgba(59,130,246,0.06) 0%, transparent 65%)', pointerEvents: 'none' }} />
+        <div className="pp" style={{ position: 'relative', maxWidth: 1200, margin: '0 auto', padding: '80px 40px' }}>
+          <div ref={featHead} style={{ marginBottom: 56 }}>
+            <span style={{ fontSize: 11, fontWeight: 700, color: T.accent, letterSpacing: '0.12em', textTransform: 'uppercase', display: 'block', marginBottom: 14 }}>Funciones</span>
+            <h2 style={{ fontSize: 'clamp(28px,3.5vw,44px)', fontWeight: 700, letterSpacing: '-0.03em', lineHeight: 1.1, color: T.ink, margin: 0, maxWidth: 520 }}>
+              Todo lo que pasa en portería,<br />en un solo lugar.
             </h2>
-          </motion.div>
+          </div>
+          <div className="pfgrid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 16 }}>
+            {FEATURES.map((f, i) => <FeatureCard key={f.n} {...f} delay={i * 60} />)}
+          </div>
+        </div>
+      </section>
 
-          <motion.div className="psteps" initial="hidden" whileInView="show" viewport={{ once: true, margin: '-40px' }} variants={listCont}
-            style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 0 }}>
-            {PASOS.map((s, i) => (
-              <motion.div key={s.n} variants={listItem} style={{ padding: '0 40px 0 0', paddingRight: i < 2 ? 40 : 0, borderRight: i < 2 ? `1px solid ${LINE}` : 'none', paddingLeft: i > 0 ? 40 : 0 }}>
-                <div style={{ fontFamily: BODY, fontWeight: 700, fontSize: 11, color: ORANGE, letterSpacing: '0.2em', textTransform: 'uppercase', marginBottom: 20 }}>{s.n}</div>
-                <h3 style={{ fontFamily: HEAD, fontWeight: 400, fontSize: 22, letterSpacing: '-0.01em', color: INK, margin: '0 0 12px' }}>{s.t}</h3>
-                <p style={{ fontFamily: BODY, fontWeight: 300, fontSize: 15, lineHeight: 1.7, color: INK2, margin: 0 }}>{s.d}</p>
-              </motion.div>
-            ))}
-          </motion.div>
+      {/* ── CÓMO FUNCIONA — dark navy con tarjetas extensas y notorias ───── */}
+      <section id="como" style={{ background: T.bgDark, borderBottom: `1px solid rgba(255,255,255,0.08)` }}>
+        <div className="pp" style={{ maxWidth: 1200, margin: '0 auto', padding: '96px 40px' }}>
+          <div ref={stepsRef}>
+            <span style={{ fontSize: 11, fontWeight: 700, color: T.accent, letterSpacing: '0.12em', textTransform: 'uppercase', display: 'block', marginBottom: 14 }}>Cómo funciona</span>
+            <h2 style={{ fontSize: 'clamp(26px,3vw,44px)', fontWeight: 700, letterSpacing: '-0.025em', lineHeight: 1.1, color: '#fff', margin: '0 0 56px', maxWidth: 480 }}>
+              Tres pasos.<br />Una tarde.
+            </h2>
+          </div>
+          <div className="psteps" style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 24 }}>
+            <StepCard dark n="01" t="Instala en portería"     d="Descarga Portia en el computador de conserjería (Windows o Mac) en menos de 2 minutos. La aplicación se instala sin complicaciones, funciona de inmediato, incluso offline, y sincroniza los datos de forma segura en una cola local encriptada. Esta instalación te brinda un control total desde el primer momento, sin dependencias externas." delay={0} />
+            <StepCard dark n="02" t="El admin entra al panel" d="El administrador entra al panel desde cualquier navegador, sin instalación previa. Desde ahí, visualiza y gestiona el edificio en tiempo real, accede a reportes detallados, asigna tareas, autoriza conserjes y supervisa cada visita y encomienda con métricas en vivo y auditorías de seguridad." delay={100} />
+            <StepCard dark n="03" t="Todo en tiempo real"     d="Cada visita, encomienda y novedad registrada por el conserje se envía al instante al panel administrativo, con cifrado de extremo a extremo y validación multi-tenant. Los datos están disponibles en tiempo real para análisis, auditoría y decisiones operativas, garantizando transparencia total y cumplimiento normativo." delay={200} />
+          </div>
         </div>
       </section>
 
       {/* ── CTA ──────────────────────────────────────────────────────────── */}
-      <section className="pp" style={{ padding: '100px 48px 120px', textAlign: 'center' }}>
-        <motion.div initial="hidden" whileInView="show" viewport={{ once: true, margin: '-60px' }} variants={fadeUp}>
-          <p style={{ ...EYE, marginBottom: 28 }}>Empieza hoy</p>
-          <h2 style={{ fontFamily: HEAD, fontWeight: 300, fontSize: 'clamp(40px,7vw,96px)', letterSpacing: '-0.03em', lineHeight: 0.94, color: INK, margin: '0 0 24px' }}>
-            Pon tu edificio<br/><span style={{ fontWeight: 600, color: ORANGE }}>en orden.</span>
+      <section style={{ background: T.bgWarm }}>
+        <div ref={ctaRef} className="pp" style={{ maxWidth: 1200, margin: '0 auto', padding: '100px 40px 112px', textAlign: 'center', position: 'relative' }}>
+          <div aria-hidden="true" style={{ position: 'absolute', top: '20%', left: '50%', transform: 'translateX(-50%)', width: 800, height: 400, borderRadius: '50%', background: 'radial-gradient(ellipse, rgba(230,78,27,0.10) 0%, transparent 70%)', pointerEvents: 'none' }} />
+          <span style={{ fontSize: 11, fontWeight: 700, color: T.accent, letterSpacing: '0.12em', textTransform: 'uppercase', display: 'block', marginBottom: 20, position: 'relative' }}>Contáctanos</span>
+          <h2 style={{ position: 'relative', fontSize: 'clamp(36px,7vw,80px)', fontWeight: 800, letterSpacing: '-0.04em', lineHeight: 0.97, color: T.ink, margin: '0 0 24px' }}>
+            Pon tu edificio<br />
+            <span style={{ color: T.accent }}>en orden.</span>
           </h2>
-          <p style={{ fontFamily: BODY, fontWeight: 300, fontSize: 18, color: INK2, margin: '0 auto 48px', maxWidth: 380, lineHeight: 1.6 }}>
-            Gratis. Sin contratos. Dos minutos de instalación.
+          <p style={{ position: 'relative', fontSize: 17, color: T.inkMid, maxWidth: 400, margin: '0 auto 40px', lineHeight: 1.65 }}>
+            Hecho para edificios chilenos reales.<br />
+            Escríbenos y te mostramos cómo funciona.
           </p>
-          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', justifyContent: 'center' }}>
-            <button onClick={descargar} className="pbtn-fill" style={{ fontFamily: BODY, fontWeight: 500, fontSize: 16, color: '#fff', background: ORANGE, border: `1.5px solid ${ORANGE}`, borderRadius: 100, padding: '14px 36px', cursor: 'pointer' }}>Descargar gratis</button>
-            <Link href="/login" className="pbtn-ghost" style={{ fontFamily: BODY, fontWeight: 500, fontSize: 16, color: INK, textDecoration: 'none', border: `1.5px solid ${INK}`, borderRadius: 100, padding: '14px 36px', display: 'inline-block' }}>Soy administrador</Link>
+          <div style={{ position: 'relative', display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
+            <a href="mailto:hola@portia.cl" style={{ fontFamily: T.font, fontSize: 16, fontWeight: 700, color: '#fff', background: T.accent, textDecoration: 'none', borderRadius: 12, padding: '14px 36px', transition: 'opacity .15s, transform .2s, box-shadow .2s', display: 'inline-block', boxShadow: '0 4px 20px rgba(230,78,27,0.3)' }}
+              onMouseEnter={e => { e.currentTarget.style.opacity = '.9'; e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 8px 30px rgba(230,78,27,0.45)' }}
+              onMouseLeave={e => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 4px 20px rgba(230,78,27,0.3)' }}
+            >Solicitar demo</a>
+            <Link href="/login" style={{ fontFamily: T.font, fontSize: 16, fontWeight: 500, color: T.ink, textDecoration: 'none', border: `1.5px solid ${T.border}`, background: T.bg, borderRadius: 12, padding: '14px 36px', transition: 'border-color .15s, transform .2s, box-shadow .2s', display: 'inline-block' }}
+              onMouseEnter={e => { e.currentTarget.style.borderColor = T.ink; e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 4px 16px rgba(15,23,42,0.08)' }}
+              onMouseLeave={e => { e.currentTarget.style.borderColor = T.border; e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = 'none' }}
+            >Soy administrador →</Link>
           </div>
-        </motion.div>
+        </div>
       </section>
 
       {/* ── FOOTER ───────────────────────────────────────────────────────── */}
-      <footer style={{ borderTop: `1px solid ${LINE}`, padding: '0 48px 44px' }} className="pp">
-        <div className="pfootg" style={{ maxWidth: 1280, margin: '0 auto', display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', gap: 40, paddingTop: 48, paddingBottom: 40, borderBottom: `1px solid ${LINE}` }}>
+      <footer style={{ borderTop: `1px solid ${T.border}`, background: T.bg }}>
+        <div className="pp pfootg" style={{ maxWidth: 1200, margin: '0 auto', padding: '48px 40px', display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', gap: 40, borderBottom: `1px solid ${T.border}` }}>
           <div>
-            <div style={{ marginBottom: 16 }}><Logo size="foot" /></div>
-            <p style={{ fontFamily: BODY, fontWeight: 300, fontSize: 15, color: INK2, maxWidth: 300, lineHeight: 1.7, margin: 0 }}>
+            <div style={{ marginBottom: 16 }}>
+              <PortiaLogo size={48} />
+            </div>
+            <p style={{ fontSize: 14, color: T.inkMid, maxWidth: 280, lineHeight: 1.7, margin: '0 0 8px' }}>
               El sistema operativo de la conserjería chilena. Hecho para conserjes reales, en edificios reales.
             </p>
+            <p style={{ fontSize: 12, color: T.inkSub, fontStyle: 'italic' }}>Tu edificio. Todo en orden.</p>
           </div>
-          <div>
-            <div style={{ ...EYE, fontSize: 11, color: INK3, marginBottom: 18 }}>Producto</div>
-            <button onClick={descargar} className="pfl" style={{ background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', fontFamily: BODY, fontSize: 15, padding: '0 0 11px' }}>Descargar app</button>
-            <Link href="/login" className="pfl" style={{ fontFamily: BODY, fontSize: 15, paddingBottom: 11 }}>Panel admin</Link>
-          </div>
-          <div>
-            <div style={{ ...EYE, fontSize: 11, color: INK3, marginBottom: 18 }}>Contacto</div>
-            <a href="mailto:hola@portia.cl" className="pfl" style={{ fontFamily: BODY, fontSize: 15, paddingBottom: 11 }}>hola@portia.cl</a>
-            <span style={{ fontFamily: BODY, fontWeight: 300, fontSize: 15, color: INK3, display: 'block' }}>Santiago, Chile</span>
-          </div>
+          {[
+            { h: 'Producto', links: [['Panel admin', '/login'], ['Solicitar demo', 'mailto:hola@portia.cl']] },
+            { h: 'Contacto', links: [['hola@portia.cl', 'mailto:hola@portia.cl'], ['Santiago, Chile', null]] },
+          ].map(({ h, links }) => (
+            <div key={h}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: T.inkSub, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 18 }}>{h}</div>
+              {links.map(([label, href]) => href
+                ? <a key={label} href={href} style={{ display: 'block', fontSize: 14, color: T.inkMid, textDecoration: 'none', marginBottom: 12, transition: 'color .15s' }}
+                    onMouseEnter={e => e.currentTarget.style.color = T.ink}
+                    onMouseLeave={e => e.currentTarget.style.color = T.inkMid}
+                  >{label}</a>
+                : <span key={label} style={{ display: 'block', fontSize: 14, color: T.inkSub, marginBottom: 12 }}>{label}</span>
+              )}
+            </div>
+          ))}
         </div>
-        <div style={{ maxWidth: 1280, margin: '0 auto', display: 'flex', justifyContent: 'space-between', paddingTop: 20, fontFamily: BODY, fontWeight: 300, fontSize: 13, color: INK3 }}>
-          <span>© 2026 Portia</span>
-          <span>Hecho en Chile</span>
+        <div className="pp" style={{ maxWidth: 1200, margin: '0 auto', padding: '18px 40px', display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
+          <span style={{ fontSize: 12, color: T.inkSub }}>© 2026 Portia — Hecho en Chile</span>
+          <span style={{ fontSize: 12, color: T.inkSub }}>Conecta · Gestiona · Transparenta</span>
         </div>
       </footer>
     </div>

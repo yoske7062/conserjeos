@@ -1,13 +1,18 @@
 import { useState } from 'react';
 import { supabase } from '../lib/supabase';
-const GOLD = '#C8932F';
+import logoPortia from '../assets/logo_portia.png';
+const ORANGE = '#E6701E';
+const NAVY   = '#0A1C40';
 
-function PortiaMark() {
+function PortiaMark({ size = 34 }) {
   return (
-    <svg width="32" height="32" viewBox="0 0 32 32" fill="none" style={{ flexShrink: 0 }}>
-      <rect width="32" height="32" rx="8" fill={GOLD}/>
-      <path d="M10 8h6.6c1.7 0 3 .45 4 1.35.9.9 1.4 2.1 1.4 3.65s-.5 2.75-1.4 3.65c-.9.9-2.3 1.35-4 1.35H12.8V24H10V8zm2.8 7.6h3.6c1 0 1.8-.25 2.3-.75.5-.5.75-1.15.75-1.95s-.25-1.45-.75-1.95c-.5-.5-1.3-.75-2.3-.75h-3.6v5.4z" fill="white"/>
-    </svg>
+    <img
+      src={logoPortia}
+      width={size}
+      height={size}
+      style={{ borderRadius: 8, flexShrink: 0, display: 'block' }}
+      alt="Portia"
+    />
   );
 }
 
@@ -54,8 +59,8 @@ function NavItem({ item, active, onClick }) {
         padding: '7px 12px', borderRadius: 10, width: '100%',
         fontSize: 13, fontWeight: isActive ? 600 : 500,
         fontFamily: 'var(--font-body)',
-        color: isActive ? '#1B2A4A' : hov ? '#19181A' : '#6A6762',
-        background: isActive ? '#EDF0F7' : hov ? 'rgba(25,24,26,0.04)' : 'transparent',
+        color: isActive ? NAVY : hov ? '#19181A' : '#4A4847',
+        background: isActive ? 'rgba(230,112,30,0.1)' : hov ? 'rgba(25,24,26,0.05)' : 'transparent',
         border: 'none', cursor: 'pointer', textAlign: 'left', marginBottom: 1,
         transition: 'background .12s, color .12s',
         letterSpacing: '-0.01em',
@@ -63,7 +68,7 @@ function NavItem({ item, active, onClick }) {
     >
       <span style={{
         fontFamily: 'Material Symbols Outlined', fontSize: 19,
-        color: isActive ? '#1B2A4A' : hov ? '#6A6762' : '#B4B0A9',
+        color: isActive ? ORANGE : hov ? '#4A4847' : '#9A9896',
         transition: 'color .12s',
         lineHeight: 1,
       }}>
@@ -123,7 +128,7 @@ export default function Sidebar({ modulo, setModulo, perfil, turno, onAjustes })
         {NAV.map(({ section, items }) => (
           <div key={section} style={{ marginBottom: 6 }}>
             <div style={{
-              fontSize: 10, fontWeight: 700, color: '#B4B0A9',
+              fontSize: 10, fontWeight: 700, color: '#000000',
               textTransform: 'uppercase', letterSpacing: '.7px',
               padding: '8px 12px 4px',
               fontFamily: 'var(--font-body)',
@@ -141,7 +146,7 @@ export default function Sidebar({ modulo, setModulo, perfil, turno, onAjustes })
         <div style={{ display: 'flex', alignItems: 'center', gap: 9, marginBottom: turno ? 10 : 8 }}>
           <div style={{
             width: 30, height: 30, borderRadius: '50%', flexShrink: 0,
-            background: '#1B2A4A',
+            background: NAVY,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             fontSize: 11, fontWeight: 700, color: '#fff',
             fontFamily: 'var(--font-body)',
