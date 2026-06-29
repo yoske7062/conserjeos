@@ -15,7 +15,7 @@ function Avatar({ nombre, size = 40 }) {
   );
 }
 
-function VisitaCard({ v, onSalida }) {
+function VisitaCard({ v, onSalida, onEditar }) {
   const entrada = new Date(v.entrada);
   const minutos = Math.floor((Date.now() - entrada) / 60000);
   const duracion = minutos < 60 ? `${minutos}min` : `${Math.floor(minutos/60)}h ${minutos%60}min`;
@@ -41,15 +41,24 @@ function VisitaCard({ v, onSalida }) {
           Entrada {entrada.toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })} · hace {duracion}
         </p>
       </div>
-      <button onClick={() => onSalida(v.id)} style={{
-        flexShrink: 0, minHeight: 48, padding: '0 16px', borderRadius: 8,
-        background: 'transparent', border: '1px solid var(--border)',
-        color: 'var(--text-secondary)', fontSize: 16, fontWeight: 500, cursor: 'pointer',
-        transition: 'all 120ms',
-      }}
-      onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--brand)'; e.currentTarget.style.color = 'var(--brand)'; }}
-      onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.color = 'var(--text-secondary)'; }}
-      >Registrar salida</button>
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'stretch', gap: 6, flexShrink: 0 }}>
+        <button onClick={() => onEditar(v)} title="Editar" style={{
+          alignSelf: 'flex-end', width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center',
+          borderRadius: 8, background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer',
+        }}
+        onMouseEnter={e => e.currentTarget.style.color = 'var(--brand)'}
+        onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}
+        ><span style={{ fontFamily: 'Material Symbols Outlined', fontSize: 18 }}>edit</span></button>
+        <button onClick={() => onSalida(v.id)} style={{
+          minHeight: 40, padding: '0 16px', borderRadius: 8,
+          background: 'transparent', border: '1px solid var(--border)',
+          color: 'var(--text-secondary)', fontSize: 13, fontWeight: 500, cursor: 'pointer',
+          transition: 'all 120ms',
+        }}
+        onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--brand)'; e.currentTarget.style.color = 'var(--brand)'; }}
+        onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.color = 'var(--text-secondary)'; }}
+        >Registrar salida</button>
+      </div>
     </div>
   );
 }
@@ -89,6 +98,10 @@ function RutInput({ value, onChange }) {
   );
 }
 
+function sanitizarBusqueda(s) {
+  return s.replace(/[,()%]/g, '').trim();
+}
+
 export default function Visitas({ perfil, turno }) {
   const [visitas, setVisitas]         = useState([]);
   const [loading, setLoading]         = useState(true);
@@ -97,7 +110,32 @@ export default function Visitas({ perfil, turno }) {
   const [enviando, setEnviando]       = useState(false);
   const [errorMsg, setErrorMsg]       = useState('');
 
+  // Búsqueda
+  const [busqueda, setBusqueda]                     = useState('');
+  const [resultadosBusqueda, setResultadosBusqueda] = useState(null);
+  const [buscando, setBuscando]                     = useState(false);
+
+  // Edición
+  const [editTarget, setEditTarget]       = useState(null);
+  const [editForm, setEditForm]           = useState({ nombre_visitante: '', rut_visitante: '', destino: '', motivo: '' });
+  const [guardandoEdit, setGuardandoEdit] = useState(false);
+
   useEffect(() => { cargarVisitas(); }, []);
+
+  useEffect(() => {
+    const q = sanitizarBusqueda(busqueda);
+    if (!q) { setResultadosBusqueda(null); return; }
+    setBuscando(true);
+    const t = setTimeout(async () => {
+      const { data } = await supabase.from('visitas').select('*')
+        .eq('edificio_id', perfil.edificio_id)
+        .or(`nombre_visitante.ilike.%${q}%,destino.ilike.%${q}%,rut_visitante.ilike.%${q}%`)
+        .order('entrada', { ascending: false }).limit(50);
+      setResultadosBusqueda(data ?? []);
+      setBuscando(false);
+    }, 350);
+    return () => clearTimeout(t);
+  }, [busqueda, perfil.edificio_id]);
 
   async function cargarVisitas() {
     setLoading(true);
@@ -155,14 +193,39 @@ export default function Visitas({ perfil, turno }) {
     else cargarVisitas();
   }
 
-  const activas   = visitas.filter(v => v.activa);
-  const historial = visitas.filter(v => !v.activa);
+  function abrirEdicion(v) {
+    setEditForm({ nombre_visitante: v.nombre_visitante, rut_visitante: v.rut_visitante, destino: v.destino, motivo: v.motivo ?? '' });
+    setEditTarget(v);
+  }
+
+  async function guardarEdicion(e) {
+    e.preventDefault();
+    if (validarRut(editForm.rut_visitante) !== true) {
+      setErrorMsg('El RUT del visitante no es válido.');
+      return;
+    }
+    if (!navigator.onLine) { setErrorMsg('Necesitas conexión a internet para editar un registro.'); return; }
+    setGuardandoEdit(true);
+    setErrorMsg('');
+    const { id, ...valorAnterior } = editTarget;
+    const { error } = await supabase.from('visitas').update({
+      ...editForm,
+      editado_por: perfil.id, editado_at: new Date().toISOString(), valor_anterior: valorAnterior,
+    }).eq('id', editTarget.id);
+    if (error) setErrorMsg('No se pudo guardar la edición. Intenta de nuevo.');
+    else { setEditTarget(null); cargarVisitas(); }
+    setGuardandoEdit(false);
+  }
+
+  const activasTodas   = visitas.filter(v => v.activa);
+  const historialTodas = visitas.filter(v => !v.activa);
+  const buscandoActivo = resultadosBusqueda !== null;
 
   return (
     <div style={{ padding: '22px 24px 28px' }}>
 
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 28 }}>
+      <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 20 }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
             <div style={{ width: 32, height: 32, borderRadius: 8, background: 'rgba(var(--brand-rgb),0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -171,10 +234,10 @@ export default function Visitas({ perfil, turno }) {
             <div style={{ fontSize: 23, fontWeight: 800, color: 'var(--text)', letterSpacing: '-0.5px' }}>Control de Visitas</div>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            {activas.length > 0 && <span style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--brand)', display: 'inline-block' }} />}
+            {activasTodas.length > 0 && <span style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--brand)', display: 'inline-block' }} />}
             <p style={{ fontSize: 13, color: 'var(--text-muted)' }}>
-              {activas.length > 0
-                ? `${activas.length} persona${activas.length !== 1 ? 's' : ''} en el edificio ahora`
+              {activasTodas.length > 0
+                ? `${activasTodas.length} persona${activasTodas.length !== 1 ? 's' : ''} en el edificio ahora`
                 : 'Sin visitas activas'}
             </p>
           </div>
@@ -197,73 +260,105 @@ export default function Visitas({ perfil, turno }) {
         </div>
       )}
 
-      {/* Visitas activas */}
-      {activas.length > 0 && (
-        <div style={{ marginBottom: 32 }}>
-          <p style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}>
-            En el edificio ahora
-          </p>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-            {activas.map(v => <VisitaCard key={v.id} v={v} onSalida={registrarSalida} />)}
-          </div>
-        </div>
-      )}
+      {/* Búsqueda */}
+      <div style={{ position: 'relative', marginBottom: 24 }}>
+        <span style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', fontFamily: 'Material Symbols Outlined', fontSize: 18, color: 'var(--text-muted)' }}>search</span>
+        <input
+          style={{ ...INPUT_STYLE, paddingLeft: 40 }}
+          placeholder="Buscar por nombre, RUT o destino…"
+          value={busqueda} onChange={e => setBusqueda(e.target.value)}
+          onFocus={e => e.target.style.borderColor = 'var(--brand)'}
+          onBlur={e => e.target.style.borderColor = 'var(--border)'}
+        />
+      </div>
 
-      {/* Historial */}
-      {historial.length > 0 && (
+      {buscandoActivo ? (
         <div>
-          <p style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}>
-            Historial del día
+          <p style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 16 }}>
+            {buscando ? 'Buscando…' : `${resultadosBusqueda.length} resultado${resultadosBusqueda.length !== 1 ? 's' : ''} para "${busqueda}"`}
           </p>
-          {/* Table header */}
-          <div style={{
-            display: 'grid', gridTemplateColumns: '1fr 120px 100px 100px 90px',
-            padding: '8px 16px', background: 'var(--bg-input)', border: '1px solid var(--bg-surface-high)',
-            borderRadius: '10px 10px 0 0', gap: 12,
-          }}>
-            {['Visitante', 'Destino', 'Entrada', 'Salida', 'Duración'].map(h => (
-              <span key={h} style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{h}</span>
-            ))}
-          </div>
-          <div style={{ border: '1px solid var(--bg-surface-high)', borderTop: 'none', borderRadius: '0 0 10px 10px', overflow: 'hidden' }}>
-            {historial.map((v, i) => {
-              const entrada = new Date(v.entrada);
-              const salida  = v.salida ? new Date(v.salida) : null;
-              const minutos = salida ? Math.floor((salida - entrada) / 60000) : null;
-              const dur = minutos !== null ? (minutos < 60 ? `${minutos}min` : `${Math.floor(minutos/60)}h ${minutos%60}min`) : '—';
-              return (
-                <div key={v.id} style={{
-                  display: 'grid', gridTemplateColumns: '1fr 120px 100px 100px 90px',
-                  padding: '12px 16px', gap: 12, alignItems: 'center',
-                  borderTop: i > 0 ? '1px solid var(--border)' : 'none',
-                  background: i % 2 === 0 ? 'var(--bg-surface)' : 'var(--bg-input)',
-                  transition: 'background 100ms',
-                }}
-                onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-surface)'}
-                onMouseLeave={e => e.currentTarget.style.background = i % 2 === 0 ? 'var(--bg-surface)' : 'var(--bg-input)'}
-                >
-                  <div>
-                    <p style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-body)' }}>{v.nombre_visitante}</p>
-                    {v.rut_visitante && <p style={{ fontSize: 11, color: 'var(--text-subtle)' }}>{v.rut_visitante}</p>}
-                  </div>
-                  <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{v.destino}</span>
-                  <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>{entrada.toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })}</span>
-                  <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>{salida ? salida.toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' }) : '—'}</span>
-                  <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>{dur}</span>
-                </div>
-              );
-            })}
-          </div>
+          {!buscando && resultadosBusqueda.length === 0 ? (
+            <p style={{ fontSize: 13, color: 'var(--text-subtle)' }}>Sin resultados.</p>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {resultadosBusqueda.map(v => <VisitaCard key={v.id} v={v} onSalida={registrarSalida} onEditar={abrirEdicion} />)}
+            </div>
+          )}
         </div>
-      )}
+      ) : (
+        <>
+          {/* Visitas activas */}
+          {activasTodas.length > 0 && (
+            <div style={{ marginBottom: 32 }}>
+              <p style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}>
+                En el edificio ahora
+              </p>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                {activasTodas.map(v => <VisitaCard key={v.id} v={v} onSalida={registrarSalida} onEditar={abrirEdicion} />)}
+              </div>
+            </div>
+          )}
 
-      {/* Empty state */}
-      {!loading && visitas.length === 0 && (
-        <div style={{ textAlign: 'center', padding: '60px 24px' }}>
-          <div style={{ width: 52, height: 52, background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', fontSize: 22 }}>👤</div>
-          <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-muted)', marginBottom: 6 }}>Sin visitas registradas hoy</p>
-          <p style={{ fontSize: 13, color: 'var(--text-subtle)' }}>Registra la entrada de visitantes al edificio</p>
-        </div>
+          {/* Historial */}
+          {historialTodas.length > 0 && (
+            <div>
+              <p style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}>
+                Historial del día
+              </p>
+              {/* Table header */}
+              <div style={{
+                display: 'grid', gridTemplateColumns: '1fr 120px 100px 100px 90px 40px',
+                padding: '8px 16px', background: 'var(--bg-input)', border: '1px solid var(--bg-surface-high)',
+                borderRadius: '10px 10px 0 0', gap: 12,
+              }}>
+                {['Visitante', 'Destino', 'Entrada', 'Salida', 'Duración', ''].map(h => (
+                  <span key={h} style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{h}</span>
+                ))}
+              </div>
+              <div style={{ border: '1px solid var(--bg-surface-high)', borderTop: 'none', borderRadius: '0 0 10px 10px', overflow: 'hidden' }}>
+                {historialTodas.map((v, i) => {
+                  const entrada = new Date(v.entrada);
+                  const salida  = v.salida ? new Date(v.salida) : null;
+                  const minutos = salida ? Math.floor((salida - entrada) / 60000) : null;
+                  const dur = minutos !== null ? (minutos < 60 ? `${minutos}min` : `${Math.floor(minutos/60)}h ${minutos%60}min`) : '—';
+                  return (
+                    <div key={v.id} style={{
+                      display: 'grid', gridTemplateColumns: '1fr 120px 100px 100px 90px 40px',
+                      padding: '12px 16px', gap: 12, alignItems: 'center',
+                      borderTop: i > 0 ? '1px solid var(--border)' : 'none',
+                      background: i % 2 === 0 ? 'var(--bg-surface)' : 'var(--bg-input)',
+                      transition: 'background 100ms',
+                    }}
+                    onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-surface)'}
+                    onMouseLeave={e => e.currentTarget.style.background = i % 2 === 0 ? 'var(--bg-surface)' : 'var(--bg-input)'}
+                    >
+                      <div>
+                        <p style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-body)' }}>{v.nombre_visitante}</p>
+                        {v.rut_visitante && <p style={{ fontSize: 11, color: 'var(--text-subtle)' }}>{v.rut_visitante}</p>}
+                      </div>
+                      <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{v.destino}</span>
+                      <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>{entrada.toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })}</span>
+                      <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>{salida ? salida.toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' }) : '—'}</span>
+                      <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>{dur}</span>
+                      <button onClick={() => abrirEdicion(v)} title="Editar" style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>
+                        <span style={{ fontFamily: 'Material Symbols Outlined', fontSize: 16 }}>edit</span>
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Empty state */}
+          {!loading && visitas.length === 0 && (
+            <div style={{ textAlign: 'center', padding: '60px 24px' }}>
+              <div style={{ width: 52, height: 52, background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', fontSize: 22 }}>👤</div>
+              <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-muted)', marginBottom: 6 }}>Sin visitas registradas hoy</p>
+              <p style={{ fontSize: 13, color: 'var(--text-subtle)' }}>Registra la entrada de visitantes al edificio</p>
+            </div>
+          )}
+        </>
       )}
 
       {/* FAB */}
@@ -278,7 +373,7 @@ export default function Visitas({ perfil, turno }) {
       onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
       >+</button>
 
-      {/* Modal */}
+      {/* Modal: Registrar */}
       {mostrarForm && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.65)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100, padding: 24 }}>
           <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 16, width: '100%', maxWidth: 420, boxShadow: '0 24px 60px rgba(0,0,0,0.7)' }}>
@@ -330,6 +425,42 @@ export default function Visitas({ perfil, turno }) {
               <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
                 <button type="button" onClick={() => setMostrarForm(false)} style={{ flex: 1, height: 48, background: 'transparent', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 16, cursor: 'pointer', fontFamily: 'inherit' }}>Cancelar</button>
                 <button type="submit" disabled={enviando} style={{ flex: 1, height: 48, background: 'var(--brand)', border: 'none', borderRadius: 8, color: 'var(--brand-text-on)', fontSize: 16, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>{enviando ? '...' : 'Registrar entrada'}</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal: Editar */}
+      {editTarget && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.65)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 110, padding: 24 }}>
+          <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 16, width: '100%', maxWidth: 420, boxShadow: '0 24px 60px rgba(0,0,0,0.7)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 22px', borderBottom: '1px solid var(--border)' }}>
+              <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)' }}>Editar visita</div>
+              <button onClick={() => setEditTarget(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', fontSize: 20 }}>✕</button>
+            </div>
+            <form onSubmit={guardarEdicion} style={{ padding: 22, display: 'flex', flexDirection: 'column', gap: 14 }}>
+              <div>
+                <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>Nombre del visitante</label>
+                <input style={INPUT_STYLE} required
+                  value={editForm.nombre_visitante} onChange={e => setEditForm(f => ({ ...f, nombre_visitante: e.target.value }))}
+                />
+              </div>
+              <RutInput value={editForm.rut_visitante} onChange={v => setEditForm(f => ({ ...f, rut_visitante: v }))} />
+              {[
+                ['destino', 'Depto / Oficina', true],
+                ['motivo',  'Motivo (opcional)', false],
+              ].map(([key, label, required]) => (
+                <div key={key}>
+                  <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>{label}</label>
+                  <input style={INPUT_STYLE} required={required}
+                    value={editForm[key]} onChange={e => setEditForm(f => ({ ...f, [key]: e.target.value }))}
+                  />
+                </div>
+              ))}
+              <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
+                <button type="button" onClick={() => setEditTarget(null)} style={{ flex: 1, height: 48, background: 'transparent', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 16, cursor: 'pointer', fontFamily: 'inherit' }}>Cancelar</button>
+                <button type="submit" disabled={guardandoEdit} style={{ flex: 1, height: 48, background: 'var(--brand)', border: 'none', borderRadius: 8, color: 'var(--brand-text-on)', fontSize: 16, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>{guardandoEdit ? '...' : 'Guardar cambios'}</button>
               </div>
             </form>
           </div>

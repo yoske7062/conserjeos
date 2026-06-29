@@ -95,6 +95,8 @@ create table public.encomiendas (
   recibida_at     timestamptz not null default now(),
   entregada_at    timestamptz,
   entregada       boolean not null default false,
+  retirado_por    text,
+  retirado_tipo   text check (retirado_tipo in ('residente','tercero')),
   editado_por     uuid references public.perfiles(id),
   editado_at      timestamptz,
   valor_anterior  jsonb
@@ -346,3 +348,14 @@ select cron.schedule(
 -- Para revisar el job: select * from cron.job;
 -- Para ver ejecuciones:  select * from cron.job_run_details order by start_time desc limit 20;
 -- Para desactivar:       select cron.unschedule('cleanup-old-visitas');
+
+-- ============================================================
+-- MIGRACIÓN — Trazabilidad de retiro de encomiendas (28-jun-2026)
+-- ============================================================
+-- Quién retiró cada encomienda: el residente o un tercero autorizado.
+
+alter table public.encomiendas add column if not exists retirado_por  text;
+alter table public.encomiendas add column if not exists retirado_tipo text
+  check (retirado_tipo in ('residente','tercero'));
+
+create index if not exists tareas_edificio_estado_idx on public.tareas (edificio_id, estado);
