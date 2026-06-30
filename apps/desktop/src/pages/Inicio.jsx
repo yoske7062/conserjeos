@@ -142,6 +142,14 @@ export default function Inicio({ perfil, turno, navegarA }) {
     visitasActivas: 0, encomiendasPendientes: 0,
     tareasPendientes: 0, tareasVencidas: 0,
   });
+  const [, setTick] = useState(0);
+
+  // Actualiza el reloj de duración del turno cada minuto
+  useEffect(() => {
+    if (!turno) return;
+    const id = setInterval(() => setTick(t => t + 1), 60000);
+    return () => clearInterval(id);
+  }, [turno]);
 
   useEffect(() => { cargarResumen(); }, [turno]);
 

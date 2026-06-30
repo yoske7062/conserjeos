@@ -147,7 +147,11 @@ export default function Novedades({ perfil, turno, filtroInicial }) {
     const channel = supabase.channel('novedades-live')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'novedades',
         filter: `edificio_id=eq.${perfil.edificio_id}` },
-        payload => setNovedades(prev => [payload.new, ...prev]))
+        async payload => {
+          // CDC payload no incluye joins; fetchar el row completo para obtener perfiles.nombre
+          const { data } = await supabase.from('novedades').select('*, perfiles(nombre)').eq('id', payload.new.id).single();
+          if (data) setNovedades(prev => [data, ...prev]);
+        })
       .subscribe();
     return () => supabase.removeChannel(channel);
   }, [turno]);
@@ -168,12 +172,17 @@ export default function Novedades({ perfil, turno, filtroInicial }) {
     if (!q) { setResultadosBusqueda(null); return; }
     setBuscando(true);
     const t = setTimeout(async () => {
-      const { data } = await supabase.from('novedades').select('*, perfiles(nombre)')
-        .eq('edificio_id', perfil.edificio_id)
-        .ilike('descripcion', `%${q}%`)
-        .order('created_at', { ascending: false }).limit(50);
-      setResultadosBusqueda(data ?? []);
-      setBuscando(false);
+      try {
+        const { data } = await supabase.from('novedades').select('*, perfiles(nombre)')
+          .eq('edificio_id', perfil.edificio_id)
+          .ilike('descripcion', `%${q}%`)
+          .order('created_at', { ascending: false }).limit(50);
+        setResultadosBusqueda(data ?? []);
+      } catch {
+        setResultadosBusqueda([]);
+      } finally {
+        setBuscando(false);
+      }
     }, 350);
     return () => clearTimeout(t);
   }, [busqueda, perfil.edificio_id]);

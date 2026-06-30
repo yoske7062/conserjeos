@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
+import { enqueue } from '../lib/offlineQueue';
 import { state as estados } from '../lib/tokens';
 
 const INPUT_STYLE = {
@@ -106,9 +107,13 @@ export default function Tareas({ perfil }) {
 
   async function completarTarea(id) {
     setErrorMsg('');
-    const { error } = await supabase.from('tareas')
-      .update({ estado: 'completada', completada_at: new Date().toISOString(), completada_por: perfil.id })
-      .eq('id', id);
+    const payload = { estado: 'completada', completada_at: new Date().toISOString(), completada_por: perfil.id };
+    if (!navigator.onLine) {
+      enqueue({ table: 'tareas', op: 'update', rowId: id, payload });
+      setTareas(prev => prev.map(t => t.id === id ? { ...t, ...payload } : t));
+      return;
+    }
+    const { error } = await supabase.from('tareas').update(payload).eq('id', id);
     if (error) setErrorMsg('No se pudo marcar como completada. Intenta de nuevo.');
     else cargarTareas();
   }

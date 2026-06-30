@@ -1,7 +1,8 @@
 // Utilidades de RUT chileno: limpieza, formateo automático y validación de dígito verificador.
 
 export function limpiarRut(valor) {
-  return valor.replace(/[^0-9kK]/g, '').toUpperCase();
+  if (!valor) return '';
+  return String(valor).replace(/[^0-9kK]/g, '').toUpperCase();
 }
 
 export function calcularDV(cuerpo) {
@@ -30,6 +31,7 @@ export function formatearRut(valor) {
 
 // null = aún incompleto (no mostrar feedback), true/false = válido o inválido
 export function validarRut(valor) {
+  if (!valor) return null;
   const limpio = limpiarRut(valor);
   if (limpio.length < 2) return null;
   const cuerpo = limpio.slice(0, -1);
