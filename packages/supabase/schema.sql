@@ -361,6 +361,16 @@ alter table public.encomiendas add column if not exists retirado_tipo text
 create index if not exists tareas_edificio_estado_idx on public.tareas (edificio_id, estado);
 
 -- ============================================================
+-- MIGRACIÓN — Columna email en perfiles (30-jun-2026)
+-- ============================================================
+-- apps/admin/app/dashboard/conserjes/actions.js (invitarConserjeAction) y
+-- page.jsx ya leen/escriben perfiles.email, pero la tabla original (línea
+-- ~26) nunca tuvo esa columna. Sin esto, invitar/listar conserjes desde el
+-- admin falla con "column does not exist".
+
+alter table public.perfiles add column if not exists email text;
+
+-- ============================================================
 -- STORAGE — Bucket de fotos (29-jun-2026)
 -- ============================================================
 -- El desktop sube fotos de novedades y encomiendas a un bucket 'fotos' y usa
