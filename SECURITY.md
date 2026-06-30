@@ -68,7 +68,13 @@ La autenticación por sí sola no evita que un usuario acceda a registros ajenos
 
 ---
 
-## 5. RUT — dato personal, no secreto
+## 5. Storage — bucket de fotos privado
+
+- El bucket `fotos` (novedades/encomiendas) es **privado**. Lectura, escritura, modificación y borrado están restringidos por RLS en `storage.objects`, scoped al `edificio_id` del usuario autenticado (path `{tabla}/{edificio_id}/{archivo}`).
+- El frontend nunca usa `getPublicUrl()`; resuelve cada foto con `createSignedUrl()` (URL temporal, expira), tanto en desktop (`apps/desktop/src/lib/fotos.js`) como en admin (`apps/admin/lib/fotos.js`).
+- Cron diario (`cleanup_orphan_fotos()`, pg_cron) borra objetos sin fila viva en `novedades`/`encomiendas` que los referencie, con margen de 7 días para no pisar uploads en curso de la cola offline.
+
+## 6. RUT — dato personal, no secreto
 
 - El RUT se valida y normaliza también del lado de los datos (CHECK constraint en la BD), no solo en el formulario. La validación en vivo es solo experiencia de usuario.
 - El RUT **nunca** se usa como contraseña, token ni mecanismo de acceso.
@@ -76,7 +82,7 @@ La autenticación por sí sola no evita que un usuario acceda a registros ajenos
 
 ---
 
-## 6. Electron
+## 7. Electron
 
 - `contextIsolation: true`, `nodeIntegration: false`, `sandbox: true`.
 - API mínima expuesta en `preload.cjs`.
@@ -87,7 +93,7 @@ Ver [`docs/engineering/architecture.md`](docs/engineering/architecture.md) secci
 
 ---
 
-## 7. GitHub Actions
+## 8. GitHub Actions
 
 - El permiso `contents: write` existe solo en el job de release y se ejecuta desde tags.
 - No se entregan secretos a workflows disparados por PRs no confiables.

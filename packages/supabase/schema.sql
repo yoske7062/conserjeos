@@ -371,24 +371,30 @@ create index if not exists tareas_edificio_estado_idx on public.tareas (edificio
 alter table public.perfiles add column if not exists email text;
 
 -- ============================================================
--- STORAGE — Bucket de fotos (29-jun-2026)
+-- STORAGE — Bucket de fotos (29-jun-2026, endurecido 30-jun-2026)
 -- ============================================================
--- El desktop sube fotos de novedades y encomiendas a un bucket 'fotos' y usa
--- getPublicUrl(), por lo que el bucket es público para LECTURA. La ESCRITURA
--- está restringida por edificio: el path es {tabla}/{edificio_id}/{archivo},
--- así que el 2do segmento de la ruta debe coincidir con mi_edificio_id().
+-- El bucket 'fotos' es PRIVADO. El desktop y el admin ya no usan
+-- getPublicUrl() — usan createSignedUrl() (ver apps/desktop/src/lib/fotos.js
+-- y apps/admin/lib/fotos.js), por lo que la lectura también pasa por RLS de
+-- storage.objects. La escritura/lectura están restringidas por edificio: el
+-- path es {tabla}/{edificio_id}/{archivo}, así que el 2do segmento de la ruta
+-- debe coincidir con mi_edificio_id().
 --
--- Aplicado en producción (proyecto cpxywvxwdnpsrxqjoqjl) el 29-jun-2026
--- vía Supabase Management API.
---
--- NOTA DE PRIVACIDAD (Ley 21.719): las fotos quedan accesibles por URL pública
--- (no adivinable, pero no protegida). Endurecimiento futuro recomendado:
--- bucket privado + createSignedUrl() en lugar de getPublicUrl(), y una limpieza
--- de objetos antiguos análoga al cron de visitas.
+-- Aplicado en producción (proyecto cpxywvxwdnpsrxqjoqjl) vía Supabase
+-- Management API: bucket creado público el 29-jun-2026, pasado a privado el
+-- 30-jun-2026 (cumplimiento Ley 21.719 — las fotos ya no son accesibles por
+-- URL directa sin autenticación).
 
 insert into storage.buckets (id, name, public)
-values ('fotos', 'fotos', true)
-on conflict (id) do update set public = true;
+values ('fotos', 'fotos', false)
+on conflict (id) do update set public = false;
+
+-- Leer: solo dentro de la carpeta del propio edificio (necesario para
+-- createSignedUrl(), que en bucket privado también pasa por esta policy).
+drop policy if exists "fotos: leer mi edificio" on storage.objects;
+create policy "fotos: leer mi edificio" on storage.objects
+  for select to authenticated
+  using (bucket_id = 'fotos' and (storage.foldername(name))[2] = public.mi_edificio_id()::text);
 
 -- Subir: solo a la carpeta del propio edificio.
 drop policy if exists "fotos: subir a mi edificio" on storage.objects;
@@ -409,3 +415,67 @@ drop policy if exists "fotos: borrar mi edificio" on storage.objects;
 create policy "fotos: borrar mi edificio" on storage.objects
   for delete to authenticated
   using (bucket_id = 'fotos' and (storage.foldername(name))[2] = public.mi_edificio_id()::text);
+
+-- ============================================================
+-- MIGRACIÓN — Limpieza de fotos huérfanas (Ley 21.719)
+-- ============================================================
+-- Objetos del bucket 'fotos' que ya no tiene referencia ninguna fila viva de
+-- novedades/encomiendas: subidas de la cola offline que terminaron fallando
+-- el insert posterior, o fotos reemplazadas al editar. No se borra nada con
+-- foto_url asociado, solo huérfanos. foto_url puede guardar el path crudo o
+-- (filas antiguas) la URL pública completa — el filtro LIKE '%' || o.name
+-- matchea ambos formatos porque el path siempre es el sufijo de la URL.
+--
+-- Margen de 7 días antes de considerar huérfano: evita borrar un objeto recién
+-- subido cuyo insert en la tabla todavía no se confirmó (ventana de la cola
+-- offline, retries, etc).
+
+create or replace function public.cleanup_orphan_fotos()
+returns void language plpgsql security definer as $$
+begin
+  delete from storage.objects o
+  where o.bucket_id = 'fotos'
+    and o.created_at < now() - interval '7 days'
+    and not exists (
+      select 1 from public.novedades n
+      where n.foto_url is not null and n.foto_url like '%' || o.name
+    )
+    and not exists (
+      select 1 from public.encomiendas e
+      where e.foto_url is not null and e.foto_url like '%' || o.name
+    );
+end;
+$$;
+
+select cron.schedule(
+  'cleanup-orphan-fotos',
+  '30 4 * * *',                                  -- todos los días a las 04:30 UTC
+  $$select public.cleanup_orphan_fotos();$$
+);
+
+-- Para revisar el job: select * from cron.job;
+-- Para ver ejecuciones:  select * from cron.job_run_details order by start_time desc limit 20;
+-- Para desactivar:       select cron.unschedule('cleanup-orphan-fotos');
+
+-- ============================================================
+-- MIGRACIÓN — Tabla de Eventos Analíticos (30-jun-2026)
+-- ============================================================
+
+create table if not exists public.eventos_analitica (
+  id            uuid primary key default uuid_generate_v4(),
+  edificio_id   uuid not null references public.edificios(id) on delete cascade,
+  conserje_id   uuid not null references public.perfiles(id) on delete cascade,
+  nombre_evento text not null,
+  metadata      jsonb not null default '{}'::jsonb,
+  created_at    timestamptz not null default now()
+);
+
+alter table public.eventos_analitica enable row level security;
+
+create policy "insertar_eventos_edificio_propio" on public.eventos_analitica
+  for insert
+  with check (edificio_id = public.mi_edificio_id());
+
+create policy "ver_eventos_edificio_propio" on public.eventos_analitica
+  for select
+  using (edificio_id = public.mi_edificio_id());

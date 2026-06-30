@@ -40,6 +40,7 @@ Qué medidas de seguridad se aplican, contra qué, y dónde están los límites 
 | Datos sensibles en logs | RUT y nombres se omiten o enmascaran en logs |
 | App Electron comprometida vía web | `contextIsolation`, `sandbox`, CSP, bloqueo de navegación externa |
 | Workflow de CI filtra secretos | `contents: write` solo en release desde tags; sin secretos en PRs no confiables |
+| Fuga de fotos de novedades/encomiendas vía URL no autenticada | Bucket `fotos` privado + RLS en `storage.objects` scoped por edificio; lectura solo vía `createSignedUrl()` |
 
 ---
 
