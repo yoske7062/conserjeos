@@ -78,7 +78,7 @@ export default function VisitasPage() {
                 <p style={{ fontWeight: 600, color: 'var(--text)' }}>{v.nombre_visitante}</p>
                 {v.rut_visitante && <p style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 1 }}>{v.rut_visitante}</p>}
               </div>
-              <span style={{ color: 'var(--text-body)' }}>{v.departamento ?? '—'}</span>
+              <span style={{ color: 'var(--text-body)' }}>{v.destino ?? '—'}</span>
               <span style={{ color: 'var(--text-body)' }}>{new Date(v.entrada).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })}</span>
               <span style={{ color: 'var(--text-body)' }}>{v.salida ? new Date(v.salida).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' }) : '—'}</span>
               <span style={{
