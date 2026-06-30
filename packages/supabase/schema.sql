@@ -361,24 +361,30 @@ alter table public.encomiendas add column if not exists retirado_tipo text
 create index if not exists tareas_edificio_estado_idx on public.tareas (edificio_id, estado);
 
 -- ============================================================
--- STORAGE — Bucket de fotos (29-jun-2026)
+-- STORAGE — Bucket de fotos (29-jun-2026, endurecido 30-jun-2026)
 -- ============================================================
--- El desktop sube fotos de novedades y encomiendas a un bucket 'fotos' y usa
--- getPublicUrl(), por lo que el bucket es público para LECTURA. La ESCRITURA
--- está restringida por edificio: el path es {tabla}/{edificio_id}/{archivo},
--- así que el 2do segmento de la ruta debe coincidir con mi_edificio_id().
+-- El bucket 'fotos' es PRIVADO. El desktop y el admin ya no usan
+-- getPublicUrl() — usan createSignedUrl() (ver apps/desktop/src/lib/fotos.js
+-- y apps/admin/lib/fotos.js), por lo que la lectura también pasa por RLS de
+-- storage.objects. La escritura/lectura están restringidas por edificio: el
+-- path es {tabla}/{edificio_id}/{archivo}, así que el 2do segmento de la ruta
+-- debe coincidir con mi_edificio_id().
 --
--- Aplicado en producción (proyecto cpxywvxwdnpsrxqjoqjl) el 29-jun-2026
--- vía Supabase Management API.
---
--- NOTA DE PRIVACIDAD (Ley 21.719): las fotos quedan accesibles por URL pública
--- (no adivinable, pero no protegida). Endurecimiento futuro recomendado:
--- bucket privado + createSignedUrl() en lugar de getPublicUrl(), y una limpieza
--- de objetos antiguos análoga al cron de visitas.
+-- Aplicado en producción (proyecto cpxywvxwdnpsrxqjoqjl) vía Supabase
+-- Management API: bucket creado público el 29-jun-2026, pasado a privado el
+-- 30-jun-2026 (cumplimiento Ley 21.719 — las fotos ya no son accesibles por
+-- URL directa sin autenticación).
 
 insert into storage.buckets (id, name, public)
-values ('fotos', 'fotos', true)
-on conflict (id) do update set public = true;
+values ('fotos', 'fotos', false)
+on conflict (id) do update set public = false;
+
+-- Leer: solo dentro de la carpeta del propio edificio (necesario para
+-- createSignedUrl(), que en bucket privado también pasa por esta policy).
+drop policy if exists "fotos: leer mi edificio" on storage.objects;
+create policy "fotos: leer mi edificio" on storage.objects
+  for select to authenticated
+  using (bucket_id = 'fotos' and (storage.foldername(name))[2] = public.mi_edificio_id()::text);
 
 -- Subir: solo a la carpeta del propio edificio.
 drop policy if exists "fotos: subir a mi edificio" on storage.objects;
