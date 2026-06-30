@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { getSupabase } from '../../../lib/supabase';
+import { getSignedFotoUrl } from '../../../lib/fotos';
 
 const TIPO = {
   urgente:     { color: '#E5484D', label: 'Urgente',     icon: 'priority_high' },
@@ -89,9 +90,15 @@ export default function NovedadesPage() {
                   </div>
                   <p style={{ fontSize: 14, color: 'var(--text-body)', lineHeight: 1.55 }}>{nov.descripcion}</p>
                   {nov.foto_url && (
-                    <a href={nov.foto_url} target="_blank" rel="noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginTop: 8, fontSize: 12, color: 'var(--brand)', textDecoration: 'none' }}>
+                    <button
+                      onClick={async () => {
+                        const url = await getSignedFotoUrl(nov.foto_url);
+                        if (url) window.open(url, '_blank', 'noreferrer');
+                      }}
+                      style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginTop: 8, fontSize: 12, color: 'var(--brand)', background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontFamily: 'inherit' }}
+                    >
                       <span style={{ fontFamily: 'Material Symbols Outlined', fontSize: 14 }}>photo</span>Ver foto adjunta
-                    </a>
+                    </button>
                   )}
                 </div>
               </div>

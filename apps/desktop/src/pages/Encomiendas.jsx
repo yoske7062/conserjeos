@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase';
 import { enqueue, fileToBase64 } from '../lib/offlineQueue';
 import { TIPOS_ENCOMIENDA, tipoInfo } from '../lib/tiposEncomienda';
 import FotoField from '../components/FotoField';
+import FotoPrivada from '../components/FotoPrivada';
 
 function tiempoDesde(fecha) {
   const min = Math.floor((Date.now() - new Date(fecha)) / 60000);
@@ -108,7 +109,7 @@ export default function Encomiendas({ perfil, turno }) {
       const path = `encomiendas/${perfil.edificio_id}/${Date.now()}.${ext}`;
       const { data: up, error: upError } = await supabase.storage.from('fotos').upload(path, fotoFile);
       if (upError) { setErrorMsg('No se pudo subir la foto. Revisa tu conexión e intenta de nuevo.'); setEnviando(false); return; }
-      if (up) { const { data: pub } = supabase.storage.from('fotos').getPublicUrl(path); foto_url = pub.publicUrl; }
+      if (up) foto_url = path;
     }
     const { error } = await supabase.from('encomiendas').insert({
       edificio_id: perfil.edificio_id, conserje_id: perfil.id,
@@ -282,7 +283,7 @@ export default function Encomiendas({ perfil, turno }) {
             >
               {/* Foto o icono */}
               {enc.foto_url ? (
-                <img src={enc.foto_url} alt="" style={{ width: 52, height: 52, borderRadius: 8, objectFit: 'cover', flexShrink: 0, border: '1px solid var(--border)' }} />
+                <FotoPrivada path={enc.foto_url} alt="" style={{ width: 52, height: 52, borderRadius: 8, objectFit: 'cover', flexShrink: 0, border: '1px solid var(--border)' }} />
               ) : <PaqueteIcon tipo={enc.tipo} />}
 
               {/* Info */}
