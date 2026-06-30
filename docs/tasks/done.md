@@ -4,6 +4,10 @@ Histórico de tareas completadas (más reciente arriba).
 
 | ID | Descripción | Stage | Responsable | Cerrada |
 |---|---|---|---|---|
+| T-045 | Fix bugs de campos desalineados con schema: Visitas, Tareas, `perfiles.email` (PR #11) | 4 | Claude | 2026-06-30 |
+| T-044 | Cron de limpieza de fotos huérfanas (PR #10) | 4 | Claude | 2026-06-30 |
+| T-043 | Bucket de fotos privado + signed URLs, Ley 21.719 (PR #9) | 4 | Claude | 2026-06-30 |
+| T-022 | Instrumentar analítica mínima — evento `1er_turno_cerrado` (PR #8) | 4 | Diego | 2026-06-30 |
 | T-023 | Endurecer alta de conserjes (invitación email vía `inviteUserByEmail`, no signUp directo) | 3 | Diego | 2026-06-29 |
 | T-021 | Desplegar `apps/admin` en Vercel — LIVE en https://admin-five-bay-95.vercel.app | 3 | Diego | 2026-06-29 |
 | T-020 | Panel web admin (Next.js): login, dashboard, 5 módulos, middleware | 3 | Diego | 2026-06-25 |
