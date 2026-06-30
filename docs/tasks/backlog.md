@@ -6,7 +6,7 @@ Prioridad: `P0` bloquea el stage actual · `P1` importante · `P2` nice to have.
 | ID | Descripción | Stage | Prio | Est | Responsable | Dependencias | Estado |
 |---|---|---|---|---|---|---|---|
 | T-024 | Probar modo offline con corte de red real (sin pérdida/duplicación) | 3 | P0 | M | Diego | — | ⬜ |
-| T-025 | Verificar realtime del panel admin contra datos del desktop | 3 | P1 | S | Diego | T-021 | ⬜ |
+| T-025 | Extender realtime a las páginas de detalle del admin (`/dashboard/novedades`, `/visitas`, `/encomiendas`, `/tareas`) — hoy solo `/dashboard` (overview) tiene `supabase.channel` con debounce (PR #7); las 4 páginas de detalle solo refrescan al cambiar filtro/tab, no ven en vivo lo que registra el desktop | 3 | P1 | S | _sin asignar_ | — | ⬜ |
 | T-030 | Conseguir 1er edificio real para Alpha | 4 | P0 | L | Diego/James | D5 | ⛔ |
 | T-040 | Cumplimiento Ley 21.719 — retención de encomiendas/novedades + flujo de supresión | 4 | P1 | M | _sin asignar_ | D4 | ⬜ |
 | T-041 | Montar Feedback + Bug Tracker (GitHub Issues + labels) | 4 | P1 | S | James | T-030 | ⬜ |
