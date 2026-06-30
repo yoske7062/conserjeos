@@ -1,4 +1,10 @@
-# Drift entre `schema.sql` y producción — detectado 30-jun-2026
+# Drift entre `schema.sql` y producción — detectado y resuelto 30-jun-2026
+
+> **Estado: RESUELTO.** Las 4 migraciones se aplicaron el 30-jun-2026 vía conexión directa a
+> Postgres (Session pooler, `aws-1-sa-east-1.pooler.supabase.com:5432`, con el `pg` de npm desde
+> un script temporal) y se verificaron con inserts reales contra producción (no solo lectura de
+> schema). Detalle abajo, queda como referencia del método y para la próxima vez que haga falta
+> aplicar una migración sin acceso al SQL Editor.
 
 `schema.sql` es documentación, no se aplica solo. Esto se detectó probando inserts reales
 contra el proyecto Supabase de producción (`cpxywvxwdnpsrxqjoqjl`) con la cuenta de prueba
@@ -67,6 +73,19 @@ await supabase.auth.signInWithPassword({ email: 'admin@portia.cl', password: '<p
 const { error } = await supabase.from('perfiles').select('email').limit(1);
 console.log(error ? 'todavía falta' : 'OK');
 ```
+
+## Cómo se aplicó realmente (para la próxima vez)
+
+El `service_role` key de la API REST **no permite ejecutar DDL** (`ALTER TABLE`/`CREATE TABLE`)
+— PostgREST no expone SQL arbitrario, ni siquiera con esa key. Hace falta conexión directa a
+Postgres. La conexión "Direct" (`db.<ref>.supabase.co:5432`) es IPv6-only y no resolvió DNS desde
+este entorno — el **Session pooler** sí funciona por IPv4: `aws-1-sa-east-1.pooler.supabase.com:5432`,
+usuario `postgres.cpxywvxwdnpsrxqjoqjl` (el número de región del pooler — `aws-1`, no `aws-0` —
+hay que sacarlo del modal "Connect" de Supabase, no asumirlo).
+
+Se instaló `pg` en una carpeta temporal fuera del repo (`npm install pg`), se corrieron las 4
+migraciones con un script de una sola vez, y se borró la carpeta al terminar. La contraseña de
+la base nunca se escribió a un archivo, solo se pasó por variable de entorno en memoria.
 
 ## Por qué pasó esto
 
