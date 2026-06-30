@@ -399,3 +399,27 @@ drop policy if exists "fotos: borrar mi edificio" on storage.objects;
 create policy "fotos: borrar mi edificio" on storage.objects
   for delete to authenticated
   using (bucket_id = 'fotos' and (storage.foldername(name))[2] = public.mi_edificio_id()::text);
+
+-- ============================================================
+-- MIGRACIÓN — Tabla de Eventos Analíticos (30-jun-2026)
+-- ============================================================
+
+create table if not exists public.eventos_analitica (
+  id            uuid primary key default uuid_generate_v4(),
+  edificio_id   uuid not null references public.edificios(id) on delete cascade,
+  conserje_id   uuid not null references public.perfiles(id) on delete cascade,
+  nombre_evento text not null,
+  metadata      jsonb not null default '{}'::jsonb,
+  created_at    timestamptz not null default now()
+);
+
+alter table public.eventos_analitica enable row level security;
+
+create policy "insertar_eventos_edificio_propio" on public.eventos_analitica
+  for insert
+  with check (edificio_id = public.mi_edificio_id());
+
+create policy "ver_eventos_edificio_propio" on public.eventos_analitica
+  for select
+  using (edificio_id = public.mi_edificio_id());
+

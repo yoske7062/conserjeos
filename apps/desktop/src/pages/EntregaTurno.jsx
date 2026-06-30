@@ -70,6 +70,16 @@ export default function EntregaTurno({ perfil, turno, onTurnoChange }) {
   async function cerrarTurno() {
     setCerrando(true);
     setErrorMsg('');
+
+    // Verificar si es el primer turno cerrado del conserje antes de desactivar el turno actual
+    const { count, error: countError } = await supabase
+      .from('turnos')
+      .select('id', { count: 'exact', head: true })
+      .eq('conserje_id', perfil.id)
+      .eq('activo', false);
+
+    const esPrimerTurno = !countError && count === 0;
+
     const inicio = new Date(turno.inicio).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' });
     const fin    = new Date().toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' });
     const resumen = [
@@ -83,8 +93,30 @@ export default function EntregaTurno({ perfil, turno, onTurnoChange }) {
     const { error } = await supabase.from('turnos')
       .update({ fin: new Date().toISOString(), activo: false, resumen, pendientes: pendientesNuevos })
       .eq('id', turno.id);
-    if (error) setErrorMsg('No se pudo cerrar el turno. Revisa tu conexión e intenta de nuevo.');
-    else { setResumenModal(resumen); setPendientesNuevos([]); onTurnoChange(null); }
+    if (error) {
+      setErrorMsg('No se pudo cerrar el turno. Revisa tu conexión e intenta de nuevo.');
+    } else {
+      setResumenModal(resumen);
+      setPendientesNuevos([]);
+      onTurnoChange(null);
+
+      if (esPrimerTurno) {
+        const duracionMinutos = Math.floor((Date.now() - new Date(turno.inicio)) / 60000);
+        supabase.from('eventos_analitica').insert({
+          edificio_id: perfil.edificio_id,
+          conserje_id: perfil.id,
+          nombre_evento: '1er_turno_cerrado',
+          metadata: {
+            turno_id: turno.id,
+            duracion_minutos: duracionMinutos
+          }
+        }).then(({ error: analyticError }) => {
+          if (analyticError) {
+            console.error('[Analytics] Error logging 1er_turno_cerrado event:', analyticError);
+          }
+        });
+      }
+    }
     setCerrando(false);
   }
 
