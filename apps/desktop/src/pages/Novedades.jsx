@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
+import { useRealtimeSync } from '../lib/useRealtimeSync';
 import { TIPO_NOVEDAD } from '../lib/tokens';
 import { enqueue, fileToBase64 } from '../lib/offlineQueue';
 import FotoField from '../components/FotoField';
@@ -144,17 +145,26 @@ export default function Novedades({ perfil, turno, filtroInicial }) {
 
   useEffect(() => {
     cargarNovedades();
-    const channel = supabase.channel('novedades-live')
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'novedades',
-        filter: `edificio_id=eq.${perfil.edificio_id}` },
-        async payload => {
-          // CDC payload no incluye joins; fetchar el row completo para obtener perfiles.nombre
-          const { data } = await supabase.from('novedades').select('*, perfiles(nombre)').eq('id', payload.new.id).single();
-          if (data) setNovedades(prev => [data, ...prev]);
-        })
-      .subscribe();
-    return () => supabase.removeChannel(channel);
   }, [turno]);
+
+  useRealtimeSync('novedades', perfil.edificio_id, {
+    onInsert: async (nuevo) => {
+      if (turno && nuevo.turno_id !== turno.id) return;
+      const { data } = await supabase.from('novedades').select('*, perfiles(nombre)').eq('id', nuevo.id).single();
+      if (data) setNovedades(prev => [data, ...prev.filter(n => n.id !== data.id)]);
+    },
+    onUpdate: async (actualizado) => {
+      const { data } = await supabase.from('novedades').select('*, perfiles(nombre)').eq('id', actualizado.id).single();
+      if (data) {
+        setNovedades(prev => prev.map(n => n.id === data.id ? data : n));
+        setResultadosBusqueda(prev => prev ? prev.map(n => n.id === data.id ? data : n) : null);
+      }
+    },
+    onDelete: (borrado) => {
+      setNovedades(prev => prev.filter(n => n.id !== borrado.id));
+      setResultadosBusqueda(prev => prev ? prev.filter(n => n.id !== borrado.id) : null);
+    }
+  });
 
   async function cargarNovedades() {
     setLoading(true);
@@ -214,12 +224,18 @@ export default function Novedades({ perfil, turno, filtroInicial }) {
 
     if (!navigator.onLine) {
       const fotoBase64 = fotoFile ? await fileToBase64(fotoFile) : null;
-      enqueue({ table: 'novedades', op: 'insert', payload: {
+      const tempId = crypto.randomUUID();
+      const payload = {
+        id: tempId,
         edificio_id: perfil.edificio_id, conserje_id: perfil.id,
         turno_id: turno?.id ?? null, tipo,
         descripcion: descripcion.trim(), foto_url: null,
         created_at: new Date().toISOString(),
-      }, fotoBase64, fotoName: fotoFile?.name });
+      };
+      enqueue({ table: 'novedades', op: 'insert', payload, fotoBase64, fotoName: fotoFile?.name });
+      
+      setNovedades(prev => [{ ...payload, perfiles: { nombre: perfil.nombre } }, ...prev]);
+      
       localStorage.removeItem(draftKey(perfil.id, perfil.edificio_id));
       setDescripcion(''); setFotoFile(null); setTipo('informativo');
       setBorradorRestaurado(false); setMostrarForm(false);

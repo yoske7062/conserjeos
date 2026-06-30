@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
+import { useRealtimeSync } from '../lib/useRealtimeSync';
 import { enqueue } from '../lib/offlineQueue';
 import { formatearRut, validarRut } from '../lib/rut';
 
@@ -122,6 +123,21 @@ export default function Visitas({ perfil, turno }) {
 
   useEffect(() => { cargarVisitas(); }, []);
 
+  useRealtimeSync('visitas', perfil.edificio_id, {
+    onInsert: (nuevo) => {
+      if (turno && nuevo.turno_id !== turno.id) return;
+      setVisitas(prev => [nuevo, ...prev.filter(v => v.id !== nuevo.id)]);
+    },
+    onUpdate: (actualizado) => {
+      setVisitas(prev => prev.map(v => v.id === actualizado.id ? actualizado : v));
+      setResultadosBusqueda(prev => prev ? prev.map(v => v.id === actualizado.id ? actualizado : v) : null);
+    },
+    onDelete: (borrado) => {
+      setVisitas(prev => prev.filter(v => v.id !== borrado.id));
+      setResultadosBusqueda(prev => prev ? prev.filter(v => v.id !== borrado.id) : null);
+    }
+  });
+
   useEffect(() => {
     const q = sanitizarBusqueda(busqueda);
     if (!q) { setResultadosBusqueda(null); return; }
@@ -163,10 +179,16 @@ export default function Visitas({ perfil, turno }) {
     }
     if (!navigator.onLine) {
       const ahora = new Date().toISOString();
-      enqueue({ table: 'visitas', op: 'insert', payload: {
+      const tempId = crypto.randomUUID();
+      const payload = {
+        id: tempId,
         edificio_id: perfil.edificio_id, conserje_id: perfil.id,
         turno_id: turno?.id ?? null, entrada: ahora, activa: true, ...form,
-      }});
+      };
+      enqueue({ table: 'visitas', op: 'insert', payload });
+      
+      setVisitas(prev => [payload, ...prev]);
+      
       setMostrarForm(false);
       setForm({ nombre_visitante: '', rut_visitante: '', destino: '', motivo: '', consentimiento_ley: false });
       return;
@@ -191,6 +213,7 @@ export default function Visitas({ perfil, turno }) {
     if (!navigator.onLine) {
       enqueue({ table: 'visitas', op: 'update', rowId: id, payload: { salida: ahora, activa: false } });
       setVisitas(prev => prev.map(v => v.id === id ? { ...v, salida: ahora, activa: false } : v));
+      setResultadosBusqueda(prev => prev ? prev.map(v => v.id === id ? { ...v, salida: ahora, activa: false } : v) : null);
       return;
     }
     const { error } = await supabase.from('visitas').update({ salida: ahora, activa: false }).eq('id', id);
