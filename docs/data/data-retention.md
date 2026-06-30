@@ -19,6 +19,7 @@ Se conserva el dato personal solo el tiempo necesario para la finalidad que just
 | Encomiendas | Trazabilidad de entrega | A definir (sugerido: hasta entrega + N días) | **Pendiente** |
 | Novedades | Bitácora operativa del edificio | A definir | **Pendiente** |
 | Perfiles de usuario | Operación de la cuenta | Mientras la cuenta esté activa | Baja lógica (`activo = false`) |
+| Fotos de novedades/encomiendas (Storage) | Evidencia adjunta al registro | Mientras exista la fila que las referencia; huérfanas se borran a los 7 días | Bucket `fotos` privado (signed URLs, sin acceso público) + `cleanup_orphan_fotos()` |
 
 ---
 
@@ -33,7 +34,7 @@ end;
 $$;
 ```
 
-Para que se ejecute periódicamente debe programarse (Supabase → Database → Cron / pg_cron). **Pendiente:** confirmar que existe un cron que llama a esta función; si no, la retención no se está aplicando automáticamente.
+**Confirmado:** programada con `pg_cron`, job `cleanup-old-visitas`, corre diario a las 04:00 UTC. Aplicado en producción el 29-jun-2026 vía Supabase Management API (job id 1). Mismo patrón replicado para fotos huérfanas: `cleanup_orphan_fotos()`, job `cleanup-orphan-fotos`, diario a las 04:30 UTC.
 
 ---
 
@@ -50,6 +51,7 @@ Estos flujos hoy son manuales (vía consulta SQL). Candidato a feature del panel
 
 ## 5. Pendientes
 
-- [ ] Confirmar/crear el cron que ejecuta `cleanup_old_visitas()`.
-- [ ] Definir retención de encomiendas y novedades.
+- [x] Confirmar/crear el cron que ejecuta `cleanup_old_visitas()` — hecho 29-jun-2026.
+- [x] Bucket de fotos privado + limpieza de huérfanos — hecho 30-jun-2026 (`fix/storage-private-bucket` PR #9, `fix/cleanup-orphan-fotos` PR #10).
+- [ ] Definir retención de encomiendas y novedades — decisión de producto, no técnica.
 - [ ] Documentar el procedimiento de respuesta a una solicitud de supresión.
