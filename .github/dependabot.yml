@@ -1,0 +1,25 @@
+# Dependabot — actualizaciones de dependencias.
+# Las alertas de seguridad (Dependabot security updates) ya están activadas a
+# nivel de repo (Settings → Security). Esto agrega PRs semanales para mantener
+# las versiones al día en los 3 manifiestos npm del monorepo.
+version: 2
+updates:
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+  - package-ecosystem: "npm"
+    directory: "/apps/admin"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+  - package-ecosystem: "npm"
+    directory: "/apps/desktop"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
