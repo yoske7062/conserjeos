@@ -67,8 +67,7 @@ export default function Dashboard({ perfil }) {
             const path = `${item.table}/${payload.edificio_id}/${Date.now()}.${ext}`;
             const { data: up, error: upError } = await supabase.storage.from('fotos').upload(path, blob);
             if (!upError && up) {
-              const { data: pub } = supabase.storage.from('fotos').getPublicUrl(path);
-              payload = { ...payload, foto_url: pub.publicUrl };
+              payload = { ...payload, foto_url: path };
             }
           }
         }

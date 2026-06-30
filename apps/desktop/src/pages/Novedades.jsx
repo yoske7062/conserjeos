@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase';
 import { TIPO_NOVEDAD } from '../lib/tokens';
 import { enqueue, fileToBase64 } from '../lib/offlineQueue';
 import FotoField from '../components/FotoField';
+import FotoPrivada from '../components/FotoPrivada';
 
 // Lo que un conserje anota de verdad, seguido, en el libro físico —
 // frases completas y listas para tocar, sin tener que rellenar nada después.
@@ -53,7 +54,7 @@ function NovedadCard({ nov, perfil, onEditar }) {
           <p style={{ fontSize: 16, color: 'var(--text-body)', lineHeight: 1.6 }}>{nov.descripcion}</p>
         </div>
         {nov.foto_url && (
-          <img src={nov.foto_url} alt="foto"
+          <FotoPrivada path={nov.foto_url} alt="foto"
             style={{ width: 80, height: 80, borderRadius: 8, objectFit: 'cover', flexShrink: 0, border: '1px solid var(--border)' }} />
         )}
         {puedeEditar && (
@@ -234,7 +235,7 @@ export default function Novedades({ perfil, turno, filtroInicial }) {
       const path = `novedades/${perfil.edificio_id}/${Date.now()}.${ext}`;
       const { data: up, error: upError } = await supabase.storage.from('fotos').upload(path, fotoFile);
       if (upError) { setErrorMsg('No se pudo subir la foto. Revisa tu conexión e intenta de nuevo.'); setEnviando(false); return; }
-      if (up) { const { data: pub } = supabase.storage.from('fotos').getPublicUrl(path); foto_url = pub.publicUrl; }
+      if (up) foto_url = path;
     }
     const { error } = await supabase.from('novedades').insert({
       edificio_id: perfil.edificio_id, conserje_id: perfil.id,
