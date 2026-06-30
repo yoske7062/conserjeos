@@ -4,6 +4,7 @@ Histórico de tareas completadas (más reciente arriba).
 
 | ID | Descripción | Stage | Responsable | Cerrada |
 |---|---|---|---|---|
+| T-047 | Aplicar a producción 4 migraciones que estaban solo en `schema.sql`: `perfiles.email`, `visitas.consentimiento_ley`, `encomiendas.retirado_por/tipo`, tabla `eventos_analitica`. Aplicadas vía conexión directa a Postgres (Session pooler) y verificadas con inserts reales contra prod. Ver `docs/data/prod-schema-drift-30jun2026.md` | 3/4 | Diego (DB password) + Claude (ejecución y verificación) | 2026-06-30 |
 | T-046 | Realtime + offline optimista para Tareas/Visitas, `useRealtimeSync` (PR #15) | 3 | Antigravity + Claude (fix de re-suscripción) | 2026-06-30 |
 | T-045 | Fix bugs de campos desalineados con schema: Visitas, Tareas, `perfiles.email` (PR #11) | 4 | Claude | 2026-06-30 |
 | T-044 | Cron de limpieza de fotos huérfanas (PR #10) | 4 | Claude | 2026-06-30 |
