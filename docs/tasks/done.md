@@ -4,6 +4,7 @@ Histórico de tareas completadas (más reciente arriba).
 
 | ID | Descripción | Stage | Responsable | Cerrada |
 |---|---|---|---|---|
+| T-046 | Realtime + offline optimista para Tareas/Visitas, `useRealtimeSync` (PR #15) | 3 | Antigravity + Claude (fix de re-suscripción) | 2026-06-30 |
 | T-045 | Fix bugs de campos desalineados con schema: Visitas, Tareas, `perfiles.email` (PR #11) | 4 | Claude | 2026-06-30 |
 | T-044 | Cron de limpieza de fotos huérfanas (PR #10) | 4 | Claude | 2026-06-30 |
 | T-043 | Bucket de fotos privado + signed URLs, Ley 21.719 (PR #9) | 4 | Claude | 2026-06-30 |
