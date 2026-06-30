@@ -70,8 +70,8 @@ function NovedadCard({ nov, perfil, onEditar }) {
   );
 }
 
-function draftKey(edificioId) {
-  return `portia:borrador-novedad:${edificioId}`;
+function draftKey(perfilId, edificioId) {
+  return `portia:borrador-novedad:${perfilId}:${edificioId}`;
 }
 
 // Lo urgente real ya tiene su propio botón rojo de Emergencia. Acá el conserje
@@ -122,7 +122,7 @@ export default function Novedades({ perfil, turno, filtroInicial }) {
   // Restaura un borrador si el conserje fue interrumpido a mitad de una novedad
   useEffect(() => {
     try {
-      const raw = localStorage.getItem(draftKey(perfil.edificio_id));
+      const raw = localStorage.getItem(draftKey(perfil.id, perfil.edificio_id));
       if (raw) {
         const draft = JSON.parse(raw);
         if (draft.descripcion?.trim()) {
@@ -138,8 +138,8 @@ export default function Novedades({ perfil, turno, filtroInicial }) {
   // Guarda el borrador en cada cambio mientras el modal está abierto
   useEffect(() => {
     if (!mostrarForm) return;
-    if (!descripcion.trim()) { localStorage.removeItem(draftKey(perfil.edificio_id)); return; }
-    localStorage.setItem(draftKey(perfil.edificio_id), JSON.stringify({ tipo, descripcion }));
+    if (!descripcion.trim()) { localStorage.removeItem(draftKey(perfil.id, perfil.edificio_id)); return; }
+    localStorage.setItem(draftKey(perfil.id, perfil.edificio_id), JSON.stringify({ tipo, descripcion }));
   }, [tipo, descripcion, mostrarForm]);
 
   useEffect(() => {
@@ -220,7 +220,7 @@ export default function Novedades({ perfil, turno, filtroInicial }) {
         descripcion: descripcion.trim(), foto_url: null,
         created_at: new Date().toISOString(),
       }, fotoBase64, fotoName: fotoFile?.name });
-      localStorage.removeItem(draftKey(perfil.edificio_id));
+      localStorage.removeItem(draftKey(perfil.id, perfil.edificio_id));
       setDescripcion(''); setFotoFile(null); setTipo('informativo');
       setBorradorRestaurado(false); setMostrarForm(false);
       return;
@@ -243,7 +243,7 @@ export default function Novedades({ perfil, turno, filtroInicial }) {
     if (error) {
       setErrorMsg('No se pudo guardar la novedad. Tu descripción no se perdió, intenta de nuevo.');
     } else {
-      localStorage.removeItem(draftKey(perfil.edificio_id));
+      localStorage.removeItem(draftKey(perfil.id, perfil.edificio_id));
       setDescripcion(''); setFotoFile(null); setTipo('informativo'); setBorradorRestaurado(false);
       setMostrarForm(false); cargarNovedades();
     }
@@ -251,7 +251,7 @@ export default function Novedades({ perfil, turno, filtroInicial }) {
   }
 
   function cancelarForm() {
-    localStorage.removeItem(draftKey(perfil.edificio_id));
+    localStorage.removeItem(draftKey(perfil.id, perfil.edificio_id));
     setDescripcion(''); setFotoFile(null); setTipo('informativo'); setBorradorRestaurado(false);
     setMostrarForm(false);
   }

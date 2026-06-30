@@ -76,7 +76,7 @@ export default function EncomiendePage() {
             }}>
               <div>
                 <p style={{ fontWeight: 600, color: 'var(--text)' }}>{item.destinatario}</p>
-                {item.departamento && <p style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 1 }}>Depto {item.departamento}</p>}
+                {item.depto && <p style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 1 }}>Depto {item.depto}</p>}
               </div>
               <span style={{ color: 'var(--text-body)', textTransform: 'capitalize' }}>{item.tipo ?? 'Paquete'}</span>
               <span style={{ color: 'var(--text-body)', fontSize: 12 }}>{new Date(item.recibida_at).toLocaleDateString('es-CL', { day: '2-digit', month: 'short' })}</span>
