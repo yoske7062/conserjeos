@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
+import { useRealtimeSync } from '../lib/useRealtimeSync';
 import { enqueue, fileToBase64 } from '../lib/offlineQueue';
 import { TIPOS_ENCOMIENDA, tipoInfo } from '../lib/tiposEncomienda';
 import FotoField from '../components/FotoField';
@@ -58,6 +59,21 @@ export default function Encomiendas({ perfil, turno }) {
 
   useEffect(() => { cargarEncomiendas(); }, []);
 
+  useRealtimeSync('encomiendas', perfil.edificio_id, {
+    onInsert: (nuevo) => {
+      if (turno && nuevo.turno_id !== turno.id) return;
+      setEncomiendas(prev => [nuevo, ...prev.filter(e => e.id !== nuevo.id)]);
+    },
+    onUpdate: (actualizado) => {
+      setEncomiendas(prev => prev.map(e => e.id === actualizado.id ? actualizado : e));
+      setResultadosBusqueda(prev => prev ? prev.map(e => e.id === actualizado.id ? actualizado : e) : null);
+    },
+    onDelete: (borrado) => {
+      setEncomiendas(prev => prev.filter(e => e.id !== borrado.id));
+      setResultadosBusqueda(prev => prev ? prev.filter(e => e.id !== borrado.id) : null);
+    }
+  });
+
   useEffect(() => {
     const q = sanitizarBusqueda(busqueda);
     if (!q) { setResultadosBusqueda(null); return; }
@@ -91,11 +107,17 @@ export default function Encomiendas({ perfil, turno }) {
     e.preventDefault();
     if (!navigator.onLine) {
       const fotoBase64 = fotoFile ? await fileToBase64(fotoFile) : null;
-      enqueue({ table: 'encomiendas', op: 'insert', payload: {
+      const tempId = crypto.randomUUID();
+      const payload = {
+        id: tempId,
         edificio_id: perfil.edificio_id, conserje_id: perfil.id,
         turno_id: turno?.id ?? null, foto_url: null,
         recibida_at: new Date().toISOString(), ...form,
-      }, fotoBase64, fotoName: fotoFile?.name });
+      };
+      enqueue({ table: 'encomiendas', op: 'insert', payload, fotoBase64, fotoName: fotoFile?.name });
+      
+      setEncomiendas(prev => [payload, ...prev]);
+      
       setMostrarForm(false);
       setForm({ tipo: 'paquete', remitente: '', destinatario: '', depto: '' });
       setFotoFile(null);
@@ -141,6 +163,7 @@ export default function Encomiendas({ perfil, turno }) {
     if (!navigator.onLine) {
       enqueue({ table: 'encomiendas', op: 'update', rowId: retiroTarget, payload });
       setEncomiendas(prev => prev.map(e => e.id === retiroTarget ? { ...e, ...payload } : e));
+      setResultadosBusqueda(prev => prev ? prev.map(e => e.id === retiroTarget ? { ...e, ...payload } : e) : null);
       setRetiroTarget(null); setConfirmandoRetiro(false);
       return;
     }

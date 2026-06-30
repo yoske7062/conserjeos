@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
+import { useRealtimeSync } from '../lib/useRealtimeSync';
 import { enqueue } from '../lib/offlineQueue';
 import { state as estados } from '../lib/tokens';
 
@@ -77,6 +78,18 @@ export default function Tareas({ perfil }) {
 
   useEffect(() => { cargarTareas(); }, []);
 
+  useRealtimeSync('tareas', perfil.edificio_id, {
+    onInsert: (nuevo) => {
+      setTareas(prev => [nuevo, ...prev.filter(t => t.id !== nuevo.id)]);
+    },
+    onUpdate: (actualizado) => {
+      setTareas(prev => prev.map(t => t.id === actualizado.id ? actualizado : t));
+    },
+    onDelete: (borrado) => {
+      setTareas(prev => prev.filter(t => t.id !== borrado.id));
+    }
+  });
+
   async function cargarTareas() {
     setLoading(true);
     const { data } = await supabase.from('tareas').select('*')
@@ -89,13 +102,28 @@ export default function Tareas({ perfil }) {
   async function crearTarea(e) {
     e.preventDefault();
     if (!form.titulo.trim()) return;
-    setEnviando(true);
-    setErrorMsg('');
-    const { error } = await supabase.from('tareas').insert({
+
+    const payload = {
       edificio_id: perfil.edificio_id, creada_por: perfil.id,
       titulo: form.titulo.trim(), descripcion: form.descripcion.trim() || null,
       prioridad: form.prioridad, vence_at: form.vence_at ? new Date(form.vence_at).toISOString() : null,
-    });
+      estado: 'pendiente',
+      created_at: new Date().toISOString()
+    };
+
+    if (!navigator.onLine) {
+      const tempId = crypto.randomUUID();
+      payload.id = tempId;
+      enqueue({ table: 'tareas', op: 'insert', payload });
+      setTareas(prev => [payload, ...prev]);
+      setForm({ titulo: '', descripcion: '', prioridad: 'normal', vence_at: '' });
+      setMostrarForm(false);
+      return;
+    }
+
+    setEnviando(true);
+    setErrorMsg('');
+    const { error } = await supabase.from('tareas').insert(payload);
     if (error) {
       setErrorMsg('No se pudo crear la tarea. Intenta de nuevo.');
     } else {

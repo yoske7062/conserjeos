@@ -73,6 +73,10 @@ export default function Dashboard({ perfil }) {
         }
         if (item.op === 'insert') {
           ({ error } = await supabase.from(item.table).insert(payload));
+          // Si el error es 23505 (Unique violation), significa que el registro ya existe
+          // (ej. se cortó la red justo después de que el server lo guardó).
+          // Lo marcamos como exitoso para sacarlo de la cola.
+          if (error && error.code === '23505') error = null;
         } else if (item.op === 'update') {
           ({ error } = await supabase.from(item.table).update(payload).eq('id', item.rowId));
         }
