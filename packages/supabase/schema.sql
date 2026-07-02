@@ -479,3 +479,31 @@ create policy "insertar_eventos_edificio_propio" on public.eventos_analitica
 create policy "ver_eventos_edificio_propio" on public.eventos_analitica
   for select
   using (edificio_id = public.mi_edificio_id());
+
+-- ============================================================
+-- MIGRACIÓN — Solo admin crea y borra tareas (01-jul-2026)
+-- ============================================================
+-- Hallazgo: la policy "tareas del edificio" era `for all`, así que cualquier
+-- usuario autenticado del edificio (conserje incluido) podía INSERTAR o
+-- BORRAR tareas vía API directa, aunque la UI ocultara el formulario.
+-- Se separa por operación: leer y actualizar puede cualquier usuario del
+-- edificio (el conserje marca completada con UPDATE); crear y borrar solo admin.
+
+drop policy if exists "tareas del edificio" on public.tareas;
+
+create policy "tareas: leer mi edificio" on public.tareas
+  for select
+  using (edificio_id = public.mi_edificio_id());
+
+create policy "tareas: actualizar mi edificio" on public.tareas
+  for update
+  using      (edificio_id = public.mi_edificio_id())
+  with check (edificio_id = public.mi_edificio_id());
+
+create policy "tareas: crear solo admin" on public.tareas
+  for insert
+  with check (edificio_id = public.mi_edificio_id() and public.mi_rol() = 'admin');
+
+create policy "tareas: borrar solo admin" on public.tareas
+  for delete
+  using (edificio_id = public.mi_edificio_id() and public.mi_rol() = 'admin');

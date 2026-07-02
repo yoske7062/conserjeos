@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { useRealtimeSync } from '../lib/useRealtimeSync';
 import { enqueue } from '../lib/offlineQueue';
+import { puedeCrearTareas } from '../lib/permisos';
+import { clasificarError } from '../lib/errores';
 import { state as estados } from '../lib/tokens';
 
 const INPUT_STYLE = {
@@ -74,7 +76,7 @@ export default function Tareas({ perfil }) {
   const [enviando, setEnviando] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
-  const esAdmin = perfil.rol === 'admin';
+  const esAdmin = puedeCrearTareas(perfil);
 
   useEffect(() => { cargarTareas(); }, []);
 
@@ -101,7 +103,7 @@ export default function Tareas({ perfil }) {
 
   async function crearTarea(e) {
     e.preventDefault();
-    if (!form.titulo.trim()) return;
+    if (!esAdmin || !form.titulo.trim()) return;
 
     const payload = {
       edificio_id: perfil.edificio_id, creada_por: perfil.id,
@@ -125,7 +127,7 @@ export default function Tareas({ perfil }) {
     setErrorMsg('');
     const { error } = await supabase.from('tareas').insert(payload);
     if (error) {
-      setErrorMsg('No se pudo crear la tarea. Intenta de nuevo.');
+      setErrorMsg(`No se pudo crear la tarea. ${clasificarError(error, 'tareas.crear').mensaje}`);
     } else {
       setForm({ titulo: '', descripcion: '', prioridad: 'normal', vence_at: '' });
       setMostrarForm(false); cargarTareas();
@@ -142,7 +144,7 @@ export default function Tareas({ perfil }) {
       return;
     }
     const { error } = await supabase.from('tareas').update(payload).eq('id', id);
-    if (error) setErrorMsg('No se pudo marcar como completada. Intenta de nuevo.');
+    if (error) setErrorMsg(`No se pudo marcar como completada. ${clasificarError(error, 'tareas.completar').mensaje}`);
     else cargarTareas();
   }
 
