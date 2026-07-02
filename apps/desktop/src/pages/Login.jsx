@@ -16,14 +16,6 @@ const FEATURES = [
   { label: 'Tareas',      sub: 'Del administrador',dot: 'rgba(255,255,255,0.35)' },
 ];
 
-const INPUT_BASE = {
-  width: '100%', height: 48, padding: '0 14px', borderRadius: 12,
-  background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.1)',
-  color: '#fff', fontSize: 14, fontFamily: BODY, outline: 'none',
-  boxSizing: 'border-box', transition: 'border-color .15s, background .15s',
-  WebkitFontSmoothing: 'antialiased',
-};
-
 export default function Login() {
   const [email,    setEmail]    = useState('');
   const [password, setPassword] = useState('');

@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "next dev --port 3001",
     "build": "next build",
-    "start": "next start --port 3001"
+    "start": "next start --port 3001",
+    "lint": "eslint ."
   },
   "dependencies": {
     "@supabase/ssr": "^0.6.1",
@@ -14,5 +15,12 @@
     "next": "^15.3.3",
     "react": "^19.2.7",
     "react-dom": "^19.2.7"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.4",
+    "eslint": "^9.39.4",
+    "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "globals": "^17.7.0"
   }
 }

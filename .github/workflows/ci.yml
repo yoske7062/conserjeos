@@ -29,6 +29,9 @@ jobs:
       - name: Instalación limpia
         run: npm ci
 
+      - name: Lint
+        run: npm run lint
+
       - name: Build
         run: npm run build
 
@@ -48,6 +51,10 @@ jobs:
 
       - name: Instalación limpia (workspace)
         run: npm ci
+
+      - name: Lint admin
+        working-directory: apps/admin
+        run: npm run lint
 
       - name: Build admin
         working-directory: apps/admin
