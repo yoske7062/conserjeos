@@ -24,7 +24,9 @@ export async function middleware(request) {
   const { data: { user } } = await supabase.auth.getUser();
   const { pathname } = request.nextUrl;
 
-  const publicPaths = ['/', '/login'];
+  // establecer-password es público: el invitado llega con tokens en el hash
+  // de la URL, que el servidor no ve — la sesión se arma en el cliente.
+  const publicPaths = ['/', '/login', '/auth/establecer-password'];
   if (!user && !publicPaths.includes(pathname)) {
     return NextResponse.redirect(new URL('/login', request.url));
   }
