@@ -12,6 +12,12 @@ const { store } = vi.hoisted(() => {
   return { store };
 });
 
+// Siempre se inyecta un cliente falso, pero syncQueue.js importa el cliente
+// real como default param — sin este mock, ese import instancia
+// createClient() y en Node sin WebSocket nativo (CI, Node 20) explota antes
+// de llegar a un solo test.
+vi.mock('./supabase.js', () => ({ supabase: {} }));
+
 import { enqueue, getAll, count } from './offlineQueue.js';
 import { flushQueue } from './syncQueue.js';
 
