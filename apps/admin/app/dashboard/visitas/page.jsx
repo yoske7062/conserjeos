@@ -1,32 +1,42 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { getSupabase } from '../../../lib/supabase';
+import { useRealtimeRefetch } from '../../../lib/useRealtimeRefetch';
 
 export default function VisitasPage() {
   const [visitas, setVisitas] = useState([]);
   const [loading, setLoading] = useState(true);
   const [fecha, setFecha]     = useState(new Date().toISOString().slice(0, 10));
   const [solo, setSolo]       = useState('todas'); // 'todas' | 'activas'
+  const [eid, setEid]         = useState(null);
+
+  const cargar = useCallback(async (edificioId) => {
+    const supabase = getSupabase();
+    let q = supabase.from('visitas')
+      .select('*')
+      .eq('edificio_id', edificioId)
+      .gte('entrada', `${fecha}T00:00:00`)
+      .lte('entrada', `${fecha}T23:59:59`)
+      .order('entrada', { ascending: false });
+    if (solo === 'activas') q = q.eq('activa', true);
+    const { data } = await q;
+    setVisitas(data ?? []);
+    setLoading(false);
+  }, [fecha, solo]);
 
   useEffect(() => {
-    async function cargar() {
-      setLoading(true);
+    setLoading(true);
+    async function init() {
       const supabase = getSupabase();
       const { data: { user } } = await supabase.auth.getUser();
       const { data: perfil }   = await supabase.from('perfiles').select('edificio_id').eq('id', user.id).single();
-      let q = supabase.from('visitas')
-        .select('*')
-        .eq('edificio_id', perfil.edificio_id)
-        .gte('entrada', `${fecha}T00:00:00`)
-        .lte('entrada', `${fecha}T23:59:59`)
-        .order('entrada', { ascending: false });
-      if (solo === 'activas') q = q.eq('activa', true);
-      const { data } = await q;
-      setVisitas(data ?? []);
-      setLoading(false);
+      setEid(perfil.edificio_id);
+      cargar(perfil.edificio_id);
     }
-    cargar();
-  }, [fecha, solo]);
+    init();
+  }, [fecha, solo, cargar]);
+
+  useRealtimeRefetch('visitas', eid, () => cargar(eid));
 
   const pill = (active) => ({
     padding: '6px 14px', borderRadius: 20, fontSize: 13, fontWeight: active ? 600 : 400,

@@ -1,7 +1,8 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { getSupabase } from '../../../lib/supabase';
 import { getSignedFotoUrl } from '../../../lib/fotos';
+import { useRealtimeRefetch } from '../../../lib/useRealtimeRefetch';
 
 const TIPO = {
   urgente:     { color: '#E5484D', label: 'Urgente',     icon: 'priority_high' },
@@ -20,25 +21,34 @@ export default function NovedadesPage() {
   const [items, setItems]     = useState([]);
   const [filtro, setFiltro]   = useState('todos');
   const [loading, setLoading] = useState(true);
+  const [eid, setEid]         = useState(null);
+
+  const cargar = useCallback(async (edificioId) => {
+    const supabase = getSupabase();
+    let q = supabase.from('novedades')
+      .select('*,perfiles(nombre)')
+      .eq('edificio_id', edificioId)
+      .order('created_at', { ascending: false })
+      .limit(60);
+    if (filtro !== 'todos') q = q.eq('tipo', filtro);
+    const { data } = await q;
+    setItems(data ?? []);
+    setLoading(false);
+  }, [filtro]);
 
   useEffect(() => {
-    async function cargar() {
+    setLoading(true);
+    async function init() {
       const supabase = getSupabase();
       const { data: { user } } = await supabase.auth.getUser();
       const { data: perfil }   = await supabase.from('perfiles').select('edificio_id').eq('id', user.id).single();
-      let q = supabase.from('novedades')
-        .select('*,perfiles(nombre)')
-        .eq('edificio_id', perfil.edificio_id)
-        .order('created_at', { ascending: false })
-        .limit(60);
-      if (filtro !== 'todos') q = q.eq('tipo', filtro);
-      const { data } = await q;
-      setItems(data ?? []);
-      setLoading(false);
+      setEid(perfil.edificio_id);
+      cargar(perfil.edificio_id);
     }
-    setLoading(true);
-    cargar();
-  }, [filtro]);
+    init();
+  }, [filtro, cargar]);
+
+  useRealtimeRefetch('novedades', eid, () => cargar(eid));
 
   const pill = (active) => ({
     padding: '6px 14px', borderRadius: 20, fontSize: 13, fontWeight: active ? 600 : 400,
