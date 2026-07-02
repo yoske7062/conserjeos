@@ -11,6 +11,11 @@ Histórico de tareas completadas (más reciente arriba).
 | T-043 | Bucket de fotos privado + signed URLs, Ley 21.719 (PR #9) | 4 | Claude | 2026-06-30 |
 | T-022 | Instrumentar analítica mínima — evento `1er_turno_cerrado` (PR #8) | 4 | Diego | 2026-06-30 |
 | T-023 | Endurecer alta de conserjes (invitación email vía `inviteUserByEmail`, no signUp directo) | 3 | Diego | 2026-06-29 |
+| T-054 | Onboarding de conserje: invite con redirectTo + página /auth/establecer-password (antes el link del correo no llevaba a ningún lado) | 3 | Claude | 2026-07-01 |
+| T-053 | ESLint (solo correctitud) en desktop y admin + gate en CI; limpieza de código muerto detectado | 3 | Claude | 2026-07-01 |
+| T-052 | Tests de flujos críticos: cola offline → sync sin duplicados (23505), retiro de encomienda, fotos encoladas, sesión vencida (flushQueue extraído a lib compartida) | 3 | Claude | 2026-07-01 |
+| T-051 | Errores con código diagnosticable en desktop: red/auth/RLS/duplicado/validación en vez de mensaje genérico | 3 | Claude | 2026-07-01 |
+| T-050 | Seguridad: solo admin crea/borra tareas — RLS por operación + guard en desktop (antes cualquier conserje podía insertar vía API) | 3 | Claude | 2026-07-01 |
 | T-021 | Desplegar `apps/admin` en Vercel — LIVE en https://admin-five-bay-95.vercel.app | 3 | Diego | 2026-06-29 |
 | T-020 | Panel web admin (Next.js): login, dashboard, 5 módulos, middleware | 3 | Diego | 2026-06-25 |
 | T-019 | Migrar paleta de la app a índigo (#6366F1) | 3 | Diego | 2026-06-25 |
