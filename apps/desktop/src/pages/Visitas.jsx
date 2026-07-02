@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase';
 import { useRealtimeSync } from '../lib/useRealtimeSync';
 import { enqueue } from '../lib/offlineQueue';
 import { formatearRut, validarRut } from '../lib/rut';
+import { clasificarError } from '../lib/errores';
 
 function Avatar({ nombre, size = 40 }) {
   const iniciales = nombre.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
@@ -200,7 +201,7 @@ export default function Visitas({ perfil, turno }) {
       turno_id: turno?.id ?? null, ...form,
     });
     if (error) {
-      setErrorMsg('No se pudo registrar la visita. Tus datos no se perdieron, intenta de nuevo.');
+      setErrorMsg(`No se pudo registrar la visita — tus datos no se perdieron. ${clasificarError(error, 'visitas.crear').mensaje}`);
     } else {
       setMostrarForm(false); setForm({ nombre_visitante: '', rut_visitante: '', destino: '', motivo: '', consentimiento_ley: false }); cargarVisitas();
     }
@@ -217,7 +218,7 @@ export default function Visitas({ perfil, turno }) {
       return;
     }
     const { error } = await supabase.from('visitas').update({ salida: ahora, activa: false }).eq('id', id);
-    if (error) setErrorMsg('No se pudo registrar la salida. Intenta de nuevo.');
+    if (error) setErrorMsg(`No se pudo registrar la salida. ${clasificarError(error, 'visitas.salida').mensaje}`);
     else cargarVisitas();
   }
 
@@ -242,7 +243,7 @@ export default function Visitas({ perfil, turno }) {
       rut_visitante: rutFormateado,
       editado_por: perfil.id, editado_at: new Date().toISOString(), valor_anterior: valorAnterior,
     }).eq('id', editTarget.id);
-    if (error) setErrorMsg('No se pudo guardar la edición. Intenta de nuevo.');
+    if (error) setErrorMsg(`No se pudo guardar la edición. ${clasificarError(error, 'visitas.editar').mensaje}`);
     else { setEditTarget(null); cargarVisitas(); }
     setGuardandoEdit(false);
   }

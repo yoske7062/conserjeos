@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { enqueue } from '../lib/offlineQueue';
+import { clasificarError } from '../lib/errores';
 
 const PROTOCOLOS = [
   { id: 'incendio',   label: 'Incendio',                     texto: 'Activa la alarma, evacúa por las escaleras (nunca el ascensor) y llama a Bomberos (132).' },
@@ -48,7 +49,7 @@ export default function EmergenciaButton({ perfil, turno }) {
     }
 
     const { data, error } = await supabase.from('novedades').insert(payload).select('id').single();
-    if (error) setErrorMsg('No se pudo registrar automáticamente. El protocolo sigue siendo válido.');
+    if (error) setErrorMsg(`No se pudo registrar automáticamente — el protocolo sigue siendo válido. ${clasificarError(error, 'emergencia.registrar').mensaje}`);
     if (data) setNovId(data.id);
     setProtocolo(p);
     setPaso('protocol');

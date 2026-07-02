@@ -4,6 +4,7 @@ import { useRealtimeSync } from '../lib/useRealtimeSync';
 import { TIPO_NOVEDAD } from '../lib/tokens';
 import { enqueue, fileToBase64 } from '../lib/offlineQueue';
 import FotoField from '../components/FotoField';
+import { clasificarError } from '../lib/errores';
 import FotoPrivada from '../components/FotoPrivada';
 
 // Lo que un conserje anota de verdad, seguido, en el libro físico —
@@ -214,7 +215,7 @@ export default function Novedades({ perfil, turno, filtroInicial }) {
       tipo: editForm.tipo, descripcion: editForm.descripcion.trim(),
       editado_por: perfil.id, editado_at: new Date().toISOString(), valor_anterior: valorAnterior,
     }).eq('id', editTarget.id);
-    if (error) setErrorMsg('No se pudo guardar la edición. Intenta de nuevo.');
+    if (error) setErrorMsg(`No se pudo guardar la edición. ${clasificarError(error, 'novedades.editar').mensaje}`);
     else { setEditTarget(null); cargarNovedades(); }
     setGuardandoEdit(false);
   }
@@ -250,7 +251,7 @@ export default function Novedades({ perfil, turno, filtroInicial }) {
       const ext  = fotoFile.name.split('.').pop();
       const path = `novedades/${perfil.edificio_id}/${Date.now()}.${ext}`;
       const { data: up, error: upError } = await supabase.storage.from('fotos').upload(path, fotoFile);
-      if (upError) { setErrorMsg('No se pudo subir la foto. Revisa tu conexión e intenta de nuevo.'); setEnviando(false); return; }
+      if (upError) { setErrorMsg(`No se pudo subir la foto. ${clasificarError(upError, 'novedades.foto').mensaje}`); setEnviando(false); return; }
       if (up) foto_url = path;
     }
     const { error } = await supabase.from('novedades').insert({
@@ -258,7 +259,7 @@ export default function Novedades({ perfil, turno, filtroInicial }) {
       turno_id: turno?.id ?? null, tipo, descripcion: descripcion.trim(), foto_url,
     });
     if (error) {
-      setErrorMsg('No se pudo guardar la novedad. Tu descripción no se perdió, intenta de nuevo.');
+      setErrorMsg(`No se pudo guardar la novedad — tu descripción no se perdió. ${clasificarError(error, 'novedades.crear').mensaje}`);
     } else {
       localStorage.removeItem(draftKey(perfil.id, perfil.edificio_id));
       setDescripcion(''); setFotoFile(null); setTipo('informativo'); setBorradorRestaurado(false);
