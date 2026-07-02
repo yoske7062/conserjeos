@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import { clasificarError } from '../lib/errores';
 
@@ -21,16 +21,16 @@ export default function FichaEdificio({ perfil }) {
 
   const esAdmin = perfil.rol === 'admin';
 
-  useEffect(() => { cargarEdificio(); }, [perfil.edificio_id]);
-
-  async function cargarEdificio() {
+  const cargarEdificio = useCallback(async () => {
     setLoading(true);
     const { data } = await supabase.from('edificios').select('*').eq('id', perfil.edificio_id).single();
     setEdificio(data);
     setContactos(data?.contactos ?? []);
     setProtocolos(data?.protocolos ?? []);
     setLoading(false);
-  }
+  }, [perfil.edificio_id]);
+
+  useEffect(() => { cargarEdificio(); }, [cargarEdificio]);
 
   function agregarContacto() {
     if (!nuevoContacto.nombre.trim()) return;

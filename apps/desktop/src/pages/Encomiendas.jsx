@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import { useRealtimeSync } from '../lib/useRealtimeSync';
 import { enqueue, fileToBase64 } from '../lib/offlineQueue';
@@ -58,7 +58,16 @@ export default function Encomiendas({ perfil, turno }) {
   const [editForm, setEditForm]     = useState({ tipo: 'paquete', remitente: '', destinatario: '', depto: '' });
   const [guardandoEdit, setGuardandoEdit] = useState(false);
 
-  useEffect(() => { cargarEncomiendas(); }, []);
+  const cargarEncomiendas = useCallback(async () => {
+    setLoading(true);
+    const { data } = await supabase.from('encomiendas').select('*')
+      .eq('edificio_id', perfil.edificio_id)
+      .order('recibida_at', { ascending: false }).limit(50);
+    setEncomiendas(data ?? []);
+    setLoading(false);
+  }, [perfil.edificio_id]);
+
+  useEffect(() => { cargarEncomiendas(); }, [cargarEncomiendas]);
 
   useRealtimeSync('encomiendas', perfil.edificio_id, {
     onInsert: (nuevo) => {
@@ -94,15 +103,6 @@ export default function Encomiendas({ perfil, turno }) {
     }, 350);
     return () => clearTimeout(t);
   }, [busqueda, perfil.edificio_id]);
-
-  async function cargarEncomiendas() {
-    setLoading(true);
-    const { data } = await supabase.from('encomiendas').select('*')
-      .eq('edificio_id', perfil.edificio_id)
-      .order('recibida_at', { ascending: false }).limit(50);
-    setEncomiendas(data ?? []);
-    setLoading(false);
-  }
 
   async function registrarEncomienda(e) {
     e.preventDefault();

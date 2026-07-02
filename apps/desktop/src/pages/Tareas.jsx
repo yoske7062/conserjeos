@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import { useRealtimeSync } from '../lib/useRealtimeSync';
 import { enqueue } from '../lib/offlineQueue';
@@ -78,7 +78,16 @@ export default function Tareas({ perfil }) {
 
   const esAdmin = puedeCrearTareas(perfil);
 
-  useEffect(() => { cargarTareas(); }, []);
+  const cargarTareas = useCallback(async () => {
+    setLoading(true);
+    const { data } = await supabase.from('tareas').select('*')
+      .eq('edificio_id', perfil.edificio_id)
+      .order('created_at', { ascending: false });
+    setTareas(data ?? []);
+    setLoading(false);
+  }, [perfil.edificio_id]);
+
+  useEffect(() => { cargarTareas(); }, [cargarTareas]);
 
   useRealtimeSync('tareas', perfil.edificio_id, {
     onInsert: (nuevo) => {
@@ -91,15 +100,6 @@ export default function Tareas({ perfil }) {
       setTareas(prev => prev.filter(t => t.id !== borrado.id));
     }
   });
-
-  async function cargarTareas() {
-    setLoading(true);
-    const { data } = await supabase.from('tareas').select('*')
-      .eq('edificio_id', perfil.edificio_id)
-      .order('created_at', { ascending: false });
-    setTareas(data ?? []);
-    setLoading(false);
-  }
 
   async function crearTarea(e) {
     e.preventDefault();
