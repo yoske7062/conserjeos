@@ -100,13 +100,13 @@ jobs:
       contents: write
     steps:
       - name: Download Mac builds
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: mac-builds
           path: dist/
 
       - name: Download Windows builds
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: windows-builds
           path: dist/
