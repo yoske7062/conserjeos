@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { getSupabase } from '../../lib/supabase';
 
 function StatCard({ icon, label, value, color, sub }) {
@@ -28,10 +28,13 @@ export default function DashboardPage() {
   const [novedades, setNovedades] = useState([]);
   const [turnos, setTurnos]     = useState([]);
   const [loading, setLoading]   = useState(true);
+  const debounceRef             = useRef(null);
 
   useEffect(() => {
+    let channel;
+    const supabase = getSupabase();
+
     async function cargar() {
-      const supabase = getSupabase();
       const { data: { user } } = await supabase.auth.getUser();
       const { data: perfil }   = await supabase.from('perfiles').select('edificio_id').eq('id', user.id).single();
       const eid = perfil.edificio_id;
@@ -49,8 +52,39 @@ export default function DashboardPage() {
       setNovedades(n.data ?? []);
       setTurnos(tu.data ?? []);
       setLoading(false);
+
+      // Debounce: si llega una ráfaga de INSERTs (ej. sync offline), solo ejecuta
+      // un refetch después de que la ráfaga se calme, evitando race conditions.
+      async function refetchDashboard() {
+        const [latestNovedades, vCount, eCount, tCount] = await Promise.all([
+          supabase.from('novedades').select('id,tipo,descripcion,created_at,perfiles(nombre)')
+            .eq('edificio_id', eid).order('created_at', { ascending: false }).limit(8),
+          supabase.from('visitas').select('id', { count: 'exact' }).eq('edificio_id', eid).eq('activa', true),
+          supabase.from('encomiendas').select('id', { count: 'exact' }).eq('edificio_id', eid).eq('entregada', false),
+          supabase.from('tareas').select('id', { count: 'exact' }).eq('edificio_id', eid).eq('estado', 'pendiente'),
+        ]);
+        setNovedades(latestNovedades.data ?? []);
+        setStats({ visitas: vCount.count ?? 0, encomiendas: eCount.count ?? 0, tareas: tCount.count ?? 0 });
+      }
+
+      channel = supabase
+        .channel(`dashboard-novedades-${eid}`)
+        .on(
+          'postgres_changes',
+          { event: 'INSERT', schema: 'public', table: 'novedades', filter: `edificio_id=eq.${eid}` },
+          () => {
+            clearTimeout(debounceRef.current);
+            debounceRef.current = setTimeout(refetchDashboard, 400);
+          }
+        )
+        .subscribe();
     }
     cargar();
+
+    return () => {
+      clearTimeout(debounceRef.current);
+      if (channel) supabase.removeChannel(channel);
+    };
   }, []);
 
   if (loading) return (

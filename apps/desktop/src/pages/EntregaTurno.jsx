@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { state as estados } from '../lib/tokens';
+import { clasificarError } from '../lib/errores';
 
 const INPUT_STYLE = {
-  width: '100%', height: 44, background: 'var(--bg-input)', border: '1px solid var(--border)',
+  width: '100%', height: 48, background: 'var(--bg-input)', border: '1px solid var(--border)',
   borderRadius: 8, padding: '0 12px', color: 'var(--text)', fontSize: 16,
   fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box', transition: 'border-color 120ms',
 };
@@ -11,8 +12,8 @@ const INPUT_STYLE = {
 function StatCard({ label, value, color }) {
   return (
     <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 12, padding: '16px 18px', flex: 1, minWidth: 120 }}>
-      <p style={{ fontSize: 28, fontWeight: 700, color: color ?? 'var(--text)', marginBottom: 4 }}>{value}</p>
-      <p style={{ fontSize: 12, color: 'var(--text-muted)' }}>{label}</p>
+      <p style={{ fontSize: 26, fontWeight: 800, color: color ?? 'var(--text)', marginBottom: 4, letterSpacing: '-0.5px' }}>{value}</p>
+      <p style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{label}</p>
     </div>
   );
 }
@@ -52,7 +53,7 @@ export default function EntregaTurno({ perfil, turno, onTurnoChange }) {
     const { data, error } = await supabase.from('turnos')
       .insert({ edificio_id: perfil.edificio_id, conserje_id: perfil.id })
       .select().single();
-    if (error) setErrorMsg('No se pudo iniciar el turno. Revisa tu conexión e intenta de nuevo.');
+    if (error) setErrorMsg(`No se pudo iniciar el turno. ${clasificarError(error, 'turnos.iniciar').mensaje}`);
     else onTurnoChange(data);
     setIniciando(false);
   }
@@ -70,6 +71,16 @@ export default function EntregaTurno({ perfil, turno, onTurnoChange }) {
   async function cerrarTurno() {
     setCerrando(true);
     setErrorMsg('');
+
+    // Verificar si es el primer turno cerrado del conserje antes de desactivar el turno actual
+    const { count, error: countError } = await supabase
+      .from('turnos')
+      .select('id', { count: 'exact', head: true })
+      .eq('conserje_id', perfil.id)
+      .eq('activo', false);
+
+    const esPrimerTurno = !countError && count === 0;
+
     const inicio = new Date(turno.inicio).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' });
     const fin    = new Date().toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' });
     const resumen = [
@@ -83,22 +94,44 @@ export default function EntregaTurno({ perfil, turno, onTurnoChange }) {
     const { error } = await supabase.from('turnos')
       .update({ fin: new Date().toISOString(), activo: false, resumen, pendientes: pendientesNuevos })
       .eq('id', turno.id);
-    if (error) setErrorMsg('No se pudo cerrar el turno. Revisa tu conexión e intenta de nuevo.');
-    else { setResumenModal(resumen); setPendientesNuevos([]); onTurnoChange(null); }
+    if (error) {
+      setErrorMsg(`No se pudo cerrar el turno. ${clasificarError(error, 'turnos.cerrar').mensaje}`);
+    } else {
+      setResumenModal(resumen);
+      setPendientesNuevos([]);
+      onTurnoChange(null);
+
+      if (esPrimerTurno) {
+        const duracionMinutos = Math.floor((Date.now() - new Date(turno.inicio)) / 60000);
+        supabase.from('eventos_analitica').insert({
+          edificio_id: perfil.edificio_id,
+          conserje_id: perfil.id,
+          nombre_evento: '1er_turno_cerrado',
+          metadata: {
+            turno_id: turno.id,
+            duracion_minutos: duracionMinutos
+          }
+        }).then(({ error: analyticError }) => {
+          if (analyticError) {
+            console.error('[Analytics] Error logging 1er_turno_cerrado event:', analyticError);
+          }
+        });
+      }
+    }
     setCerrando(false);
   }
 
   return (
-    <div style={{ padding: '28px 32px', maxWidth: 720, margin: '0 auto' }}>
+    <div style={{ padding: '22px 24px 28px' }}>
 
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 20 }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
-            <div style={{ width: 32, height: 32, borderRadius: 8, background: 'var(--bg-surface-high)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <span style={{ fontFamily: 'Material Symbols Outlined', fontSize: 18, color: 'var(--text-secondary)' }}>schedule</span>
+            <div style={{ width: 32, height: 32, borderRadius: 8, background: 'rgba(var(--brand-rgb),0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <span style={{ fontFamily: 'Material Symbols Outlined', fontSize: 18, color: 'var(--brand)' }}>schedule</span>
             </div>
-            <h2 style={{ fontSize: 22, fontWeight: 700, color: 'var(--text)' }}>Entrega de Turno</h2>
+            <div style={{ fontSize: 23, fontWeight: 800, color: 'var(--text)', letterSpacing: '-0.5px' }}>Entrega de Turno</div>
           </div>
           <p style={{ fontSize: 13, color: 'var(--text-muted)' }}>
             {turno
@@ -108,14 +141,14 @@ export default function EntregaTurno({ perfil, turno, onTurnoChange }) {
         </div>
         {turno ? (
           <button onClick={cerrarTurno} disabled={cerrando} style={{
-            height: 44, padding: '0 18px', background: 'transparent',
-            border: '1px solid var(--border)', borderRadius: 8,
-            color: 'var(--text-secondary)', fontSize: 14, fontWeight: 500, cursor: 'pointer',
+            height: 48, padding: '0 20px', background: 'transparent',
+            border: '1px solid var(--border)', borderRadius: 'var(--radius)',
+            color: 'var(--text-secondary)', fontSize: 16, fontWeight: 500, cursor: 'pointer',
           }}>{cerrando ? '...' : 'Cerrar turno'}</button>
         ) : (
           <button onClick={iniciarTurno} disabled={iniciando} style={{
-            height: 44, padding: '0 18px', background: 'var(--brand)', border: 'none',
-            borderRadius: 8, color: 'var(--brand-text-on)', fontSize: 14, fontWeight: 700, cursor: 'pointer',
+            height: 48, padding: '0 20px', background: 'var(--brand)', border: 'none',
+            borderRadius: 'var(--radius)', color: 'var(--brand-text-on)', fontSize: 16, fontWeight: 700, cursor: 'pointer',
           }}>{iniciando ? '...' : '⏱ Iniciar turno'}</button>
         )}
       </div>
@@ -124,18 +157,18 @@ export default function EntregaTurno({ perfil, turno, onTurnoChange }) {
       {errorMsg && (
         <div style={{
           display: 'flex', alignItems: 'center', gap: 10,
-          background: 'rgba(229,72,77,0.1)', borderLeft: '4px solid #E5484D',
+          background: 'var(--crit-bg)', borderLeft: '4px solid var(--crit-tx)',
           borderRadius: '0 8px 8px 0', padding: '12px 16px', marginBottom: 20,
         }}>
-          <span style={{ fontFamily: 'Material Symbols Outlined', fontSize: 18, color: '#E5484D', flexShrink: 0 }}>error</span>
-          <span style={{ fontSize: 14, color: '#FF8A8A' }}>{errorMsg}</span>
+          <span style={{ fontFamily: 'Material Symbols Outlined', fontSize: 18, color: 'var(--crit-tx)', flexShrink: 0 }}>error</span>
+          <span style={{ fontSize: 14, color: 'var(--crit-tx)', fontWeight: 600 }}>{errorMsg}</span>
         </div>
       )}
 
       {!turno ? (
         <div style={{ textAlign: 'center', padding: '60px 24px', background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 14 }}>
           <div style={{ width: 52, height: 52, background: 'var(--bg-input)', border: '1px solid var(--border)', borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', fontSize: 22 }}>⏱</div>
-          <p style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-muted)', marginBottom: 6 }}>Sin turno activo</p>
+          <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-muted)', marginBottom: 6 }}>Sin turno activo</p>
           <p style={{ fontSize: 13, color: 'var(--text-subtle)' }}>Inicia tu turno para empezar a registrar novedades, visitas y encomiendas</p>
         </div>
       ) : (
@@ -163,8 +196,8 @@ export default function EntregaTurno({ perfil, turno, onTurnoChange }) {
               onBlur={e => e.target.style.borderColor = 'var(--border)'}
             />
             <button onClick={agregarPendiente} type="button" style={{
-              height: 44, padding: '0 20px', background: 'var(--bg-surface)', border: '1px solid var(--border)',
-              borderRadius: 8, color: 'var(--text)', fontSize: 14, fontWeight: 600, cursor: 'pointer', flexShrink: 0,
+              height: 48, padding: '0 20px', background: 'var(--bg-surface)', border: '1px solid var(--border)',
+              borderRadius: 8, color: 'var(--text)', fontSize: 16, fontWeight: 600, cursor: 'pointer', flexShrink: 0,
             }}>Agregar</button>
           </div>
 
@@ -198,7 +231,7 @@ export default function EntregaTurno({ perfil, turno, onTurnoChange }) {
             </div>
             <div style={{ padding: '0 22px 22px' }}>
               <pre style={{ fontSize: 14, color: 'var(--text-body)', background: 'var(--bg-input)', border: '1px solid var(--border)', borderRadius: 8, padding: '12px 14px', fontFamily: 'inherit', lineHeight: 1.7, whiteSpace: 'pre-wrap' }}>{resumenModal}</pre>
-              <button onClick={() => setResumenModal(null)} style={{ width: '100%', height: 44, marginTop: 12, background: 'var(--brand)', border: 'none', borderRadius: 8, color: 'var(--brand-text-on)', fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>Aceptar</button>
+              <button onClick={() => setResumenModal(null)} style={{ width: '100%', height: 48, marginTop: 12, background: 'var(--brand)', border: 'none', borderRadius: 8, color: 'var(--brand-text-on)', fontSize: 16, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>Aceptar</button>
             </div>
           </div>
         </div>

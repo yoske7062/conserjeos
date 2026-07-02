@@ -29,13 +29,13 @@ export default function PendientesChecklist({ turno, onReconocido }) {
           {pendientes.map((p, i) => (
             <label key={i} style={{
               display: 'flex', alignItems: 'flex-start', gap: 12, cursor: 'pointer',
-              background: marcados[i] ? 'rgba(47,191,113,0.08)' : 'var(--bg-input)',
-              border: `1px solid ${marcados[i] ? 'rgba(47,191,113,0.3)' : 'var(--border)'}`,
+              background: marcados[i] ? 'var(--ok-bg)' : 'var(--bg-input)',
+              border: `1px solid ${marcados[i] ? 'var(--ok-border)' : 'var(--border)'}`,
               borderRadius: 8, padding: '12px 14px', transition: 'all 120ms', minHeight: 44, boxSizing: 'border-box',
             }}>
               <input
                 type="checkbox" checked={marcados[i]} onChange={() => toggle(i)}
-                style={{ width: 20, height: 20, marginTop: 1, accentColor: '#2FBF71', cursor: 'pointer', flexShrink: 0 }}
+                style={{ width: 20, height: 20, marginTop: 1, accentColor: 'var(--ok-tx)', cursor: 'pointer', flexShrink: 0 }}
               />
               <span style={{ fontSize: 15, color: 'var(--text-body)', lineHeight: 1.5 }}>{p.texto}</span>
             </label>

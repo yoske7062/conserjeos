@@ -24,10 +24,16 @@ export async function middleware(request) {
   const { data: { user } } = await supabase.auth.getUser();
   const { pathname } = request.nextUrl;
 
-  if (!user && pathname.startsWith('/dashboard')) {
+  // establecer-password es público: el invitado llega con tokens en el hash
+  // de la URL, que el servidor no ve — la sesión se arma en el cliente.
+  const publicPaths = ['/', '/login', '/auth/establecer-password'];
+  if (!user && !publicPaths.includes(pathname)) {
     return NextResponse.redirect(new URL('/login', request.url));
   }
   if (user && pathname === '/login') {
+    return NextResponse.redirect(new URL('/dashboard', request.url));
+  }
+  if (user && pathname === '/') {
     return NextResponse.redirect(new URL('/dashboard', request.url));
   }
 
@@ -35,5 +41,9 @@ export async function middleware(request) {
 }
 
 export const config = {
-  matcher: ['/dashboard/:path*', '/login'],
+  matcher: [
+    '/',
+    '/login',
+    '/dashboard/:path*',
+  ],
 };

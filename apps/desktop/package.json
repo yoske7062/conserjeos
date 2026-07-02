@@ -1,15 +1,20 @@
 {
   "name": "portia-desktop",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Portia — Tu edificio. Todo en orden.",
+  "repository": "https://github.com/yoske7062/conserjeos",
+  "author": "Diego Hadwa <yoske7062@gmail.com>",
   "main": "main.cjs",
   "scripts": {
     "dev": "concurrently \"vite\" \"wait-on http://localhost:5173 && electron .\"",
     "vite": "vite",
     "build": "vite build",
     "electron": "electron .",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "dist:mac": "npm run build && electron-builder --mac --arm64",
-    "dist:win": "npm run build && electron-builder --win --x64"
+    "dist:win": "npm run build && electron-builder --win --x64",
+    "lint": "eslint src"
   },
   "build": {
     "appId": "cl.portia.desktop",
@@ -20,12 +25,27 @@
       "dist/**/*"
     ],
     "win": {
-      "target": [{ "target": "nsis", "arch": ["x64"] }],
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
       "artifactName": "Portia-Setup-${version}.${ext}"
     },
     "mac": {
       "category": "public.app-category.business",
-      "target": [{ "target": "dmg", "arch": ["arm64", "x64"] }],
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "arm64",
+            "x64"
+          ]
+        }
+      ],
       "artifactName": "Portia-${version}-${arch}.${ext}"
     }
   },
@@ -37,15 +57,21 @@
     "react-dom": "^18.3.1"
   },
   "devDependencies": {
+    "@eslint/js": "^9.39.4",
     "@vitejs/plugin-react": "^4.3.4",
     "autoprefixer": "^10.4.20",
     "concurrently": "^9.2.3",
-    "electron": "^33.3.1",
+    "electron": "33.4.11",
     "electron-builder": "^25.1.8",
+    "eslint": "^9.39.4",
+    "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "globals": "^17.7.0",
     "postcss": "^8.4.49",
     "tailwindcss": "^3.4.17",
     "vite": "^6.0.5",
     "vite-plugin-electron": "^0.28.8",
+    "vitest": "^2.1.8",
     "wait-on": "^8.0.5"
   }
 }

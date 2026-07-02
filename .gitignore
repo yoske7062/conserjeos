@@ -38,3 +38,7 @@ yarn-error.log*
 # Supabase local
 supabase/.branches
 supabase/.temp
+
+# Credenciales privadas — NUNCA al repo
+CREDENCIALES-PRIVADO.txt
+*.credentials.txt

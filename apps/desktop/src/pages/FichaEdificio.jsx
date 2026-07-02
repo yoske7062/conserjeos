@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
+import { clasificarError } from '../lib/errores';
 
 const INPUT_STYLE = {
   width: '100%', height: 44, background: 'var(--bg-input)', border: '1px solid var(--border)',
@@ -57,7 +58,7 @@ export default function FichaEdificio({ perfil }) {
     const { error } = await supabase.from('edificios')
       .update({ contactos, protocolos })
       .eq('id', perfil.edificio_id);
-    if (error) setErrorMsg('No se pudo guardar. Revisa tu conexión e intenta de nuevo.');
+    if (error) setErrorMsg(`No se pudo guardar. ${clasificarError(error, 'ficha.guardar').mensaje}`);
     else { setEditando(false); cargarEdificio(); }
     setGuardando(false);
   }
@@ -104,10 +105,10 @@ export default function FichaEdificio({ perfil }) {
       {errorMsg && (
         <div style={{
           display: 'flex', alignItems: 'center', gap: 10,
-          background: 'rgba(229,72,77,0.1)', borderLeft: '4px solid #E5484D',
+          background: 'var(--crit-bg)', borderLeft: '4px solid var(--crit-tx)',
           borderRadius: '0 8px 8px 0', padding: '12px 16px', marginBottom: 20,
         }}>
-          <span style={{ fontSize: 14, color: '#FF8A8A' }}>{errorMsg}</span>
+          <span style={{ fontSize: 14, color: 'var(--crit-tx)', fontWeight: 600 }}>{errorMsg}</span>
         </div>
       )}
 

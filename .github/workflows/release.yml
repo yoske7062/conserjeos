@@ -5,8 +5,29 @@ on:
     tags:
       - 'v*'
 
+# Mínimo privilegio a nivel de workflow: solo lectura. El permiso de escritura
+# (necesario para crear la Release) se otorga únicamente en el job `release`.
+permissions:
+  contents: read
+
 jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/desktop
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: apps/desktop/package-lock.json
+      - run: npm ci
+      - run: npm test
+
   build-mac:
+    needs: test
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
@@ -15,12 +36,12 @@ jobs:
         with:
           node-version: 20
 
-      - name: Install root deps
-        run: npm install
-
       - name: Install desktop deps
-        run: npm install
+        run: npm install --include=dev
         working-directory: apps/desktop
+
+      - name: Check binary exists
+        run: ls -la apps/desktop/node_modules/app-builder-bin/mac/ || echo "Binary not found"
 
       - name: Create .env
         working-directory: apps/desktop
@@ -28,11 +49,9 @@ jobs:
           echo "VITE_SUPABASE_URL=${{ secrets.VITE_SUPABASE_URL }}" > .env
           echo "VITE_SUPABASE_ANON_KEY=${{ secrets.VITE_SUPABASE_ANON_KEY }}" >> .env
 
-      - name: Build Mac (arm64 + x64)
+      - name: Build Mac
         working-directory: apps/desktop
-        run: npx electron-builder --mac --arm64 --x64
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npx electron-builder --mac --arm64 --x64 --publish never
 
       - name: Upload Mac artifacts
         uses: actions/upload-artifact@v4
@@ -41,6 +60,7 @@ jobs:
           path: apps/desktop/dist/*.dmg
 
   build-windows:
+    needs: test
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
@@ -49,12 +69,12 @@ jobs:
         with:
           node-version: 20
 
-      - name: Install root deps
-        run: npm install
-
       - name: Install desktop deps
-        run: npm install
+        run: npm install --include=dev
         working-directory: apps/desktop
+
+      - name: Check binary exists
+        run: dir apps\desktop\node_modules\app-builder-bin\win\x64\ 2>NUL || echo "Binary not found"
 
       - name: Create .env
         working-directory: apps/desktop
@@ -63,11 +83,9 @@ jobs:
           echo "VITE_SUPABASE_URL=${{ secrets.VITE_SUPABASE_URL }}" > .env
           echo "VITE_SUPABASE_ANON_KEY=${{ secrets.VITE_SUPABASE_ANON_KEY }}" >> .env
 
-      - name: Build Windows (x64)
+      - name: Build Windows
         working-directory: apps/desktop
-        run: npx electron-builder --win --x64
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npx electron-builder --win --x64 --publish never
 
       - name: Upload Windows artifacts
         uses: actions/upload-artifact@v4
@@ -78,6 +96,8 @@ jobs:
   release:
     needs: [build-mac, build-windows]
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: Download Mac builds
         uses: actions/download-artifact@v4

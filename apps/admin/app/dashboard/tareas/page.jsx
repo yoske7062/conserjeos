@@ -2,16 +2,15 @@
 import { useState, useEffect } from 'react';
 import { getSupabase } from '../../../lib/supabase';
 
-const PRIORIDADES = ['baja', 'normal', 'alta', 'urgente'];
-const P_COLOR = { baja: '#636363', normal: '#3B9EFF', alta: '#F5A524', urgente: '#E5484D' };
-const ESTADOS = ['pendiente', 'en_progreso', 'completada'];
+const PRIORIDADES = ['baja', 'normal', 'alta'];
+const P_COLOR = { baja: '#636363', normal: '#3B9EFF', alta: '#F5A524' };
+const ESTADOS = ['pendiente', 'completada'];
 const E_STYLE = {
   pendiente:   { color: '#A8A8A8', bg: 'rgba(168,168,168,0.1)', label: 'Pendiente'   },
-  en_progreso: { color: '#3B9EFF', bg: 'rgba(59,158,255,0.1)',  label: 'En progreso' },
   completada:  { color: '#2FBF71', bg: 'rgba(47,191,113,0.1)',  label: 'Completada'  },
 };
 
-const FORM_INIT = { titulo: '', descripcion: '', prioridad: 'normal', asignado_a: '', fecha_limite: '' };
+const FORM_INIT = { titulo: '', descripcion: '', prioridad: 'normal', asignada_a: '', vence_at: '' };
 
 export default function TareasPage() {
   const [tareas, setTareas]     = useState([]);
@@ -41,7 +40,7 @@ export default function TareasPage() {
       setLoading(true);
       const supabase = getSupabase();
       const { data } = await supabase.from('tareas')
-        .select('*,perfiles!asignado_a(nombre)')
+        .select('*,perfiles!asignada_a(nombre)')
         .eq('edificio_id', eid)
         .eq('estado', filtroE)
         .order('created_at', { ascending: false })
@@ -57,22 +56,23 @@ export default function TareasPage() {
     setGuardando(true);
     const supabase = getSupabase();
     const { data: { user } } = await supabase.auth.getUser();
-    await supabase.from('tareas').insert({
-      edificio_id:  eid,
-      titulo:       form.titulo,
-      descripcion:  form.descripcion || null,
-      prioridad:    form.prioridad,
-      asignado_a:   form.asignado_a || null,
-      fecha_limite: form.fecha_limite || null,
-      estado:       'pendiente',
-      creado_por:   user.id,
+    const { error } = await supabase.from('tareas').insert({
+      edificio_id: eid,
+      titulo:      form.titulo,
+      descripcion: form.descripcion || null,
+      prioridad:   form.prioridad,
+      asignada_a:  form.asignada_a || null,
+      vence_at:    form.vence_at ? new Date(form.vence_at).toISOString() : null,
+      estado:      'pendiente',
+      creada_por:  user.id,
     });
+    setGuardando(false);
+    if (error) return;
     setModal(false);
     setForm(FORM_INIT);
-    setGuardando(false);
     if (filtroE === 'pendiente') {
       setLoading(true);
-      const { data } = await supabase.from('tareas').select('*,perfiles!asignado_a(nombre)').eq('edificio_id', eid).eq('estado', 'pendiente').order('created_at', { ascending: false }).limit(50);
+      const { data } = await supabase.from('tareas').select('*,perfiles!asignada_a(nombre)').eq('edificio_id', eid).eq('estado', 'pendiente').order('created_at', { ascending: false }).limit(50);
       setTareas(data ?? []);
       setLoading(false);
     }
@@ -80,7 +80,11 @@ export default function TareasPage() {
 
   async function cambiarEstado(id, estado) {
     const supabase = getSupabase();
-    await supabase.from('tareas').update({ estado }).eq('id', id);
+    const payload = estado === 'completada'
+      ? { estado, completada_at: new Date().toISOString() }
+      : { estado };
+    const { error } = await supabase.from('tareas').update(payload).eq('id', id);
+    if (error) return;
     setTareas(prev => prev.filter(t => t.id !== id));
   }
 
@@ -129,9 +133,9 @@ export default function TareasPage() {
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6, flexWrap: 'wrap' }}>
                   <span style={{ fontSize: 11, fontWeight: 700, color: P_COLOR[t.prioridad], background: `${P_COLOR[t.prioridad]}18`, padding: '2px 8px', borderRadius: 4, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{t.prioridad}</span>
-                  {t.fecha_limite && (
-                    <span style={{ fontSize: 12, color: new Date(t.fecha_limite) < new Date() ? 'var(--error)' : 'var(--text-muted)' }}>
-                      Vence {new Date(t.fecha_limite).toLocaleDateString('es-CL')}
+                  {t.vence_at && (
+                    <span style={{ fontSize: 12, color: new Date(t.vence_at) < new Date() ? 'var(--error)' : 'var(--text-muted)' }}>
+                      Vence {new Date(t.vence_at).toLocaleDateString('es-CL')}
                     </span>
                   )}
                 </div>
@@ -146,11 +150,6 @@ export default function TareasPage() {
               </div>
               {filtroE !== 'completada' && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6, flexShrink: 0 }}>
-                  {filtroE === 'pendiente' && (
-                    <button onClick={() => cambiarEstado(t.id, 'en_progreso')} style={{ fontSize: 12, padding: '5px 12px', borderRadius: 7, background: 'rgba(59,158,255,0.1)', border: '1px solid rgba(59,158,255,0.2)', color: '#3B9EFF', cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap' }}>
-                      Iniciar
-                    </button>
-                  )}
                   <button onClick={() => cambiarEstado(t.id, 'completada')} style={{ fontSize: 12, padding: '5px 12px', borderRadius: 7, background: 'rgba(47,191,113,0.1)', border: '1px solid rgba(47,191,113,0.2)', color: '#2FBF71', cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap' }}>
                     Completar
                   </button>
@@ -187,7 +186,7 @@ export default function TareasPage() {
                 </div>
                 <div>
                   <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>Asignar a</label>
-                  <select style={{ ...inputSt, cursor: 'pointer' }} value={form.asignado_a} onChange={e => setForm(p => ({ ...p, asignado_a: e.target.value }))}>
+                  <select style={{ ...inputSt, cursor: 'pointer' }} value={form.asignada_a} onChange={e => setForm(p => ({ ...p, asignada_a: e.target.value }))}>
                     <option value="" style={{ background: 'var(--bg-surface)' }}>Sin asignar</option>
                     {conserjes.map(c => <option key={c.id} value={c.id} style={{ background: 'var(--bg-surface)' }}>{c.nombre}</option>)}
                   </select>
@@ -195,7 +194,7 @@ export default function TareasPage() {
               </div>
               <div>
                 <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>Fecha límite</label>
-                <input type="date" style={{ ...inputSt, cursor: 'pointer' }} value={form.fecha_limite} onChange={e => setForm(p => ({ ...p, fecha_limite: e.target.value }))} />
+                <input type="date" style={{ ...inputSt, cursor: 'pointer' }} value={form.vence_at} onChange={e => setForm(p => ({ ...p, vence_at: e.target.value }))} />
               </div>
               <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
                 <button type="button" onClick={() => setModal(false)} style={{ flex: 1, height: 44, background: 'var(--bg-input)', border: '1px solid var(--border)', borderRadius: 10, color: 'var(--text-muted)', fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>Cancelar</button>

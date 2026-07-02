@@ -3,15 +3,19 @@
   "version": "1.0.0",
   "private": true,
   "workspaces": [
-    "apps/*",
+    "apps/admin",
+    "apps/web",
     "packages/*"
   ],
   "scripts": {
     "dev": "turbo dev",
-    "build": "turbo build",
-    "desktop": "npm run dev --workspace=apps/desktop"
+    "build": "turbo build"
   },
   "devDependencies": {
     "turbo": "^2.3.3"
+  },
+  "overrides": {
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
   }
 }

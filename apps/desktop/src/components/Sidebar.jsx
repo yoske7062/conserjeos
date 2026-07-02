@@ -1,161 +1,191 @@
 import { useState } from 'react';
 import { supabase } from '../lib/supabase';
-import logoImg from '../assets/logo.png';
+import logoPortia from '../assets/logo_portia.png';
+const ORANGE = '#E6701E';
+const NAVY   = '#0A1C40';
 
-function leerTema() {
-  return localStorage.getItem('portia:tema') || 'dark';
+function PortiaMark({ size = 34 }) {
+  return (
+    <img
+      src={logoPortia}
+      width={size}
+      height={size}
+      style={{ borderRadius: 8, flexShrink: 0, display: 'block' }}
+      alt="Portia"
+    />
+  );
 }
 
-function ThemeToggle() {
-  const [tema, setTema] = useState(leerTema);
+const ICONS = {
+  home:   'home',
+  clock:  'schedule',
+  bell:   'campaign',
+  people: 'group',
+  box:    'inventory_2',
+  check:  'checklist',
+  grid:   'apartment',
+  help:   'help',
+  logout: 'logout',
+  gear:   'settings',
+};
 
-  function alternar() {
-    const siguiente = tema === 'dark' ? 'light' : 'dark';
-    document.documentElement.setAttribute('data-theme', siguiente);
-    localStorage.setItem('portia:tema', siguiente);
-    setTema(siguiente);
-  }
+const NAV = [
+  { section: 'Principal', items: [
+    { id: 'inicio',  label: 'Inicio',           icon: ICONS.home  },
+    { id: 'turno',   label: 'Entrega de turno', icon: ICONS.clock },
+  ]},
+  { section: 'Tu día', items: [
+    { id: 'novedades',   label: 'Novedades',   icon: ICONS.bell   },
+    { id: 'visitas',     label: 'Visitas',     icon: ICONS.people },
+    { id: 'encomiendas', label: 'Encomiendas', icon: ICONS.box    },
+    { id: 'tareas',      label: 'Tareas',      icon: ICONS.check  },
+  ]},
+  { section: 'Edificio', items: [
+    { id: 'edificio', label: 'Ficha Edificio', icon: ICONS.grid },
+    { id: 'ayuda',    label: 'Ayuda',          icon: ICONS.help },
+  ]},
+];
 
+function NavItem({ item, active, onClick }) {
+  const [hov, setHov] = useState(false);
+  const isActive = active;
   return (
     <button
-      onClick={alternar}
+      onClick={() => onClick(item.id)}
+      onMouseEnter={() => setHov(true)}
+      onMouseLeave={() => setHov(false)}
       style={{
-        display: 'flex', alignItems: 'center', gap: 10, width: '100%', minHeight: 44,
-        padding: '0 14px', borderRadius: 8, background: 'transparent',
-        border: 'none', cursor: 'pointer', color: 'var(--text-muted)', fontSize: 14,
-        fontWeight: 500, transition: 'all 120ms',
+        display: 'flex', alignItems: 'center', gap: 10,
+        padding: '7px 12px', borderRadius: 10, width: '100%',
+        fontSize: 13, fontWeight: isActive ? 600 : 500,
+        fontFamily: 'var(--font-body)',
+        color: isActive ? NAVY : hov ? '#19181A' : '#4A4847',
+        background: isActive ? 'rgba(230,112,30,0.1)' : hov ? 'rgba(25,24,26,0.05)' : 'transparent',
+        border: 'none', cursor: 'pointer', textAlign: 'left', marginBottom: 1,
+        transition: 'background .12s, color .12s',
+        letterSpacing: '-0.01em',
       }}
-      onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg-surface)'; e.currentTarget.style.color = 'var(--text)'; }}
-      onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-muted)'; }}
     >
-      <span style={{ fontFamily: 'Material Symbols Outlined', fontSize: 18 }}>{tema === 'dark' ? 'light_mode' : 'dark_mode'}</span>
-      {tema === 'dark' ? 'Tema claro' : 'Tema oscuro'}
+      <span style={{
+        fontFamily: 'Material Symbols Outlined', fontSize: 19,
+        color: isActive ? ORANGE : hov ? '#4A4847' : '#9A9896',
+        transition: 'color .12s',
+        lineHeight: 1,
+      }}>
+        {item.icon}
+      </span>
+      {item.label}
     </button>
   );
 }
 
-const NAV_PRIMARIO = [
-  { id: 'visitas',     icon: 'group',       label: 'Visitas'     },
-  { id: 'encomiendas', icon: 'inventory_2', label: 'Encomiendas' },
-  { id: 'tareas',      icon: 'checklist',   label: 'Tareas'      },
-];
-
-const NAV_SECUNDARIO = [
-  { id: 'novedades',   icon: 'campaign',    label: 'Novedades'        },
-  { id: 'turno',       icon: 'schedule',    label: 'Entrega de turno' },
-  { id: 'edificio',    icon: 'apartment',   label: 'Edificio'         },
-  { id: 'ayuda',       icon: 'help',        label: 'Ayuda'            },
-];
-
-function NavButton({ id, icon, label, active, setModulo }) {
-  return (
-    <button
-      onClick={() => setModulo(id)}
-      style={{
-        display: 'flex', alignItems: 'center', gap: 12, minHeight: 44,
-        padding: '0 14px', borderRadius: 8,
-        fontSize: 15, fontWeight: active ? 600 : 400,
-        color: active ? 'var(--brand)' : 'var(--text-secondary)',
-        background: active ? 'rgba(var(--brand-rgb),0.08)' : 'transparent',
-        border: 'none', cursor: 'pointer', width: '100%', textAlign: 'left',
-        transition: 'all 120ms',
-      }}
-      onMouseEnter={e => { if (!active) { e.currentTarget.style.background = 'var(--bg-surface)'; e.currentTarget.style.color = 'var(--text)'; }}}
-      onMouseLeave={e => { if (!active) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-secondary)'; }}}
-    >
-      <span style={{ fontFamily: 'Material Symbols Outlined', fontSize: 20, color: active ? 'var(--brand)' : 'inherit' }}>{icon}</span>
-      {label}
-    </button>
-  );
-}
-
-export default function Sidebar({ modulo, setModulo, perfil, turno }) {
-  const nombre    = perfil?.nombre || perfil?.email?.split('@')[0] || 'Usuario';
+export default function Sidebar({ modulo, setModulo, perfil, turno, onAjustes }) {
+  const nombre    = perfil?.nombre || perfil?.email?.split('@')[0] || 'Conserje';
   const iniciales = nombre.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
   const edificio  = perfil?.edificios?.nombre || 'Edificio';
+  const turnoSince = turno
+    ? new Date(turno.inicio).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })
+    : null;
 
   return (
     <aside style={{
-      position: 'fixed', left: 0, top: 0, width: 256, height: '100vh',
-      background: 'var(--bg-input)', borderRight: '1px solid var(--bg-surface-high)',
-      display: 'flex', flexDirection: 'column', zIndex: 50,
-      padding: '20px 12px',
+      position: 'fixed', left: 0, top: 0, width: 240, height: '100vh',
+      background: '#FFFFFF',
+      borderRight: '1px solid rgba(25,24,26,0.09)',
+      display: 'flex', flexDirection: 'column',
+      zIndex: 50, overflowY: 'auto', overflowX: 'hidden',
     }}>
 
-      {/* Logo */}
-      <div style={{ padding: '4px 8px', marginBottom: 28 }}>
-        <img
-          src={logoImg} alt="Portia"
-          style={{ width: 160, height: 'auto', display: 'block', mixBlendMode: 'lighten' }}
-        />
-        <p style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>{edificio}</p>
+      {/* Drag region */}
+      <div style={{ height: 28, flexShrink: 0, WebkitAppRegion: 'drag' }} />
+
+      {/* Brand */}
+      <div style={{
+        padding: '2px 16px 16px',
+        borderBottom: '1px solid rgba(25,24,26,0.07)',
+        display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0,
+      }}>
+        <PortiaMark />
+        <div>
+          <div style={{
+            fontFamily: 'var(--font-heading)',
+            fontSize: 15, fontWeight: 700,
+            color: '#19181A', letterSpacing: '-0.3px', lineHeight: 1,
+          }}>Portia</div>
+          <div style={{
+            fontSize: 11, fontWeight: 500,
+            color: '#B4B0A9', marginTop: 3,
+            letterSpacing: '0em',
+            whiteSpace: 'nowrap', overflow: 'hidden',
+            textOverflow: 'ellipsis', maxWidth: 155,
+            fontFamily: 'var(--font-body)',
+          }}>{edificio}</div>
+        </div>
       </div>
 
-      {/* Nav */}
-      <nav style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 2, overflowY: 'auto' }}>
-        <NavButton id="inicio" icon="home" label="Inicio" active={modulo === 'inicio'} setModulo={setModulo} />
-
-        <p style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-subtle)', textTransform: 'uppercase', letterSpacing: '0.1em', padding: '14px 14px 4px' }}>
-          Tu día
-        </p>
-        {NAV_PRIMARIO.map(({ id, icon, label }) => (
-          <NavButton key={id} id={id} icon={icon} label={label} active={modulo === id} setModulo={setModulo} />
-        ))}
-
-        <p style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-subtle)', textTransform: 'uppercase', letterSpacing: '0.1em', padding: '14px 14px 4px' }}>
-          Más
-        </p>
-        {NAV_SECUNDARIO.map(({ id, icon, label }) => (
-          <NavButton key={id} id={id} icon={icon} label={label} active={modulo === id} setModulo={setModulo} />
+      {/* Navigation */}
+      <nav style={{ flex: 1, padding: '10px 10px 0', overflowY: 'auto' }}>
+        {NAV.map(({ section, items }) => (
+          <div key={section} style={{ marginBottom: 6 }}>
+            <div style={{
+              fontSize: 10, fontWeight: 700, color: '#000000',
+              textTransform: 'uppercase', letterSpacing: '.7px',
+              padding: '8px 12px 4px',
+              fontFamily: 'var(--font-body)',
+            }}>{section}</div>
+            {items.map(item => (
+              <NavItem key={item.id} item={item} active={modulo === item.id} onClick={setModulo} />
+            ))}
+          </div>
         ))}
       </nav>
 
-      {/* Turno indicator */}
-      {turno && (
-        <div style={{
-          background: 'rgba(var(--brand-rgb),0.06)', border: '1px solid rgba(var(--brand-rgb),0.18)',
-          borderRadius: 10, padding: '10px 14px', marginBottom: 12,
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 3 }}>
-            <div style={{ width: 6, height: 6, background: 'var(--brand)', borderRadius: '50%' }} />
-            <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--brand)', letterSpacing: '0.08em' }}>TURNO ACTIVO</span>
-          </div>
-          <p style={{ fontSize: 12, color: 'var(--text-muted)', paddingLeft: 14 }}>
-            Desde {new Date(turno.inicio).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })}
-          </p>
-        </div>
-      )}
-
       {/* Footer */}
-      <div style={{ borderTop: '1px solid var(--bg-surface-high)', paddingTop: 12 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 6px', marginBottom: 4 }}>
+      <div style={{ borderTop: '1px solid rgba(25,24,26,0.07)', padding: '12px 12px 14px', flexShrink: 0 }}>
+        {/* User */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 9, marginBottom: turno ? 10 : 8 }}>
           <div style={{
-            width: 32, height: 32, borderRadius: '50%', flexShrink: 0,
-            background: 'rgba(var(--brand-rgb),0.1)', border: '1px solid rgba(var(--brand-rgb),0.2)',
+            width: 30, height: 30, borderRadius: '50%', flexShrink: 0,
+            background: NAVY,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-          }}>
-            <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--brand)' }}>{iniciales}</span>
-          </div>
+            fontSize: 11, fontWeight: 700, color: '#fff',
+            fontFamily: 'var(--font-body)',
+          }}>{iniciales}</div>
           <div style={{ minWidth: 0 }}>
-            <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{nombre}</p>
-            <p style={{ fontSize: 11, color: 'var(--text-muted)' }}>Conserje</p>
+            <div style={{ fontSize: 12.5, fontWeight: 600, color: '#19181A', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{nombre}</div>
+            <div style={{ fontSize: 10.5, color: '#B4B0A9', marginTop: 1 }}>Conserje</div>
           </div>
         </div>
-        <ThemeToggle />
-        <button
+
+        {/* Turno badge */}
+        {turno && (
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 6,
+            background: 'var(--ok-bg)', border: '1px solid var(--ok-border)',
+            borderRadius: 8, padding: '5px 10px', marginBottom: 8,
+            fontSize: 10.5, fontWeight: 600, color: 'var(--ok-tx)',
+            fontFamily: 'var(--font-body)',
+          }}>
+            <div style={{
+              width: 6, height: 6, borderRadius: '50%',
+              background: 'var(--ok-tx)', flexShrink: 0,
+              animation: 'pulse-neon 2s ease-in-out infinite',
+            }} />
+            Turno activo · desde {turnoSince}
+          </div>
+        )}
+
+        {/* Ajustes + Logout */}
+        <NavItem
+          item={{ id: '__ajustes', label: 'Ajustes', icon: ICONS.gear }}
+          active={false}
+          onClick={onAjustes}
+        />
+        <NavItem
+          item={{ id: '__logout', label: 'Cerrar sesión', icon: ICONS.logout }}
+          active={false}
           onClick={() => supabase.auth.signOut()}
-          style={{
-            display: 'flex', alignItems: 'center', gap: 10, width: '100%', minHeight: 44,
-            padding: '0 14px', borderRadius: 8, background: 'transparent',
-            border: 'none', cursor: 'pointer', color: 'var(--text-muted)', fontSize: 14,
-            fontWeight: 500, transition: 'all 120ms',
-          }}
-          onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg-surface)'; e.currentTarget.style.color = 'var(--text)'; }}
-          onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-muted)'; }}
-        >
-          <span style={{ fontFamily: 'Material Symbols Outlined', fontSize: 18 }}>logout</span>
-          Cerrar sesión
-        </button>
+        />
       </div>
     </aside>
   );

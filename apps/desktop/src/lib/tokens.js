@@ -1,43 +1,44 @@
-// Paleta de Portia — marca separada de estado (nunca el mismo verde para todo)
+// Portia Design Tokens — Warm White + Deep Navy
+// Hardcoded values for JS usage; CSS custom properties defined in index.css
+
 export const bg = {
-  base: '#0B0B0B',
-  surface: '#161616',
-  surfaceHigh: '#1F1F1F',
-  elevated: '#1F2225',
-  input: '#0D0D0D',
+  base: '#FAFAF8',
+  section: '#F3F0E9',
+  surface: '#FFFFFF',
+  surfaceHigh: '#F3F0E9',
+  elevated: '#FFFFFF',
+  input: '#FFFFFF',
 };
 
 export const border = {
-  default: '#2E2E2E',
-  strong: '#3D3D3D',
+  default: 'rgba(25,24,26,0.13)',
+  strong: 'rgba(25,24,26,0.2)',
 };
 
 export const text = {
-  primary: '#F5F5F5',
-  secondary: '#A8A8A8',
-  muted: '#636363',
-  subtle: '#4E4E4E',
+  primary: '#19181A',
+  secondary: '#6A6762',
+  muted: '#B4B0A9',
+  subtle: '#D4D2CE',
 };
 
-// Marca: solo logo, foco y CTAs primarios. Nunca representa "éxito" ni "todo bien".
-// Dorado en vez de verde neón: la zona azul-verde es la más difícil de discriminar
-// para ojos mayores por el amarilleamiento del cristalino.
+// Marca: navy profundo — solo logo, foco y CTAs primarios.
 export const brand = {
-  color: '#6366F1',
-  bg: 'rgba(99,102,241,0.08)',
-  border: 'rgba(99,102,241,0.2)',
+  color: 'var(--brand)',
+  bg: 'var(--info-bg)',
+  border: 'var(--info-border)',
 };
 
 // Estados semánticos: cada uno con su propio color + icono. Nunca solo color.
 export const state = {
-  success:   { color: '#2FBF71', bg: 'rgba(47,191,113,0.12)',  border: 'rgba(47,191,113,0.3)',  icon: '✓' },
-  info:      { color: '#3B9EFF', bg: 'rgba(59,158,255,0.12)',  border: 'rgba(59,158,255,0.3)',  icon: 'ℹ' },
-  warning:   { color: '#F5A524', bg: 'rgba(245,165,36,0.12)',  border: 'rgba(245,165,36,0.3)',  icon: '▲' },
-  incident:  { color: '#FF6B3D', bg: 'rgba(255,107,61,0.12)',  border: 'rgba(255,107,61,0.3)',  icon: '!' },
-  emergency: { color: '#E5484D', bg: 'rgba(229,72,77,0.12)',   border: 'rgba(229,72,77,0.3)',   icon: '◆' },
+  success:   { color: 'var(--ok-tx)', bg: 'var(--ok-bg)',  border: 'var(--ok-border)',  icon: '✓' },
+  info:      { color: 'var(--info-tx)', bg: 'var(--info-bg)',  border: 'var(--info-border)',  icon: 'ℹ' },
+  warning:   { color: 'var(--warn-tx)', bg: 'var(--warn-bg)',  border: 'var(--warn-border)',  icon: '▲' },
+  incident:  { color: 'var(--warn-tx)', bg: 'var(--warn-bg)',  border: 'var(--warn-border)',  icon: '!' },
+  emergency: { color: 'var(--crit-tx)', bg: 'var(--crit-bg)',   border: 'var(--crit-border)',   icon: '◆' },
 };
 
-// Tipos de novedad → estado semántico (ver §10.2 research: emergencia nunca es verde)
+// Tipos de novedad → estado semántico
 export const TIPO_NOVEDAD = {
   urgente:     { ...state.emergency, label: 'Urgente' },
   incidente:   { ...state.incident,  label: 'Incidente' },
