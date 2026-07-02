@@ -6,7 +6,6 @@ import { getSupabase } from '../../lib/supabase';
 const BG   = '#FFFFFF';
 const INK  = '#0F172A';
 const INK2 = 'rgba(15,23,42,0.5)';
-const INK3 = 'rgba(15,23,42,0.22)';
 const ORG  = '#E64E1B';
 const HEAD = "'Inter', system-ui, sans-serif";
 const BODY = "'Inter', system-ui, sans-serif";

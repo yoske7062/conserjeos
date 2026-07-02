@@ -1,6 +1,6 @@
 'use server';
 
-import { cookies } from 'next/headers';
+import { cookies, headers } from 'next/headers';
 import { createServerClient } from '@supabase/ssr';
 import { getSupabaseServiceRole } from '../../../lib/supabase';
 
@@ -35,12 +35,18 @@ export async function invitarConserjeAction(email, nombre, edificioId) {
   try {
     const supabase = getSupabaseServiceRole();
 
-    // Invite the user using the Service Role Admin client
+    // El link del correo debe aterrizar en la página de establecer contraseña.
+    // Esa URL tiene que estar en la allowlist de Supabase (Auth → URL Configuration).
+    const h = await headers();
+    const origin = process.env.NEXT_PUBLIC_SITE_URL
+      ?? `${h.get('x-forwarded-proto') ?? 'http'}://${h.get('host')}`;
+
     const { data: authData, error: inviteError } = await supabase.auth.admin.inviteUserByEmail(email, {
       data: {
         rol: 'conserje',
         edificio_id: edificioId,
-      }
+      },
+      redirectTo: `${origin}/auth/establecer-password`,
     });
 
     if (inviteError) {

@@ -225,7 +225,7 @@ function FeatureCard({ n, t, d, icon, color, colorBg, delay }) {
 }
 
 /* ── STEP CARD — rediseñado sin marcas de agua y profesional ────────────── */
-function StepCard({ n, t, d, delay }) {
+function StepCard({ n: _n, t, d, delay }) {
   const ref = useFadeUp(delay);
   const cardBg = 'rgba(255,255,255,0.02)';
   const borderColor = 'rgba(255,255,255,0.08)';

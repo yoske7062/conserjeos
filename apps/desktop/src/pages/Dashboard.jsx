@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabase';
-import { getAll, remove, count, onCountChange, base64ToBlob } from '../lib/offlineQueue';
+import { count, onCountChange } from '../lib/offlineQueue';
+import { flushQueue } from '../lib/syncQueue';
 import Sidebar from '../components/Sidebar';
 import EntregaTurno from './EntregaTurno';
 import Novedades from './Novedades';
@@ -47,42 +48,7 @@ export default function Dashboard({ perfil }) {
     async function flush() {
       flushingRef.current = true;
       setSincronizando(true);
-
-      // Garantiza que el JWT esté vigente antes de intentar writes.
-      // Si el dispositivo estuvo offline > 1h el token puede haber expirado.
-      const { error: sessionErr } = await supabase.auth.refreshSession();
-      if (sessionErr) {
-        setSincronizando(false);
-        flushingRef.current = false;
-        return;
-      }
-
-      for (const item of getAll()) {
-        let error;
-        let payload = item.payload;
-        if (item.fotoBase64) {
-          const blob = base64ToBlob(item.fotoBase64);
-          if (blob) {
-            const ext  = item.fotoName?.split('.').pop() || 'jpg';
-            const path = `${item.table}/${payload.edificio_id}/${Date.now()}.${ext}`;
-            const { data: up, error: upError } = await supabase.storage.from('fotos').upload(path, blob);
-            if (!upError && up) {
-              payload = { ...payload, foto_url: path };
-            }
-          }
-        }
-        if (item.op === 'insert') {
-          ({ error } = await supabase.from(item.table).insert(payload));
-          // Si el error es 23505 (Unique violation), significa que el registro ya existe
-          // (ej. se cortó la red justo después de que el server lo guardó).
-          // Lo marcamos como exitoso para sacarlo de la cola.
-          if (error && error.code === '23505') error = null;
-        } else if (item.op === 'update') {
-          ({ error } = await supabase.from(item.table).update(payload).eq('id', item.rowId));
-        }
-        if (!error) remove(item._id);
-      }
-
+      await flushQueue();
       setSincronizando(false);
       flushingRef.current = false;
     }

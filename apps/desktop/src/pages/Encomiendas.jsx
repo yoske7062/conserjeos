@@ -4,6 +4,7 @@ import { useRealtimeSync } from '../lib/useRealtimeSync';
 import { enqueue, fileToBase64 } from '../lib/offlineQueue';
 import { TIPOS_ENCOMIENDA, tipoInfo } from '../lib/tiposEncomienda';
 import FotoField from '../components/FotoField';
+import { clasificarError } from '../lib/errores';
 import FotoPrivada from '../components/FotoPrivada';
 
 function tiempoDesde(fecha) {
@@ -130,7 +131,7 @@ export default function Encomiendas({ perfil, turno }) {
       const ext  = fotoFile.name.split('.').pop();
       const path = `encomiendas/${perfil.edificio_id}/${Date.now()}.${ext}`;
       const { data: up, error: upError } = await supabase.storage.from('fotos').upload(path, fotoFile);
-      if (upError) { setErrorMsg('No se pudo subir la foto. Revisa tu conexión e intenta de nuevo.'); setEnviando(false); return; }
+      if (upError) { setErrorMsg(`No se pudo subir la foto. ${clasificarError(upError, 'encomiendas.foto').mensaje}`); setEnviando(false); return; }
       if (up) foto_url = path;
     }
     const { error } = await supabase.from('encomiendas').insert({
@@ -138,7 +139,7 @@ export default function Encomiendas({ perfil, turno }) {
       turno_id: turno?.id ?? null, foto_url, ...form,
     });
     if (error) {
-      setErrorMsg('No se pudo registrar la encomienda. Tus datos no se perdieron, intenta de nuevo.');
+      setErrorMsg(`No se pudo registrar la encomienda — tus datos no se perdieron. ${clasificarError(error, 'encomiendas.crear').mensaje}`);
     } else {
       setMostrarForm(false); setForm({ tipo: 'paquete', remitente: '', destinatario: '', depto: '' }); setFotoFile(null); cargarEncomiendas();
     }
@@ -168,7 +169,7 @@ export default function Encomiendas({ perfil, turno }) {
       return;
     }
     const { error } = await supabase.from('encomiendas').update(payload).eq('id', retiroTarget);
-    if (error) setErrorMsg('No se pudo marcar como entregada. Intenta de nuevo.');
+    if (error) setErrorMsg(`No se pudo marcar como entregada. ${clasificarError(error, 'encomiendas.entregar').mensaje}`);
     else { setRetiroTarget(null); cargarEncomiendas(); }
     setConfirmandoRetiro(false);
   }
@@ -188,7 +189,7 @@ export default function Encomiendas({ perfil, turno }) {
       ...editForm,
       editado_por: perfil.id, editado_at: new Date().toISOString(), valor_anterior: valorAnterior,
     }).eq('id', editTarget.id);
-    if (error) setErrorMsg('No se pudo guardar la edición. Intenta de nuevo.');
+    if (error) setErrorMsg(`No se pudo guardar la edición. ${clasificarError(error, 'encomiendas.editar').mensaje}`);
     else { setEditTarget(null); cargarEncomiendas(); if (busqueda) setBusqueda(b => b); }
     setGuardandoEdit(false);
   }

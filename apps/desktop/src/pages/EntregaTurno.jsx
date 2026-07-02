@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { state as estados } from '../lib/tokens';
+import { clasificarError } from '../lib/errores';
 
 const INPUT_STYLE = {
   width: '100%', height: 48, background: 'var(--bg-input)', border: '1px solid var(--border)',
@@ -52,7 +53,7 @@ export default function EntregaTurno({ perfil, turno, onTurnoChange }) {
     const { data, error } = await supabase.from('turnos')
       .insert({ edificio_id: perfil.edificio_id, conserje_id: perfil.id })
       .select().single();
-    if (error) setErrorMsg('No se pudo iniciar el turno. Revisa tu conexión e intenta de nuevo.');
+    if (error) setErrorMsg(`No se pudo iniciar el turno. ${clasificarError(error, 'turnos.iniciar').mensaje}`);
     else onTurnoChange(data);
     setIniciando(false);
   }
@@ -94,7 +95,7 @@ export default function EntregaTurno({ perfil, turno, onTurnoChange }) {
       .update({ fin: new Date().toISOString(), activo: false, resumen, pendientes: pendientesNuevos })
       .eq('id', turno.id);
     if (error) {
-      setErrorMsg('No se pudo cerrar el turno. Revisa tu conexión e intenta de nuevo.');
+      setErrorMsg(`No se pudo cerrar el turno. ${clasificarError(error, 'turnos.cerrar').mensaje}`);
     } else {
       setResumenModal(resumen);
       setPendientesNuevos([]);

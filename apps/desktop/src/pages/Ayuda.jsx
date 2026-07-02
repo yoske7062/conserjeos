@@ -179,7 +179,7 @@ export default function Ayuda() {
             ['2', 'checklist',   'Revisa las tareas', 'En "Tareas" verás lo que el administrador dejó pendiente para tu turno.'],
             ['3', 'campaign',    'Registra todo', 'Cualquier incidente, visita o encomienda debe quedar registrado. Si después hay un reclamo, el historial es tu respaldo.'],
             ['4', 'schedule',    'Cierra el turno', 'Al salir, pulsa "Cerrar turno" y deja pendientes si hace falta. El próximo conserje los verá obligatoriamente.'],
-          ].map(([num, icon, titulo, desc]) => (
+          ].map(([num, _icon, titulo, desc]) => (
             <div key={num} style={{
               display: 'flex', alignItems: 'flex-start', gap: 14,
               background: 'var(--bg-surface)', border: '1px solid var(--border)',
