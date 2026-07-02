@@ -60,7 +60,7 @@
     "@eslint/js": "^9.39.4",
     "@vitejs/plugin-react": "^4.3.4",
     "concurrently": "^9.2.3",
-    "electron": "33.4.11",
+    "electron": "^39.8.5",
     "electron-builder": "^26.15.3",
     "eslint": "^9.39.4",
     "eslint-plugin-react": "^7.37.5",
