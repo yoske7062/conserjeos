@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import { useRealtimeSync } from '../lib/useRealtimeSync';
 import { enqueue } from '../lib/offlineQueue';
@@ -122,7 +122,16 @@ export default function Visitas({ perfil, turno }) {
   const [editForm, setEditForm]           = useState({ nombre_visitante: '', rut_visitante: '', destino: '', motivo: '' });
   const [guardandoEdit, setGuardandoEdit] = useState(false);
 
-  useEffect(() => { cargarVisitas(); }, []);
+  const cargarVisitas = useCallback(async () => {
+    setLoading(true);
+    const { data } = await supabase.from('visitas').select('*')
+      .eq('edificio_id', perfil.edificio_id)
+      .order('entrada', { ascending: false }).limit(50);
+    setVisitas(data ?? []);
+    setLoading(false);
+  }, [perfil.edificio_id]);
+
+  useEffect(() => { cargarVisitas(); }, [cargarVisitas]);
 
   useRealtimeSync('visitas', perfil.edificio_id, {
     onInsert: (nuevo) => {
@@ -158,15 +167,6 @@ export default function Visitas({ perfil, turno }) {
     }, 350);
     return () => clearTimeout(t);
   }, [busqueda, perfil.edificio_id]);
-
-  async function cargarVisitas() {
-    setLoading(true);
-    const { data } = await supabase.from('visitas').select('*')
-      .eq('edificio_id', perfil.edificio_id)
-      .order('entrada', { ascending: false }).limit(50);
-    setVisitas(data ?? []);
-    setLoading(false);
-  }
 
   async function registrarEntrada(e) {
     e.preventDefault();

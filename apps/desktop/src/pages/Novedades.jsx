@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import { useRealtimeSync } from '../lib/useRealtimeSync';
 import { TIPO_NOVEDAD } from '../lib/tokens';
@@ -136,18 +136,29 @@ export default function Novedades({ perfil, turno, filtroInicial }) {
         }
       }
     } catch { /* borrador corrupto, se ignora */ }
-  }, []);
+  }, [perfil.id, perfil.edificio_id]);
 
   // Guarda el borrador en cada cambio mientras el modal está abierto
   useEffect(() => {
     if (!mostrarForm) return;
     if (!descripcion.trim()) { localStorage.removeItem(draftKey(perfil.id, perfil.edificio_id)); return; }
     localStorage.setItem(draftKey(perfil.id, perfil.edificio_id), JSON.stringify({ tipo, descripcion }));
-  }, [tipo, descripcion, mostrarForm]);
+  }, [tipo, descripcion, mostrarForm, perfil.id, perfil.edificio_id]);
+
+  const cargarNovedades = useCallback(async () => {
+    setLoading(true);
+    let q = supabase.from('novedades').select('*, perfiles(nombre)')
+      .eq('edificio_id', perfil.edificio_id)
+      .order('created_at', { ascending: false }).limit(100);
+    if (turno) q = q.eq('turno_id', turno.id);
+    const { data } = await q;
+    setNovedades(data ?? []);
+    setLoading(false);
+  }, [perfil.edificio_id, turno]);
 
   useEffect(() => {
     cargarNovedades();
-  }, [turno]);
+  }, [cargarNovedades]);
 
   useRealtimeSync('novedades', perfil.edificio_id, {
     onInsert: async (nuevo) => {
@@ -168,16 +179,6 @@ export default function Novedades({ perfil, turno, filtroInicial }) {
     }
   });
 
-  async function cargarNovedades() {
-    setLoading(true);
-    let q = supabase.from('novedades').select('*, perfiles(nombre)')
-      .eq('edificio_id', perfil.edificio_id)
-      .order('created_at', { ascending: false }).limit(100);
-    if (turno) q = q.eq('turno_id', turno.id);
-    const { data } = await q;
-    setNovedades(data ?? []);
-    setLoading(false);
-  }
 
   useEffect(() => {
     const q = busqueda.replace(/[,()%]/g, '').trim();

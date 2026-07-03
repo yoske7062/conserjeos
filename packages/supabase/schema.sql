@@ -507,3 +507,47 @@ create policy "tareas: crear solo admin" on public.tareas
 create policy "tareas: borrar solo admin" on public.tareas
   for delete
   using (edificio_id = public.mi_edificio_id() and public.mi_rol() = 'admin');
+
+-- ============================================================
+-- MIGRACIÓN — Retención 90 días encomiendas/novedades + hardening (02-jul-2026)
+-- ============================================================
+-- Aplicado directo en producción vía Supabase MCP. Diego confirmó 90 días,
+-- mismo plazo que ya regía para visitas (docs/data/data-retention.md §3.1).
+
+create or replace function public.cleanup_old_encomiendas()
+returns void language plpgsql security definer set search_path = public as $$
+begin
+  delete from public.encomiendas where recibida_at < now() - interval '90 days';
+end;
+$$;
+
+create or replace function public.cleanup_old_novedades()
+returns void language plpgsql security definer set search_path = public as $$
+begin
+  delete from public.novedades where created_at < now() - interval '90 days';
+end;
+$$;
+
+revoke execute on function public.cleanup_old_encomiendas() from anon, authenticated, public;
+revoke execute on function public.cleanup_old_novedades() from anon, authenticated, public;
+grant execute on function public.cleanup_old_encomiendas() to postgres, service_role;
+grant execute on function public.cleanup_old_novedades() to postgres, service_role;
+
+select cron.schedule('cleanup-old-encomiendas', '0 5 * * *', $$select public.cleanup_old_encomiendas();$$);
+select cron.schedule('cleanup-old-novedades',   '15 5 * * *', $$select public.cleanup_old_novedades();$$);
+
+-- Hardening detectado por Supabase Advisors (get_advisors, security):
+-- 1. search_path mutable en mi_edificio_id/mi_rol/cleanup_orphan_fotos — cerrado.
+-- 2. cleanup_orphan_fotos era invocable públicamente vía RPC (anon/authenticated
+--    tenían EXECUTE por privilegio default de Supabase en funciones nuevas del
+--    schema public) — revocado, solo postgres/service_role la ejecutan ahora.
+-- mi_edificio_id/mi_rol siguen siendo ejecutables por authenticated a propósito:
+-- son las funciones que usa cada policy de RLS: revocarles EXECUTE rompe el
+-- acceso a datos de toda la app. Cada usuario solo puede leer su propio
+-- edificio_id/rol — no hay escalación de privilegio posible ahí.
+
+alter function public.mi_edificio_id() set search_path = public;
+alter function public.mi_rol() set search_path = public;
+alter function public.cleanup_orphan_fotos() set search_path = public;
+revoke execute on function public.cleanup_orphan_fotos() from anon, authenticated, public;
+grant execute on function public.cleanup_orphan_fotos() to postgres, service_role;

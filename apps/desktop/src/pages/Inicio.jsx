@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 
 function StatCard({ label, value, delta, deltaType }) {
@@ -151,9 +151,7 @@ export default function Inicio({ perfil, turno, navegarA }) {
     return () => clearInterval(id);
   }, [turno]);
 
-  useEffect(() => { cargarResumen(); }, [turno]);
-
-  async function cargarResumen() {
+  const cargarResumen = useCallback(async () => {
     const [novedadesRes, visitasRes, encomiendasRes, tareasRes] = await Promise.all([
       turno
         ? supabase.from('novedades').select('tipo').eq('turno_id', turno.id)
@@ -174,7 +172,9 @@ export default function Inicio({ perfil, turno, navegarA }) {
       tareasPendientes: tareasPendientes.length,
       tareasVencidas: tareasPendientes.filter(t => t.vence_at && new Date(t.vence_at) < ahora).length,
     });
-  }
+  }, [turno, perfil.edificio_id]);
+
+  useEffect(() => { cargarResumen(); }, [cargarResumen]);
 
   const nombre = (perfil?.nombre || 'Conserje').split(' ')[0];
   const totalNovedades = resumen.urgente + resumen.incidente + resumen.informativo;

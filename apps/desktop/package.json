@@ -51,27 +51,28 @@
   },
   "type": "module",
   "dependencies": {
-    "@supabase/supabase-js": "^2.47.2",
+    "@supabase/supabase-js": "^2.110.0",
     "electron-updater": "^6.3.9",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.4",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@testing-library/user-event": "^14.6.1",
     "@vitejs/plugin-react": "^4.3.4",
-    "autoprefixer": "^10.4.20",
     "concurrently": "^9.2.3",
-    "electron": "33.4.11",
-    "electron-builder": "^25.1.8",
+    "electron": "^39.8.5",
+    "electron-builder": "^26.15.3",
     "eslint": "^9.39.4",
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^7.1.1",
     "globals": "^17.7.0",
-    "postcss": "^8.4.49",
-    "tailwindcss": "^3.4.17",
+    "jsdom": "^29.1.1",
     "vite": "^6.0.5",
     "vite-plugin-electron": "^0.28.8",
-    "vitest": "^2.1.8",
+    "vitest": "^3.2.6",
     "wait-on": "^8.0.5"
   }
 }

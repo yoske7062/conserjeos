@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import { state as estados } from '../lib/tokens';
 import { clasificarError } from '../lib/errores';
@@ -27,9 +27,7 @@ export default function EntregaTurno({ perfil, turno, onTurnoChange }) {
   const [errorMsg, setErrorMsg] = useState('');
   const [resumenModal, setResumenModal] = useState(null);
 
-  useEffect(() => { cargarResumen(); }, [turno]);
-
-  async function cargarResumen() {
+  const cargarResumen = useCallback(async () => {
     const [novedadesRes, visitasRes, encomiendasRes] = await Promise.all([
       turno
         ? supabase.from('novedades').select('tipo').eq('turno_id', turno.id)
@@ -45,7 +43,9 @@ export default function EntregaTurno({ perfil, turno, onTurnoChange }) {
       visitasActivas: visitasRes.count ?? 0,
       encomiendasPendientes: encomiendasRes.count ?? 0,
     });
-  }
+  }, [turno, perfil.edificio_id]);
+
+  useEffect(() => { cargarResumen(); }, [cargarResumen]);
 
   async function iniciarTurno() {
     setIniciando(true);

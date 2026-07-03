@@ -1,6 +1,7 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { getSupabase } from '../../../lib/supabase';
+import { useRealtimeRefetch } from '../../../lib/useRealtimeRefetch';
 
 const PRIORIDADES = ['baja', 'normal', 'alta'];
 const P_COLOR = { baja: '#636363', normal: '#3B9EFF', alta: '#F5A524' };
@@ -34,22 +35,23 @@ export default function TareasPage() {
     init();
   }, []);
 
-  useEffect(() => {
+  const cargar = useCallback(async () => {
     if (!eid) return;
-    async function cargar() {
-      setLoading(true);
-      const supabase = getSupabase();
-      const { data } = await supabase.from('tareas')
-        .select('*,perfiles!asignada_a(nombre)')
-        .eq('edificio_id', eid)
-        .eq('estado', filtroE)
-        .order('created_at', { ascending: false })
-        .limit(50);
-      setTareas(data ?? []);
-      setLoading(false);
-    }
-    cargar();
+    setLoading(true);
+    const supabase = getSupabase();
+    const { data } = await supabase.from('tareas')
+      .select('*,perfiles!asignada_a(nombre)')
+      .eq('edificio_id', eid)
+      .eq('estado', filtroE)
+      .order('created_at', { ascending: false })
+      .limit(50);
+    setTareas(data ?? []);
+    setLoading(false);
   }, [eid, filtroE]);
+
+  useEffect(() => { cargar(); }, [cargar]);
+
+  useRealtimeRefetch('tareas', eid, cargar);
 
   async function crearTarea(e) {
     e.preventDefault();
@@ -70,12 +72,7 @@ export default function TareasPage() {
     if (error) return;
     setModal(false);
     setForm(FORM_INIT);
-    if (filtroE === 'pendiente') {
-      setLoading(true);
-      const { data } = await supabase.from('tareas').select('*,perfiles!asignada_a(nombre)').eq('edificio_id', eid).eq('estado', 'pendiente').order('created_at', { ascending: false }).limit(50);
-      setTareas(data ?? []);
-      setLoading(false);
-    }
+    if (filtroE === 'pendiente') cargar();
   }
 
   async function cambiarEstado(id, estado) {

@@ -1,29 +1,39 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { getSupabase } from '../../../lib/supabase';
+import { useRealtimeRefetch } from '../../../lib/useRealtimeRefetch';
 
 export default function EncomiendePage() {
   const [items, setItems]     = useState([]);
   const [tab, setTab]         = useState('pendientes'); // pendientes | entregadas
   const [loading, setLoading] = useState(true);
+  const [eid, setEid]         = useState(null);
+
+  const cargar = useCallback(async (edificioId) => {
+    const supabase = getSupabase();
+    const { data } = await supabase.from('encomiendas')
+      .select('*')
+      .eq('edificio_id', edificioId)
+      .eq('entregada', tab === 'entregadas')
+      .order(tab === 'pendientes' ? 'recibida_at' : 'entregada_at', { ascending: false })
+      .limit(60);
+    setItems(data ?? []);
+    setLoading(false);
+  }, [tab]);
 
   useEffect(() => {
-    async function cargar() {
-      setLoading(true);
+    setLoading(true);
+    async function init() {
       const supabase = getSupabase();
       const { data: { user } } = await supabase.auth.getUser();
       const { data: perfil }   = await supabase.from('perfiles').select('edificio_id').eq('id', user.id).single();
-      const { data } = await supabase.from('encomiendas')
-        .select('*')
-        .eq('edificio_id', perfil.edificio_id)
-        .eq('entregada', tab === 'entregadas')
-        .order(tab === 'pendientes' ? 'recibida_at' : 'entregada_at', { ascending: false })
-        .limit(60);
-      setItems(data ?? []);
-      setLoading(false);
+      setEid(perfil.edificio_id);
+      cargar(perfil.edificio_id);
     }
-    cargar();
-  }, [tab]);
+    init();
+  }, [tab, cargar]);
+
+  useRealtimeRefetch('encomiendas', eid, () => cargar(eid));
 
   const pill = (active) => ({
     padding: '6px 14px', borderRadius: 20, fontSize: 13, fontWeight: active ? 600 : 400,

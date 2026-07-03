@@ -24,9 +24,31 @@ Cómo se protege y se recupera la base de datos. Un respaldo no se considera con
 | Cifrado | En reposo, gestionado por Supabase |
 | Responsable | Diego |
 | RTO (tiempo objetivo de recuperación) | < 4 horas |
-| Última prueba de restauración | **Pendiente — debe ejecutarse y registrarse aquí** |
+| Última prueba de restauración | Intentada 02-jul-2026 — ver hallazgos abajo. No completada aún. |
 
-> Supabase ofrece backups automáticos y, en planes superiores, Point-in-Time Recovery (PITR). Confirmar el plan actual del proyecto `cpxywvxwdnpsrxqjoqjl` para saber qué nivel está disponible.
+> El proyecto `cpxywvxwdnpsrxqjoqjl` está en plan **Free** — sin Point-in-Time Recovery (PITR) ni backups automáticos gestionados con restore por dashboard. Eso solo existe en planes Pro o superiores. Al pasar a Pro, repetir esta prueba usando PITR directo.
+
+### Hallazgos del intento de prueba (02-jul-2026)
+
+Se intentó una restauración real en dos niveles, con estos resultados:
+
+1. **Restore a Postgres local (Homebrew, gratis):** falla de raíz. `schema.sql` no es
+   auto-contenido — depende de esquemas y roles que solo existen dentro de la
+   plataforma gestionada de Supabase (`auth.users`, `storage.buckets`, roles
+   `anon`/`authenticated`/`service_role`). No se puede restaurar contra un Postgres
+   vanilla sin antes recrear esa capa (vía Supabase CLI + Docker, no instalado en
+   esta sesión).
+2. **Restore a un segundo proyecto Supabase (gratis, mismo entorno real):**
+   bloqueado — la organización ya tiene 2 proyectos free activos bajo la cuenta de
+   James (límite del plan Free por organización). No se pudo crear el proyecto
+   temporal sin pausar o borrar algo de él primero, y eso requiere su autorización,
+   no la de esta sesión.
+
+**Conclusión honesta:** la prueba de restauración real sigue sin completarse. No es
+un pendiente que se pueda resolver solo con más tiempo de código — necesita, o (a)
+que James libere un slot de proyecto free, o (b) que Diego apruebe crear un proyecto
+en otra organización/cuenta, o (c) instalar Docker + Supabase CLI para levantar el
+stack completo localmente (`supabase start`).
 
 ---
 
