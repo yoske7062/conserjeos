@@ -1,0 +1,18 @@
+# CODEOWNERS — quién debe revisar qué.
+# GitHub solo puede pedir revisión automática a colaboradores del repo.
+# Hoy el único colaborador es @yoske7062 — cuando se agregue a James (@crorkan)
+# como colaborador, descomentar/ajustar la línea de frontend abajo.
+
+# Default: todo pasa por Diego.
+* @yoske7062
+
+# Frontend / diseño — James es responsable visual del proyecto (ver CLAUDE.md).
+# Descomentar una vez que @crorkan tenga acceso de colaborador al repo:
+# apps/admin/app/**/*.jsx @crorkan
+# apps/desktop/src/pages/**/*.jsx @crorkan
+# apps/desktop/src/components/**/*.jsx @crorkan
+
+# Seguridad y base de datos — cambios sensibles, requieren atención directa de Diego.
+packages/supabase/schema.sql @yoske7062
+docs/security/ @yoske7062
+docs/legal/ @yoske7062
