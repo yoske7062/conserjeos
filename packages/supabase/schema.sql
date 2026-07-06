@@ -18,8 +18,17 @@ create table public.edificios (
   -- Ficha de edificio: [{ "nombre": "...", "rol": "...", "telefono": "..." }, ...]
   contactos   jsonb not null default '[]'::jsonb,
   -- Protocolos individuales: [{ "titulo": "...", "texto": "..." }, ...]
-  protocolos  jsonb not null default '[]'::jsonb
+  protocolos  jsonb not null default '[]'::jsonb,
+  -- Suscripción Stripe — null hasta que complete el signup con pago.
+  -- subscription_status espeja Stripe (trialing/active/past_due/canceled/incomplete),
+  -- lo escribe solo el webhook, nunca a mano.
+  stripe_customer_id     text unique,
+  stripe_subscription_id text unique,
+  subscription_status    text
 );
+
+create index if not exists idx_edificios_stripe_customer     on public.edificios (stripe_customer_id);
+create index if not exists idx_edificios_stripe_subscription on public.edificios (stripe_subscription_id);
 
 -- ─── TABLA: perfiles de usuario ──────────────────────────────
 -- Extiende auth.users de Supabase
