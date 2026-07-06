@@ -1,6 +1,5 @@
 import { getSupabaseServiceRole } from '../lib/supabase';
 import LogoutButton from './LogoutButton';
-import ConfigurarClavePrompt from './ConfigurarClavePrompt';
 
 // Datos en vivo, no estáticos — nunca prerenderizar esto en build time.
 export const dynamic = 'force-dynamic';
@@ -50,7 +49,6 @@ export default async function MonitorPage() {
 
   return (
     <div style={{ padding: '32px 36px', maxWidth: 1000, margin: '0 auto' }}>
-      <ConfigurarClavePrompt />
       <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 32 }}>
         <div>
           <h1 style={{ fontSize: 22, fontWeight: 700, color: 'var(--text)', marginBottom: 4 }}>Monitor Portia</h1>
