@@ -79,7 +79,7 @@ export default function EstablecerPasswordPage() {
       background: '#FFFFFF', fontFamily: "'Inter', system-ui, sans-serif", padding: 24,
     }}>
       <div style={{ width: '100%', maxWidth: 400 }}>
-        <h1 style={{ fontSize: 22, fontWeight: 700, color: '#0F172A', marginBottom: 8 }}>
+        <h1 style={{ fontSize: 22, fontWeight: 700, color: '#000000', marginBottom: 8 }}>
           Bienvenido a Portia
         </h1>
 
@@ -125,7 +125,7 @@ export default function EstablecerPasswordPage() {
         )}
 
         {fase === 'exito' && (
-          <p style={{ fontSize: 14, color: '#0F172A', lineHeight: 1.6 }}>
+          <p style={{ fontSize: 14, color: '#000000', lineHeight: 1.6 }}>
             Contraseña creada. Abre <strong>Portia</strong> en el equipo de conserjería
             y entra con tu email y la contraseña que acabas de crear.
             Ya puedes cerrar esta ventana.
