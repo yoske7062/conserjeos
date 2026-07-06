@@ -1,0 +1,96 @@
+name: Release Monitor Desktop
+
+on:
+  push:
+    tags:
+      - 'monitor-v*'
+
+permissions:
+  contents: read
+
+jobs:
+  build-mac:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install deps
+        run: npm install --include=dev
+        working-directory: apps/monitor-desktop
+
+      - name: Build Mac
+        working-directory: apps/monitor-desktop
+        run: npx electron-builder --mac --arm64 --x64 --publish never
+
+      - name: Upload Mac artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: mac-builds
+          path: apps/monitor-desktop/dist/*.dmg
+
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install deps
+        run: npm install --include=dev
+        working-directory: apps/monitor-desktop
+
+      - name: Build Windows
+        working-directory: apps/monitor-desktop
+        run: npx electron-builder --win --x64 --publish never
+
+      - name: Upload Windows artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: windows-builds
+          path: apps/monitor-desktop/dist/*.exe
+
+  release:
+    needs: [build-mac, build-windows]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download Mac builds
+        uses: actions/download-artifact@v8
+        with:
+          name: mac-builds
+          path: dist/
+
+      - name: Download Windows builds
+        uses: actions/download-artifact@v8
+        with:
+          name: windows-builds
+          path: dist/
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v3
+        with:
+          files: dist/*
+          generate_release_notes: true
+          name: "Portia Monitor ${{ github.ref_name }}"
+          body: |
+            ## Portia Monitor ${{ github.ref_name }}
+
+            Panel privado para fundadores — solo Diego y James.
+
+            ### Descargas
+            - **Mac (Apple Silicon):** `PortiaMonitor-*-arm64.dmg`
+            - **Mac (Intel):** `PortiaMonitor-*-x64.dmg`
+            - **Windows:** `PortiaMonitor-Setup-*.exe`
+
+            ### Instalación
+            **Mac:** Abre el `.dmg` y arrastra Portia Monitor a Aplicaciones.
+            **Windows:** Ejecuta el `.exe` como administrador.
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
