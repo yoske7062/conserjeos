@@ -1,0 +1,50 @@
+{
+  "name": "portia-monitor-desktop",
+  "version": "1.0.0",
+  "description": "Portia Monitor — panel privado para fundadores",
+  "repository": "https://github.com/yoske7062/conserjeos",
+  "author": "Diego Hadwa <yoske7062@gmail.com>",
+  "main": "main.cjs",
+  "scripts": {
+    "electron": "electron .",
+    "dist:mac": "electron-builder --mac --arm64 --x64",
+    "dist:win": "electron-builder --win --x64"
+  },
+  "build": {
+    "appId": "cl.portia.monitor",
+    "productName": "Portia Monitor",
+    "files": [
+      "main.cjs",
+      "preload.cjs"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "artifactName": "PortiaMonitor-Setup-${version}.${ext}"
+    },
+    "mac": {
+      "category": "public.app-category.business",
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "arm64",
+            "x64"
+          ]
+        }
+      ],
+      "artifactName": "PortiaMonitor-${version}-${arch}.${ext}"
+    }
+  },
+  "type": "module",
+  "devDependencies": {
+    "electron": "^39.8.5",
+    "electron-builder": "^26.15.3"
+  }
+}
