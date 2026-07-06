@@ -22,7 +22,14 @@ export default function LoginPage() {
       email,
       options: { shouldCreateUser: false },
     });
-    if (authErr) { setError('No se pudo enviar el código. ¿Tu email está en la allowlist interna?'); setLoading(false); return; }
+    if (authErr) {
+      const msg = authErr.status === 429 || authErr.code === 'over_email_send_rate_limit'
+        ? 'Se enviaron demasiados correos en poco tiempo. Espera unos minutos e intenta de nuevo.'
+        : 'No se pudo enviar el código. ¿Tu email está en la allowlist interna?';
+      setError(msg);
+      setLoading(false);
+      return;
+    }
     setFase('codigo');
     setLoading(false);
   }
