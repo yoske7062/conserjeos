@@ -37,6 +37,16 @@ export async function middleware(request) {
     return NextResponse.redirect(new URL('/dashboard', request.url));
   }
 
+  // /dashboard es solo para admin — conserjes usan la app de escritorio, no
+  // este panel. Antes esto solo se chequeaba en el cliente (dashboard/layout.jsx),
+  // lo cual no protege nada a nivel de servidor.
+  if (user && pathname.startsWith('/dashboard')) {
+    const { data: perfil } = await supabase.from('perfiles').select('rol').eq('id', user.id).single();
+    if (perfil?.rol !== 'admin') {
+      return NextResponse.redirect(new URL('/login', request.url));
+    }
+  }
+
   return response;
 }
 
