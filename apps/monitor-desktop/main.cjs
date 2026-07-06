@@ -50,6 +50,7 @@ function createWindow() {
     backgroundColor: '#0B0B0B',
     title: 'Portia Monitor',
     titleBarStyle: 'hiddenInset',
+    icon: path.join(__dirname, 'build', 'icon.png'),
     webPreferences: {
       preload: path.join(__dirname, 'preload.cjs'),
       contextIsolation: true,
@@ -70,6 +71,20 @@ function createWindow() {
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
     if (esUrlExternaSegura(url)) shell.openExternal(url);
     return { action: 'deny' };
+  });
+
+  // El contenido es remoto (Next.js en Vercel) y no marca ninguna zona como
+  // arrastrable — sin esto la ventana no se puede mover con hiddenInset.
+  mainWindow.webContents.on('did-finish-load', () => {
+    mainWindow.webContents.insertCSS(`
+      body::before {
+        content: '';
+        position: fixed;
+        top: 0; left: 0; right: 0; height: 28px;
+        -webkit-app-region: drag;
+        z-index: 999999;
+      }
+    `);
   });
 
   mainWindow.loadURL(MONITOR_URL);
