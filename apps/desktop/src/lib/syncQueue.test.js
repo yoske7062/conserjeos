@@ -144,6 +144,21 @@ describe('flushQueue', () => {
     expect(client.llamadas.inserts).toHaveLength(0);
     expect(count()).toBe(1);
   });
+
+  it('dos flush disparados a la vez no duplican — el segundo sale con omitido', async () => {
+    enqueue({ table: 'visitas', op: 'insert', payload: VISITA });
+    const client = clienteFalso();
+    const original = client.auth.refreshSession;
+    client.auth.refreshSession = () => new Promise(resolve => setTimeout(() => resolve(original()), 20));
+
+    const [primero, segundo] = await Promise.all([flushQueue(client), flushQueue(client)]);
+
+    const resultados = [primero, segundo];
+    expect(resultados.filter(r => r.omitido)).toHaveLength(1);
+    expect(resultados.filter(r => r.procesados === 1)).toHaveLength(1);
+    expect(client.llamadas.inserts).toHaveLength(1);
+    expect(count()).toBe(0);
+  });
 });
 
 describe('offlineQueue', () => {

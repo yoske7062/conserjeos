@@ -10,18 +10,18 @@ import Link from 'next/link';
  ───────────────────────────────────────────────────────────────────────────── */
 
 const T = {
-  bg:        '#F5F2EB',
-  bgPanel:   '#ECE8DE',
+  bg:        '#F6F4F1',
+  bgPanel:   '#E4DED2',
   bgCard:    '#FFFFFF',
-  bgDark:    '#17151F',
-  ink:       '#1D1B16',
+  bgDark:    '#000000',
+  ink:       '#000000',
   inkMid:    '#656055',
   inkSub:    '#969084',
   border:    '#E2DDD1',
-  accent:    '#E8501F',
-  accentBtn: '#D9430D',
-  violet:    '#6D5AE6',
-  pink:      '#C0369B',
+  accent:    '#F95C4B',
+  accentBtn: '#E14A38',
+  violet:    '#F95C4B',
+  pink:      '#F95C4B',
   ok:        '#1A7A42',
   font:      "'Inter', system-ui, -apple-system, sans-serif",
   shadowWin: '0 1px 2px rgba(29,27,22,0.05), 0 12px 24px -8px rgba(29,27,22,0.10), 0 32px 64px -24px rgba(29,27,22,0.18)',
@@ -29,11 +29,11 @@ const T = {
   shadowFloat:'0 2px 6px rgba(29,27,22,0.06), 0 20px 40px -16px rgba(29,27,22,0.22)',
   ease: 'cubic-bezier(.16,1,.3,1)',
   app: {
-    side:   '#0B0A14',
-    base:   '#EDEEF8',
+    side:   '#000000',
+    base:   '#E4DED2',
     card:   '#FFFFFF',
-    brand:  '#4F46E5',
-    ink:    '#111111',
+    brand:  '#F95C4B',
+    ink:    '#000000',
     mid:    '#5A5A5A',
     sub:    '#8C8C8C',
     border: '#E3E2EE',
@@ -1275,10 +1275,10 @@ export default function Landing() {
           </p>
 
           <div ref={ctas} style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
-            <a href="mailto:hola@portia.cl" className="btn-grad" style={{
+            <Link href="/registro" className="btn-grad" style={{
               fontFamily: T.font, fontSize: 17, fontWeight: 700, color: '#fff',
               textDecoration: 'none', borderRadius: 13, padding: '16px 34px', display: 'inline-block',
-            }}>Solicitar demo</a>
+            }}>Crear mi cuenta</Link>
             <a href="#producto" className="btn-ghost" style={{
               fontFamily: T.font, fontSize: 17, fontWeight: 600, color: T.ink,
               textDecoration: 'none', borderRadius: 13, padding: '16px 30px', display: 'inline-block',
@@ -1377,10 +1377,10 @@ export default function Landing() {
             Escríbenos y te lo mostramos funcionando.
           </p>
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
-            <a href="mailto:hola@portia.cl" className="btn-grad" style={{
+            <Link href="/registro" className="btn-grad" style={{
               fontFamily: T.font, fontSize: 17.5, fontWeight: 700, color: '#fff',
               textDecoration: 'none', borderRadius: 13, padding: '17px 40px', display: 'inline-block',
-            }}>Solicitar demo</a>
+            }}>Crear mi cuenta</Link>
             <Link href="/login" className="btn-ghost" style={{
               fontFamily: T.font, fontSize: 17.5, fontWeight: 600, color: T.ink,
               textDecoration: 'none', borderRadius: 13, padding: '17px 36px', display: 'inline-block',
@@ -1407,7 +1407,7 @@ export default function Landing() {
             <p style={{ fontSize: 12.5, color: 'rgba(255,255,255,0.35)', fontStyle: 'italic' }}>Tu edificio. Todo en orden.</p>
           </div>
           {[
-            { h: 'Producto', links: [['Panel admin', '/login'], ['Solicitar demo', 'mailto:hola@portia.cl']] },
+            { h: 'Producto', links: [['Panel admin', '/login'], ['Crear mi cuenta', '/registro']] },
             { h: 'Contacto', links: [['hola@portia.cl', 'mailto:hola@portia.cl'], ['Santiago, Chile', null]] },
           ].map(({ h, links }) => (
             <div key={h}>

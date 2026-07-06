@@ -176,7 +176,6 @@ export default function Inicio({ perfil, turno, navegarA }) {
 
   useEffect(() => { cargarResumen(); }, [cargarResumen]);
 
-  const nombre = (perfil?.nombre || 'Conserje').split(' ')[0];
   const totalNovedades = resumen.urgente + resumen.incidente + resumen.informativo;
 
   const novedadBadges = [];
@@ -199,17 +198,12 @@ export default function Inicio({ perfil, turno, navegarA }) {
   return (
     <div style={{ padding: '22px 24px 28px' }}>
 
-      {/* Page header */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 18 }}>
-        <div>
-          <div style={{ fontFamily: 'var(--font-heading)', fontSize: 23, fontWeight: 800, letterSpacing: '-.5px', color: 'var(--text)' }}>
-            Hola, {nombre}
-          </div>
-          <div style={{ fontSize: 11.5, fontWeight: 600, color: 'var(--text-muted)', marginTop: 3 }}>
-            {turno
-              ? `Turno activo desde las ${new Date(turno.inicio).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })}`
-              : 'Sin turno activo'}
-          </div>
+      {/* Estado del turno — el saludo ya vive en el header persistente */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
+        <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)' }}>
+          {turno
+            ? `Turno activo desde las ${new Date(turno.inicio).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })}`
+            : 'Sin turno activo'}
         </div>
         {turno ? (
           <div style={{

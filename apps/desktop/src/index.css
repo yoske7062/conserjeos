@@ -4,25 +4,25 @@
 
 :root {
   /* ── Surfaces ────────────────────────────────────────────────── */
-  --bg-base:          #FAFAF8;
-  --bg-section:       #F3F0E9;
+  --bg-base:          #F6F4F1;
+  --bg-section:       #E4DED2;
   --bg-surface:       #FFFFFF;
-  --bg-surface-high:  #F3F0E9;
+  --bg-surface-high:  #E4DED2;
   --bg-input:         #FFFFFF;
 
   /* ── Text ────────────────────────────────────────────────────── */
-  --text:             #19181A;
+  --text:             #000000;
   --text-secondary:   #4A4847;
   --text-muted:       #9A9896;
-  --text-body:        #19181A;
+  --text-body:        #000000;
   --text-subtle:      #C8C6C2;
 
   /* ── Brand / Accent ──────────────────────────────────────────── */
-  --brand:            #E6701E;
-  --brand-rgb:        230,112,30;
+  --brand:            #F95C4B;
+  --brand-rgb:        249,92,75;
   --brand-text-on:    #FFFFFF;
-  --brand-light:      rgba(230,112,30,0.08);
-  --brand-navy:       #0A1C40;
+  --brand-light:      rgba(249,92,75,0.08);
+  --brand-navy:       #000000;
 
   /* ── Borders ─────────────────────────────────────────────────── */
   --border:           rgba(25,24,26,0.13);
@@ -33,7 +33,7 @@
   --ok-bg:    #EDF7EF; --ok-tx: #1A6B35;  --ok-border: rgba(26,107,53,0.15);
   --warn-bg:  #FBF3E2; --warn-tx: #8A5A00; --warn-border: rgba(138,90,0,0.15);
   --crit-bg:  #FEF0F0; --crit-tx: #C42B2B; --crit-border: rgba(196,43,43,0.12);
-  --info-bg:  #EDF0F7; --info-tx: #1B2A4A; --info-border: rgba(27,42,74,0.12);
+  --info-bg:  rgba(0,0,0,0.05); --info-tx: #000000; --info-border: rgba(0,0,0,0.12);
 
   /* ── Radii ───────────────────────────────────────────────────── */
   --radius:        18px;
@@ -44,20 +44,20 @@
   /* ── Shadow ──────────────────────────────────────────────────── */
   --shadow: 0 1px 3px rgba(25,24,26,.04), 0 4px 16px -6px rgba(25,24,26,.08);
 
-  /* ── Typography ──────────────────────────────────────────────── */
-  --font-heading: 'Bricolage Grotesque', system-ui, sans-serif;
-  --font-body:    'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  /* ── Typography — mismos fonts que Catalina Hub ─────────────────── */
+  --font-heading: Georgia, 'Times New Roman', serif;
+  --font-body:    -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif;
 
   /* ── Sidebar (mismos valores que hoy — solo dejan de estar hardcodeados) */
-  --sidebar-bg:        #FFFFFF;
-  --sidebar-line:      rgba(25,24,26,0.07);
+  --sidebar-bg:        #E4DED2;
+  --sidebar-line:      rgba(25,24,26,0.09);
   --sidebar-tx:        #4A4847;
-  --sidebar-tx-hi:     #19181A;
+  --sidebar-tx-hi:     #000000;
   --sidebar-muted:     #B4B0A9;
-  --sidebar-active-bg: rgba(230,112,30,0.1);
-  --sidebar-active-tx: #0A1C40;
+  --sidebar-active-bg: rgba(249,92,75,0.1);
+  --sidebar-active-tx: #000000;
   --sidebar-icon:      #9A9896;
-  --sidebar-icon-active: #E6701E;
+  --sidebar-icon-active: #F95C4B;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -78,7 +78,7 @@
   --text-body:        #F2F1EE;
   --text-subtle:      #4A4844;
 
-  --brand-light:      rgba(230,112,30,0.14);
+  --brand-light:      rgba(249,92,75,0.14);
 
   --border:           rgba(255,255,255,0.11);
   --border-line:      rgba(255,255,255,0.07);
@@ -87,7 +87,7 @@
   --ok-bg:    rgba(26,107,53,0.18);  --ok-tx: #4ADE80;  --ok-border: rgba(74,222,128,0.25);
   --warn-bg:  rgba(138,90,0,0.20);   --warn-tx: #FBBF24; --warn-border: rgba(251,191,36,0.25);
   --crit-bg:  rgba(196,43,43,0.18);  --crit-tx: #F87171; --crit-border: rgba(248,113,113,0.25);
-  --info-bg:  rgba(59,90,158,0.22);  --info-tx: #A9BEF0; --info-border: rgba(169,190,240,0.25);
+  --info-bg:  rgba(228,222,210,0.15); --info-tx: #E4DED2; --info-border: rgba(228,222,210,0.25);
 
   --shadow: 0 1px 3px rgba(0,0,0,.3), 0 4px 16px -6px rgba(0,0,0,.4);
 
@@ -96,10 +96,10 @@
   --sidebar-tx:        rgba(255,255,255,0.6);
   --sidebar-tx-hi:     #FFFFFF;
   --sidebar-muted:     rgba(255,255,255,0.35);
-  --sidebar-active-bg: rgba(230,112,30,0.16);
-  --sidebar-active-tx: #FFB27A;
+  --sidebar-active-bg: rgba(249,92,75,0.16);
+  --sidebar-active-tx: #F95C4B;
   --sidebar-icon:      rgba(255,255,255,0.4);
-  --sidebar-icon-active: #E6701E;
+  --sidebar-icon-active: #F95C4B;
 }
 
 /* ── Base ─────────────────────────────────────────────────────── */
@@ -171,3 +171,93 @@
 }
 .sp-toggle input:checked ~ .sp-toggle-track { background: var(--brand); }
 .sp-toggle input:checked ~ .sp-toggle-track::after { transform: translateX(17px); }
+
+/* ── Rail circular flotante — mismo patrón que Catalina Hub ─────── */
+.rail {
+  width: 84px;
+  height: 100vh;
+  min-height: 100vh;
+  flex-shrink: 0;
+  background: var(--sidebar-bg);
+  border-right: 1px solid var(--sidebar-line);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  overflow-y: auto;
+  overflow-x: visible;
+  box-sizing: border-box;
+  padding: 16px 0;
+  position: fixed;
+  left: 0; top: 0;
+  z-index: 50;
+}
+.rail::-webkit-scrollbar { display: none; }
+
+.rail-logo { padding: 30px 0 20px; display: flex; flex-direction: column; align-items: center; gap: 8px; flex-shrink: 0; }
+
+.rail-mark {
+  position: relative;
+  width: 42px; height: 42px; flex-shrink: 0;
+  border-radius: 50%;
+  background: #ffffff;
+  display: flex; align-items: center; justify-content: center;
+  overflow: hidden;
+  box-shadow: 0 4px 14px -4px rgba(var(--brand-rgb),.45);
+}
+
+.rail-nav-list { list-style: none; padding: 4px 0; display: flex; flex-direction: column; align-items: center; gap: 9px; width: 100%; }
+.rail-item {
+  position: relative;
+  display: flex; align-items: center; justify-content: center;
+  width: 44px; height: 44px; flex: 0 0 44px;
+  box-sizing: border-box; border-radius: 50%;
+  cursor: pointer; border: none; background: transparent;
+  color: var(--sidebar-icon);
+  transition: background .16s, color .16s, transform .12s;
+  -webkit-app-region: no-drag;
+}
+.rail-item:hover { background: var(--sidebar-active-bg); color: var(--sidebar-tx-hi); }
+.rail-item:active { transform: scale(.93); }
+.rail-item.active { background: var(--text); color: var(--bg-base); }
+.rail-item .rail-icon { font-family: 'Material Symbols Outlined'; font-size: 19px; line-height: 1; }
+
+.rail-section + .rail-section { margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--sidebar-line); width: 40px; }
+
+/* Tooltip fixed — vive fuera del rail, position calculada en JS */
+.rail-tooltip {
+  position: fixed;
+  background: var(--bg-surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  font-size: 12px; font-weight: 600; letter-spacing: -.01em;
+  white-space: nowrap; padding: 6px 12px; border-radius: 9px;
+  pointer-events: none;
+  transition: opacity .14s ease, transform .14s ease;
+  z-index: 99997;
+  box-shadow: var(--shadow);
+  opacity: 0;
+  transform: translateY(-50%) translateX(-4px);
+}
+.rail-tooltip.visible { opacity: 1; transform: translateY(-50%) translateX(0); }
+
+/* ── Header cluster de íconos — mismo patrón que Catalina Hub ────── */
+.hh-qbtn {
+  width: 38px; height: 38px; flex-shrink: 0;
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--bg-surface);
+  cursor: pointer; color: var(--text-secondary);
+  transition: background .14s, color .14s, transform .12s, border-color .14s;
+}
+.hh-qbtn .rail-icon, .hh-qbtn span { font-family: 'Material Symbols Outlined'; font-size: 17px; line-height: 1; }
+.hh-qbtn:hover { background: var(--text); border-color: var(--text); color: var(--bg-base); transform: translateY(-1px); }
+.hh-qbtn:active { transform: translateY(0) scale(.94); }
+.hh-avatar {
+  width: 38px; height: 38px; flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--brand);
+  color: #ffffff;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 700;
+}

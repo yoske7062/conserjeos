@@ -14,7 +14,7 @@ const PROTOCOLOS = [
 const INPUT = {
   width: '100%', borderRadius: 10, padding: '11px 14px',
   background: '#F6F6F4', border: '1.5px solid rgba(25,24,26,0.12)',
-  color: '#19181A', fontSize: 14, fontFamily: 'inherit', fontWeight: 500,
+  color: '#000000', fontSize: 14, fontFamily: 'inherit', fontWeight: 500,
   outline: 'none', resize: 'none', boxSizing: 'border-box',
   transition: 'border-color .15s',
 };
@@ -83,7 +83,7 @@ export default function EmergenciaButton({ perfil, turno }) {
         style={{
           display: 'flex', alignItems: 'center', gap: 6,
           height: 36, padding: '0 18px', flexShrink: 0,
-          background: '#E6701E', border: 'none',
+          background: '#F95C4B', border: 'none',
           borderRadius: 980, color: '#fff', fontSize: 13, fontWeight: 700,
           cursor: 'pointer', transition: 'filter .12s',
           letterSpacing: '0.01em',
@@ -105,7 +105,7 @@ export default function EmergenciaButton({ perfil, turno }) {
             {paso === 'select' && <>
               <div style={{ padding: '24px 24px 16px' }}>
                 <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.12em', textTransform: 'uppercase', color: '#C42B2B', marginBottom: 8 }}>Emergencia</div>
-                <h2 style={{ fontSize: 20, fontWeight: 700, color: '#19181A', marginBottom: 5, letterSpacing: '-0.3px' }}>¿Qué está pasando?</h2>
+                <h2 style={{ fontSize: 20, fontWeight: 700, color: '#000000', marginBottom: 5, letterSpacing: '-0.3px' }}>¿Qué está pasando?</h2>
                 <p style={{ fontSize: 14, color: '#6A6762', lineHeight: 1.5 }}>Toca una opción para avisar de inmediato. Después podrás agregar detalles.</p>
               </div>
               <div style={{ padding: '0 24px 24px', display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -113,7 +113,7 @@ export default function EmergenciaButton({ perfil, turno }) {
                   <button key={p.id} disabled={enviando} onClick={() => seleccionar(p)} style={{
                     minHeight: 50, padding: '13px 18px', borderRadius: 12, textAlign: 'left',
                     background: '#FAFAF8', border: '1.5px solid rgba(25,24,26,0.1)',
-                    color: '#19181A', fontSize: 15, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
+                    color: '#000000', fontSize: 15, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
                     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                     transition: 'background .1s',
                   }}
@@ -136,7 +136,7 @@ export default function EmergenciaButton({ perfil, turno }) {
                 <button onClick={() => setPaso('select')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#6A6762', fontSize: 13, fontFamily: 'inherit', fontWeight: 600, padding: 0, marginBottom: 16, display: 'flex', alignItems: 'center', gap: 4 }}>
                   <span style={{ fontFamily: 'Material Symbols Outlined', fontSize: 16 }}>arrow_back</span> Volver
                 </button>
-                <h2 style={{ fontSize: 20, fontWeight: 700, color: '#19181A', marginBottom: 5, letterSpacing: '-0.3px' }}>¿Qué está ocurriendo?</h2>
+                <h2 style={{ fontSize: 20, fontWeight: 700, color: '#000000', marginBottom: 5, letterSpacing: '-0.3px' }}>¿Qué está ocurriendo?</h2>
                 <p style={{ fontSize: 14, color: '#6A6762', lineHeight: 1.5 }}>Describe brevemente la emergencia para registrarla.</p>
               </div>
               <div style={{ padding: '0 24px 24px', display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -166,7 +166,7 @@ export default function EmergenciaButton({ perfil, turno }) {
             {paso === 'protocol' && protocolo && <>
               <div style={{ padding: '24px 24px 16px' }}>
                 <div style={{ width: 44, height: 44, background: '#FEF0F0', border: '1px solid rgba(196,43,43,0.15)', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 14, fontSize: 18, color: '#C42B2B' }}>◆</div>
-                <h2 style={{ fontSize: 19, fontWeight: 700, color: '#19181A', marginBottom: 6, letterSpacing: '-0.2px' }}>
+                <h2 style={{ fontSize: 19, fontWeight: 700, color: '#000000', marginBottom: 6, letterSpacing: '-0.2px' }}>
                   {protocolo.id === 'otra' ? customTipo : protocolo.label}
                 </h2>
                 <p style={{ fontSize: 14, color: '#3D3939', lineHeight: 1.65 }}>{protocolo.texto}</p>
@@ -192,13 +192,13 @@ export default function EmergenciaButton({ perfil, turno }) {
                   value={detalles}
                   onChange={e => setDetalles(e.target.value)}
                   style={{ ...INPUT, lineHeight: 1.55 }}
-                  onFocus={e => e.target.style.borderColor = '#0A1C40'}
+                  onFocus={e => e.target.style.borderColor = '#000000'}
                   onBlur={e => e.target.style.borderColor = 'rgba(25,24,26,0.12)'}
                 />
                 <button
                   onClick={confirmarDetalles}
                   style={{
-                    height: 48, background: '#0A1C40', color: '#fff', border: 'none', borderRadius: 12,
+                    height: 48, background: '#000000', color: '#fff', border: 'none', borderRadius: 12,
                     fontSize: 15, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit',
                     transition: 'filter .12s',
                   }}

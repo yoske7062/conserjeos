@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
 import { getSupabase } from '../../lib/supabase';
+import DescargaCard from '../../components/DescargaCard';
 
 function StatCard({ icon, label, value, color, sub }) {
   return (
@@ -99,6 +100,8 @@ export default function DashboardPage() {
         <h1 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text)', marginBottom: 4 }}>Resumen del edificio</h1>
         <p style={{ fontSize: 13, color: 'var(--text-muted)' }}>{new Date().toLocaleDateString('es-CL', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
       </div>
+
+      <DescargaCard />
 
       {/* Stats */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14, marginBottom: 32 }}>
