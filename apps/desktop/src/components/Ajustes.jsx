@@ -29,14 +29,14 @@ function SpNavItem({ item, active, onClick }) {
         borderRadius: 8, border: 'none', textAlign: 'left', cursor: 'pointer',
         fontSize: 12.5, fontWeight: active ? 600 : 500,
         fontFamily: 'var(--font-body)',
-        color: active ? '#1B2A4A' : hov ? '#19181A' : '#6A6762',
-        background: active ? '#EDF0F7' : hov ? 'rgba(25,24,26,0.04)' : 'transparent',
+        color: active ? 'var(--info-tx)' : hov ? 'var(--text)' : 'var(--text-secondary)',
+        background: active ? 'var(--info-bg)' : hov ? 'var(--border-line)' : 'transparent',
         transition: 'background .12s, color .12s',
       }}
     >
       <span style={{
         fontFamily: 'Material Symbols Outlined', fontSize: 18,
-        color: active ? '#1B2A4A' : '#B4B0A9',
+        color: active ? 'var(--info-tx)' : 'var(--text-muted)',
         lineHeight: 1,
       }}>
         {item.icon}
@@ -51,11 +51,11 @@ function FieldGroup({ label, children }) {
     <div style={{ marginBottom: 20 }}>
       <div style={{
         fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.5px',
-        color: '#B4B0A9', padding: '0 0 7px',
+        color: 'var(--text-muted)', padding: '0 0 7px',
         fontFamily: 'var(--font-body)',
       }}>{label}</div>
       <div style={{
-        background: '#F3F0E9', border: '1px solid rgba(25,24,26,0.13)',
+        background: 'var(--bg-section)', border: '1px solid var(--border)',
         borderRadius: 12, overflow: 'hidden',
       }}>{children}</div>
     </div>
@@ -67,12 +67,12 @@ function ToggleRow({ label, sublabel, checked, onChange, last }) {
     <label style={{
       display: 'flex', alignItems: 'center', justifyContent: 'space-between',
       padding: '11px 14px', cursor: 'pointer',
-      borderBottom: last ? 'none' : '1px solid rgba(25,24,26,0.07)',
+      borderBottom: last ? 'none' : '1px solid var(--border-line)',
       gap: 12,
     }}>
       <div>
-        <div style={{ fontSize: 12.5, fontWeight: 600, color: '#19181A' }}>{label}</div>
-        {sublabel && <div style={{ fontSize: 11, color: '#B4B0A9', marginTop: 2 }}>{sublabel}</div>}
+        <div style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--text)' }}>{label}</div>
+        {sublabel && <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>{sublabel}</div>}
       </div>
       <span className="sp-toggle">
         <input type="checkbox" checked={checked} onChange={e => onChange(e.target.checked)} />
@@ -87,10 +87,10 @@ function InfoRow({ label, value, last }) {
     <div style={{
       display: 'flex', alignItems: 'center', justifyContent: 'space-between',
       padding: '11px 14px',
-      borderBottom: last ? 'none' : '1px solid rgba(25,24,26,0.07)',
+      borderBottom: last ? 'none' : '1px solid var(--border-line)',
     }}>
-      <span style={{ fontSize: 12.5, fontWeight: 600, color: '#6A6762' }}>{label}</span>
-      <span style={{ fontSize: 12.5, fontWeight: 600, color: '#19181A' }}>{value || '—'}</span>
+      <span style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--text-secondary)' }}>{label}</span>
+      <span style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--text)' }}>{value || '—'}</span>
     </div>
   );
 }
@@ -110,11 +110,11 @@ function ZoomRow() {
   }
   return (
     <div style={{ display: 'flex', alignItems: 'center', padding: '11px 14px', gap: 8 }}>
-      <span style={{ flex: 1, fontSize: 12.5, fontWeight: 600, color: '#19181A' }}>Tamaño del texto</span>
+      <span style={{ flex: 1, fontSize: 12.5, fontWeight: 600, color: 'var(--text)' }}>Tamaño del texto</span>
       {[['A−', () => apply(-10)], [`${zoom}%`, reset], ['A+', () => apply(10)]].map(([lbl, fn]) => (
         <button key={lbl} onClick={fn} style={{
-          padding: '4px 10px', borderRadius: 6, border: '1px solid rgba(25,24,26,0.13)',
-          background: '#FAFAF8', color: '#6A6762', fontSize: 12,
+          padding: '4px 10px', borderRadius: 6, border: '1px solid var(--border)',
+          background: 'var(--bg-base)', color: 'var(--text-secondary)', fontSize: 12,
           fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit',
         }}>{lbl}</button>
       ))}
@@ -126,6 +126,9 @@ export default function Ajustes({ perfil, onClose }) {
   const [section, setSection] = useState('general');
   const [notifs, setNotifs] = useState(
     () => localStorage.getItem('portia:notifs') !== 'off'
+  );
+  const [temaOscuro, setTemaOscuro] = useState(
+    () => localStorage.getItem('portia:tema') === 'dark'
   );
   const [version, setVersion] = useState('—');
 
@@ -143,6 +146,12 @@ export default function Ajustes({ perfil, onClose }) {
     }
   }
 
+  function toggleTema(val) {
+    setTemaOscuro(val);
+    localStorage.setItem('portia:tema', val ? 'dark' : 'light');
+    document.documentElement.setAttribute('data-theme', val ? 'dark' : 'light');
+  }
+
   const nombre    = perfil?.nombre || perfil?.email?.split('@')[0] || 'Conserje';
   const iniciales = nombre.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
   const edificio  = perfil?.edificios?.nombre || '—';
@@ -154,7 +163,7 @@ export default function Ajustes({ perfil, onClose }) {
       onClick={e => { if (e.target === e.currentTarget) onClose(); }}
       style={{
         position: 'fixed', inset: 0, zIndex: 200,
-        background: 'rgba(25,24,26,.25)',
+        background: 'rgba(0,0,0,.35)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         animation: 'backdrop-in 180ms ease both',
       }}
@@ -162,31 +171,31 @@ export default function Ajustes({ perfil, onClose }) {
       <div style={{
         display: 'flex', width: 700, height: 520, maxWidth: '94vw', maxHeight: '88vh',
         borderRadius: 18, overflow: 'hidden',
-        background: '#FFFFFF',
-        boxShadow: '0 24px 64px rgba(25,24,26,.18), 0 0 0 1px rgba(25,24,26,.06)',
+        background: 'var(--bg-surface)',
+        boxShadow: '0 24px 64px rgba(0,0,0,.28), 0 0 0 1px var(--border-line)',
         animation: 'spPageIn .22s cubic-bezier(.22,1,.36,1)',
       }}>
 
         {/* ── Left sidebar ── */}
         <div style={{
-          width: 210, flexShrink: 0, background: '#FAFAF8',
-          borderRight: '1px solid rgba(25,24,26,0.07)',
+          width: 210, flexShrink: 0, background: 'var(--bg-base)',
+          borderRight: '1px solid var(--border-line)',
           display: 'flex', flexDirection: 'column', overflow: 'hidden',
         }}>
           {/* Header */}
           <div style={{
             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-            padding: '16px 14px 10px', borderBottom: '1px solid rgba(25,24,26,0.07)',
+            padding: '16px 14px 10px', borderBottom: '1px solid var(--border-line)',
           }}>
             <span style={{
-              fontSize: 14, fontWeight: 800, color: '#19181A', letterSpacing: '-.3px',
+              fontSize: 14, fontWeight: 800, color: 'var(--text)', letterSpacing: '-.3px',
               fontFamily: 'var(--font-heading)',
             }}>Ajustes</span>
             <button
               onClick={onClose}
               style={{
                 width: 22, height: 22, borderRadius: '50%', border: 'none',
-                background: 'rgba(25,24,26,0.06)', color: '#B4B0A9', cursor: 'pointer',
+                background: 'var(--border-line)', color: 'var(--text-muted)', cursor: 'pointer',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 fontSize: 11, fontWeight: 700,
               }}
@@ -199,7 +208,7 @@ export default function Ajustes({ perfil, onClose }) {
               <div key={group} style={{ marginBottom: 6 }}>
                 <div style={{
                   fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.6px',
-                  color: '#B4B0A9', padding: '5px 10px 3px',
+                  color: 'var(--text-muted)', padding: '5px 10px 3px',
                   fontFamily: 'var(--font-body)',
                 }}>{group}</div>
                 {items.map(item => (
@@ -211,32 +220,32 @@ export default function Ajustes({ perfil, onClose }) {
 
           {/* User */}
           <div style={{
-            borderTop: '1px solid rgba(25,24,26,0.07)', padding: '10px 12px',
+            borderTop: '1px solid var(--border-line)', padding: '10px 12px',
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <div style={{
                 width: 28, height: 28, borderRadius: '50%', flexShrink: 0,
-                background: '#1B2A4A',
+                background: 'var(--info-tx)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 fontSize: 11, fontWeight: 700, color: '#fff',
                 fontFamily: 'var(--font-body)',
               }}>{iniciales}</div>
               <div style={{ minWidth: 0 }}>
-                <div style={{ fontSize: 11.5, fontWeight: 600, color: '#19181A', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{nombre}</div>
-                <div style={{ fontSize: 10, color: '#B4B0A9', marginTop: 1 }}>Conserje · {edificio}</div>
+                <div style={{ fontSize: 11.5, fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{nombre}</div>
+                <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 1 }}>Conserje · {edificio}</div>
               </div>
             </div>
           </div>
         </div>
 
         {/* ── Right content ── */}
-        <div style={{ flex: 1, background: '#FFFFFF', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        <div style={{ flex: 1, background: 'var(--bg-surface)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
           {/* Content topbar */}
           <div style={{
             height: 44, flexShrink: 0, display: 'flex', alignItems: 'center', padding: '0 20px',
-            borderBottom: '1px solid rgba(25,24,26,0.07)', background: '#F3F0E9',
+            borderBottom: '1px solid var(--border-line)', background: 'var(--bg-section)',
           }}>
-            <span style={{ fontSize: 13, fontWeight: 700, color: '#19181A', fontFamily: 'var(--font-heading)' }}>{activeLabel}</span>
+            <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)', fontFamily: 'var(--font-heading)' }}>{activeLabel}</span>
           </div>
 
           {/* Scrollable content */}
@@ -259,10 +268,10 @@ export default function Ajustes({ perfil, onClose }) {
                 </FieldGroup>
                 <FieldGroup label="Versión">
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '11px 14px' }}>
-                    <span style={{ fontSize: 12.5, fontWeight: 600, color: '#19181A' }}>
+                    <span style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--text)' }}>
                       Portia v{version}
                     </span>
-                    <span style={{ fontSize: 11, fontWeight: 600, color: '#B4B0A9' }}>
+                    <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)' }}>
                       Electron + React
                     </span>
                   </div>
@@ -273,17 +282,14 @@ export default function Ajustes({ perfil, onClose }) {
             {/* APARIENCIA */}
             {section === 'apariencia' && (
               <div>
-                <FieldGroup label="Paleta actual">
-                  <div style={{ padding: '13px 14px', display: 'flex', flexDirection: 'column', gap: 10 }}>
-                    <div style={{ fontSize: 11, fontWeight: 600, color: '#6A6762', marginBottom: 4 }}>
-                      Warm White — fondo #FAFAF8 + acento navy #1B2A4A
-                    </div>
-                    <div style={{ display: 'flex', gap: 8 }}>
-                      {['#FAFAF8', '#F3F0E9', '#1B2A4A', '#EDF0F7', 'var(--ok-tx)', 'var(--warn-tx)', 'var(--crit-tx)'].map((c, i) => (
-                        <div key={i} style={{ width: 26, height: 26, borderRadius: 6, background: c, border: '1.5px solid rgba(25,24,26,0.13)' }} />
-                      ))}
-                    </div>
-                  </div>
+                <FieldGroup label="Tema">
+                  <ToggleRow
+                    label="Tema oscuro"
+                    sublabel="Superficies oscuras, mismo acento naranja"
+                    checked={temaOscuro}
+                    onChange={toggleTema}
+                    last={true}
+                  />
                 </FieldGroup>
                 <FieldGroup label="Zoom">
                   <ZoomRow />
@@ -301,13 +307,13 @@ export default function Ajustes({ perfil, onClose }) {
                 </FieldGroup>
                 <FieldGroup label="Sesión">
                   <div style={{ padding: '11px 14px' }}>
-                    <div style={{ fontSize: 11.5, color: '#B4B0A9', marginBottom: 10 }}>
+                    <div style={{ fontSize: 11.5, color: 'var(--text-muted)', marginBottom: 10 }}>
                       Para cambiar tu contraseña, usarás el correo de recuperación que Supabase envía.
                     </div>
                     <button
                       style={{
                         padding: '7px 16px', borderRadius: 980, border: 'none',
-                        background: '#1B2A4A', color: '#fff', fontSize: 12,
+                        background: 'var(--info-tx)', color: '#fff', fontSize: 12,
                         fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--font-body)',
                       }}
                       onClick={() => {
@@ -333,8 +339,8 @@ export default function Ajustes({ perfil, onClose }) {
                   <InfoRow label="ID" value={perfil?.edificio_id} last={true} />
                 </FieldGroup>
                 <div style={{
-                  background: '#EDF0F7', border: '1px solid rgba(27,42,74,0.12)',
-                  borderRadius: 12, padding: '11px 14px', fontSize: 12, color: '#6A6762', lineHeight: 1.55,
+                  background: 'var(--info-bg)', border: '1px solid rgba(27,42,74,0.12)',
+                  borderRadius: 12, padding: '11px 14px', fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.55,
                 }}>
                   Para cambiar los datos del edificio, contacta al administrador del sistema.
                 </div>

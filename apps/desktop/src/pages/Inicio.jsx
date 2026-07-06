@@ -17,7 +17,7 @@ function StatCard({ label, value, delta, deltaType }) {
       }}
     >
       <div style={{ fontSize: 9.5, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '.5px' }}>{label}</div>
-      <div style={{ fontSize: 26, fontWeight: 800, color: 'var(--text)', margin: '5px 0 3px', letterSpacing: '-.5px', lineHeight: 1 }}>{value}</div>
+      <div style={{ fontFamily: 'var(--font-heading)', fontSize: 26, fontWeight: 800, color: 'var(--text)', margin: '5px 0 3px', letterSpacing: '-.5px', lineHeight: 1 }}>{value}</div>
       {delta && <div style={{ fontSize: 11, fontWeight: 600, color: deltaColor }}>{delta}</div>}
     </div>
   );
@@ -84,7 +84,7 @@ function ModuloTile({ icon, accentBg, accentColor, accentBorder, titulo, subtitu
         <span style={{ fontFamily: 'Material Symbols Outlined', fontSize: 28, color: accentColor }}>{icon}</span>
       </div>
       <div>
-        <p style={{ fontSize: 19, fontWeight: 800, color: 'var(--text)', marginBottom: 5, letterSpacing: '-0.3px' }}>{titulo}</p>
+        <p style={{ fontFamily: 'var(--font-heading)', fontSize: 19, fontWeight: 800, color: 'var(--text)', marginBottom: 5, letterSpacing: '-0.3px' }}>{titulo}</p>
         {badges ? (
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>{badges}</div>
         ) : (
@@ -202,7 +202,7 @@ export default function Inicio({ perfil, turno, navegarA }) {
       {/* Page header */}
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 18 }}>
         <div>
-          <div style={{ fontSize: 23, fontWeight: 800, letterSpacing: '-.5px', color: 'var(--text)' }}>
+          <div style={{ fontFamily: 'var(--font-heading)', fontSize: 23, fontWeight: 800, letterSpacing: '-.5px', color: 'var(--text)' }}>
             Hola, {nombre}
           </div>
           <div style={{ fontSize: 11.5, fontWeight: 600, color: 'var(--text-muted)', marginTop: 3 }}>

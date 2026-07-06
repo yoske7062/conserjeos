@@ -47,6 +47,59 @@
   /* ── Typography ──────────────────────────────────────────────── */
   --font-heading: 'Bricolage Grotesque', system-ui, sans-serif;
   --font-body:    'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+
+  /* ── Sidebar (mismos valores que hoy — solo dejan de estar hardcodeados) */
+  --sidebar-bg:        #FFFFFF;
+  --sidebar-line:      rgba(25,24,26,0.07);
+  --sidebar-tx:        #4A4847;
+  --sidebar-tx-hi:     #19181A;
+  --sidebar-muted:     #B4B0A9;
+  --sidebar-active-bg: rgba(230,112,30,0.1);
+  --sidebar-active-tx: #0A1C40;
+  --sidebar-icon:      #9A9896;
+  --sidebar-icon-active: #E6701E;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Tema oscuro — mismo acento naranja, superficies invertidas.
+   Se activa con [data-theme="dark"] en <html>, seteado antes del primer
+   render (ver main.jsx) para que no haya parpadeo de tema claro.
+   ═══════════════════════════════════════════════════════════════════════════ */
+[data-theme="dark"] {
+  --bg-base:          #18171D;
+  --bg-section:       #201F26;
+  --bg-surface:       #201F26;
+  --bg-surface-high:  #29282F;
+  --bg-input:         #201F26;
+
+  --text:             #F2F1EE;
+  --text-secondary:   #B9B6B0;
+  --text-muted:       #82807B;
+  --text-body:        #F2F1EE;
+  --text-subtle:      #4A4844;
+
+  --brand-light:      rgba(230,112,30,0.14);
+
+  --border:           rgba(255,255,255,0.11);
+  --border-line:      rgba(255,255,255,0.07);
+  --border-strong:    rgba(255,255,255,0.18);
+
+  --ok-bg:    rgba(26,107,53,0.18);  --ok-tx: #4ADE80;  --ok-border: rgba(74,222,128,0.25);
+  --warn-bg:  rgba(138,90,0,0.20);   --warn-tx: #FBBF24; --warn-border: rgba(251,191,36,0.25);
+  --crit-bg:  rgba(196,43,43,0.18);  --crit-tx: #F87171; --crit-border: rgba(248,113,113,0.25);
+  --info-bg:  rgba(59,90,158,0.22);  --info-tx: #A9BEF0; --info-border: rgba(169,190,240,0.25);
+
+  --shadow: 0 1px 3px rgba(0,0,0,.3), 0 4px 16px -6px rgba(0,0,0,.4);
+
+  --sidebar-bg:        #131217;
+  --sidebar-line:      rgba(255,255,255,0.08);
+  --sidebar-tx:        rgba(255,255,255,0.6);
+  --sidebar-tx-hi:     #FFFFFF;
+  --sidebar-muted:     rgba(255,255,255,0.35);
+  --sidebar-active-bg: rgba(230,112,30,0.16);
+  --sidebar-active-tx: #FFB27A;
+  --sidebar-icon:      rgba(255,255,255,0.4);
+  --sidebar-icon-active: #E6701E;
 }
 
 /* ── Base ─────────────────────────────────────────────────────── */
