@@ -20,8 +20,15 @@ resolverse T-030), el riesgo es bajo, pero igual hay que decidirlo a propósito,
 
 ## 2. Pre-requisitos antes de ejecutar
 
-- [ ] Confirmar que `main` tiene mergeado el PR #9 (bucket privado + signed URLs en código) —
+- [x] Confirmar que `main` tiene mergeado el PR #9 (bucket privado + signed URLs en código) —
       ya está, mergeado 30-jun-2026.
+- [x] **Policy de SELECT scoped por edificio aplicada en producción** (`fotos: leer mi
+      edificio`). *Actualizado 2026-07-04: esta policy estaba escrita en `schema.sql` desde
+      el PR #9 pero **nunca se había aplicado a la base real** — solo existían las policies de
+      INSERT/UPDATE/DELETE. Si el bucket se hubiera flippeado a privado antes de este fix,
+      `createSignedUrl()` habría fallado para todo el mundo (RLS deniega SELECT por defecto
+      sin policy permisiva). Se aplicó vía migración `fotos_policy_leer_mi_edificio`, verificada
+      con `pg_policies`.*
 - [ ] Confirmar que el build de `apps/desktop` que la gente tiene instalado (o va a instalar)
       corresponde a un commit posterior al merge de PR #9. Si hay una release de Electron
       pendiente de publicar, publicarla primero.
@@ -44,8 +51,8 @@ resolverse T-030), el riesgo es bajo, pero igual hay que decidirlo a propósito,
    values ('fotos', 'fotos', false)
    on conflict (id) do update set public = false;
    ```
-   La policy de SELECT scoped por edificio (`"fotos: leer mi edificio"`) ya debería existir si
-   se corrió el resto de la migración del PR #9 — confirmar con:
+   La policy de SELECT scoped por edificio (`"fotos: leer mi edificio"`) ya está aplicada
+   (confirmado 2026-07-04) — para volver a verificar:
    ```sql
    select policyname from pg_policies where tablename = 'objects' and schemaname = 'storage';
    ```

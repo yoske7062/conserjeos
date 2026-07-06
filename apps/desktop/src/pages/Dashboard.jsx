@@ -151,40 +151,37 @@ export default function Dashboard({ perfil }) {
 
   const labels = { inicio: 'Inicio', turno: 'Entrega de turno', novedades:'Novedades', visitas:'Visitas', encomiendas:'Encomiendas', tareas: 'Tareas', edificio: 'Edificio', ayuda: 'Ayuda' };
 
+  const nombre = (perfil?.nombre || 'Conserje').split(' ')[0];
+  const iniciales = (perfil?.nombre || perfil?.email?.split('@')[0] || 'C').split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
+  const hora = new Date().getHours();
+  const saludo = hora < 12 ? 'Buenos días' : hora < 19 ? 'Buenas tardes' : 'Buenas noches';
+  const titulo = modulo === 'inicio' ? `${saludo}, ${nombre}.` : labels[modulo];
+  const fecha = new Date().toLocaleDateString('es-CL', { weekday: 'long', day: 'numeric', month: 'long' });
+
   return (
     <div style={{ display:'flex', height:'100vh', background:'var(--bg-base)' }}>
       <Sidebar perfil={perfil} modulo={modulo} setModulo={cambiarModulo} turno={turno} onAjustes={() => setShowAjustes(true)} />
-      <main style={{ marginLeft:240, flex:1, display:'flex', flexDirection:'column', overflow:'hidden' }}>
-        {/* Top bar — delgado, al estilo Catalina Hub */}
+      <main style={{ marginLeft:84, flex:1, display:'flex', flexDirection:'column', overflow:'hidden' }}>
+        {/* Header — saludo estilo Catalina Hub, mismo patrón en todas las páginas */}
         <header style={{
-          height:44, flexShrink:0, display:'flex', alignItems:'center', justifyContent:'space-between',
-          padding:'0 22px', borderBottom:'1px solid var(--border)', background:'var(--bg-surface)',
+          flexShrink:0, display:'flex', alignItems:'flex-start', justifyContent:'space-between',
+          padding:'24px 28px 18px', background:'var(--bg-base)', borderBottom:'1px solid var(--border)',
         }}>
-          <span style={{ fontSize:12, color:'var(--text-muted)', fontWeight:600 }}>
-            {labels[modulo]}
-          </span>
-          <div style={{ display:'flex', alignItems:'center', gap:12 }}>
-            {pendingCount > 0 && (
-              <span style={{
-                display:'flex', alignItems:'center', gap:5, fontSize:11, fontWeight:700,
-                color: sincronizando ? 'var(--warn-tx)' : 'var(--text-secondary)',
-                background: 'var(--warn-bg)', border: '1px solid var(--warn-border)',
-                borderRadius:99, padding:'2px 9px',
-              }}>
-                {sincronizando
-                  ? <span style={{ width:7, height:7, border:'1.5px solid var(--warn-tx)', borderTopColor:'transparent', borderRadius:'50%', display:'inline-block', animation:'spin 0.8s linear infinite' }} />
-                  : null}
-                {sincronizando ? 'Sincronizando…' : `${pendingCount} pend.`}
-              </span>
-            )}
-            <span style={{
-              display:'flex', alignItems:'center', gap:5, fontSize:11, fontWeight:700,
-              color: enLinea ? 'var(--ok-tx)' : 'var(--crit-tx)',
-            }}>
-              <span style={{ width:6, height:6, borderRadius:'50%', background: enLinea ? 'var(--ok-tx)' : 'var(--crit-tx)', display:'inline-block' }} />
-              {enLinea ? 'En línea' : 'Sin conexión'}
-            </span>
+          <div>
+            <div style={{ fontFamily:'var(--font-heading)', fontSize:26, fontWeight:700, letterSpacing:'-0.3px', color:'var(--text)' }}>
+              {titulo}
+            </div>
+            <div style={{ fontSize:12.5, fontWeight:500, color:'var(--text-muted)', marginTop:5, textTransform:'capitalize' }}>
+              {fecha}
+              {pendingCount > 0 && ` · ${sincronizando ? 'Sincronizando…' : `${pendingCount} pendiente${pendingCount !== 1 ? 's' : ''} de sincronizar`}`}
+            </div>
+          </div>
+          <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+            <div className="hh-qbtn" title={enLinea ? 'En línea' : 'Sin conexión'} style={{ cursor: 'default', color: enLinea ? 'var(--ok-tx)' : 'var(--crit-tx)' }}>
+              <span style={{ fontFamily:'Material Symbols Outlined', fontSize:17 }}>{enLinea ? 'wifi' : 'wifi_off'}</span>
+            </div>
             <EmergenciaButton perfil={perfil} turno={turno} />
+            <div className="hh-avatar">{iniciales}</div>
           </div>
         </header>
         {/* Page content */}

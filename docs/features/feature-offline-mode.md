@@ -16,13 +16,23 @@ vuelve al cuaderno y perdemos el caso de uso central.
 
 ## Solución
 Cola en `localStorage` con pub/sub (`apps/desktop/src/lib/offlineQueue.js`):
-- Operaciones se encolan con **timestamp explícito**.
+- Operaciones se encolan con **timestamp explícito** (`_ts`).
 - **Flush automático** al detectar reconexión; también al montar si quedó cola previa.
 - UI optimista para updates (salida de visita, entrega de encomienda).
-- Fotos deshabilitadas offline con mensaje claro (requieren Storage).
+- Fotos **sí soportadas offline**: se codifican como base64 en la cola (`fileToBase64`) y se suben a Storage recién al flush (`syncQueue.js`). *(Corregido 2026-07-04 — esta doc decía "deshabilitadas", quedó desactualizada desde que se implementó en PR #3.)*
 - TopBar muestra N operaciones pendientes / "Sincronizando…".
 
 Ver decisión en [ADR-005](../decisions/ADR-005-offline-localstorage.md).
+
+## Política de invalidación de la cola
+No hay expiración por tiempo (TTL) hoy — un item se queda en la cola hasta que:
+1. **Sincroniza con éxito** → se saca (`remove`).
+2. **Falla con `23505` (unique violation)** → se trata como éxito igual: el insert ya había llegado al server antes de que se cortara la red, se saca de la cola sin reintentar.
+3. **Falla con cualquier otro código** (ej. RLS, columna inválida) → **se reintenta para siempre**, en cada reconexión, sin límite de intentos ni backoff. Un item permanentemente inválido (ej. un `edificio_id` borrado) queda atascado ahí indefinidamente, ocupando espacio en `localStorage` y reintentando en cada reconexión.
+
+**Concurrencia:** `flushQueue()` tiene guard de reentrancia a nivel de módulo (`enVuelo`, en `syncQueue.js`) — si dos disparos se solapan, el segundo devuelve `{ omitido: true }` sin tocar la cola. Antes esto solo estaba protegido en el caller (`Dashboard.jsx`, `flushingRef`); ahora está en la función misma para no depender de que cada nuevo punto de entrada lo repita.
+
+**Deuda conocida, no implementada:** no hay límite de reintentos ni TTL para items permanentemente fallidos — si esto se vuelve un problema real en terreno, la solución sería mover a un item a un "dead letter" después de N fallos consecutivos en vez de reintentar para siempre.
 
 ## User Stories
 - Como **conserje**, quiero seguir registrando aunque se caiga internet, para no perder información.

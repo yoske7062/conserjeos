@@ -1,0 +1,27 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg-base:        #F6F4F1;
+  --bg-surface:     #ffffff;
+  --bg-input:       #ffffff;
+  --border:         #E5E1D9;
+  --text:           #000000;
+  --text-secondary: #5A5A5A;
+  --text-muted:     #8C8C8C;
+  --brand:          #F95C4B;
+  --brand-rgb:      249,92,75;
+  --brand-text-on:  #FFFFFF;
+  --crit-tx:        #C42B2B;
+}
+
+body {
+  background: var(--bg-base);
+  color: var(--text);
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
