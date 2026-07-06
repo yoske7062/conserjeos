@@ -77,26 +77,36 @@ function draftKey(perfilId, edificioId) {
   return `portia:borrador-novedad:${perfilId}:${edificioId}`;
 }
 
-// Lo urgente real ya tiene su propio botón rojo de Emergencia. Acá el conserje
-// no tiene que pensar en categorías: por defecto es un registro normal, y solo
-// marca esto si algo salió mal o se rompió algo — es secundario, no compite
-// visualmente con escribir la nota.
-function ToggleIncidente({ activo, onToggle }) {
+// El conserje elige libremente entre las 3 categorías — nada queda bloqueado.
+// El botón de Emergencia sigue siendo un atajo aparte para el flujo de
+// emergencia real, pero no es la única puerta para marcar algo urgente.
+function SelectorTipo({ valor, onChange }) {
+  const opciones = ['informativo', 'incidente', 'urgente'];
   return (
-    <button type="button" onClick={onToggle} style={{
-      display: 'flex', alignItems: 'center', gap: 9, padding: 0,
-      background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit',
-    }}>
-      <span style={{
-        width: 18, height: 18, borderRadius: 5, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
-        border: activo ? 'none' : '1.5px solid var(--border-strong)',
-        background: activo ? 'var(--warn-tx)' : 'transparent',
-        color: '#fff', fontSize: 12, fontWeight: 700,
-      }}>{activo ? '✓' : ''}</span>
-      <span style={{ fontSize: 13, fontWeight: 500, color: activo ? 'var(--warn-tx)' : 'var(--text-secondary)' }}>
-        Algo salió mal o se rompió algo
-      </span>
-    </button>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+      <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+        Tipo de novedad
+      </label>
+      <div style={{ display: 'flex', gap: 6 }}>
+        {opciones.map(op => {
+          const t = TIPO_NOVEDAD[op];
+          const activo = valor === op;
+          return (
+            <button key={op} type="button" onClick={() => onChange(op)} style={{
+              flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
+              minHeight: 40, padding: '6px 10px', borderRadius: 8,
+              border: `1.5px solid ${activo ? t.color : 'var(--border)'}`,
+              background: activo ? t.bg : 'transparent',
+              color: activo ? t.color : 'var(--text-secondary)',
+              fontSize: 12.5, fontWeight: activo ? 700 : 500, cursor: 'pointer', fontFamily: 'inherit',
+              transition: 'border-color 120ms, background 120ms, color 120ms',
+            }}>
+              <span>{t.icon}</span>{t.label}
+            </button>
+          );
+        })}
+      </div>
+    </div>
   );
 }
 
@@ -414,8 +424,10 @@ export default function Novedades({ perfil, turno, filtroInicial }) {
                   >{frase}</button>
                 ))}
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-                <ToggleIncidente activo={tipo === 'incidente'} onToggle={() => setTipo(t => t === 'incidente' ? 'informativo' : 'incidente')} />
+              <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 12 }}>
+                <div style={{ flex: 1 }}>
+                  <SelectorTipo valor={tipo} onChange={setTipo} />
+                </div>
                 <FotoField value={fotoFile} onChange={setFotoFile} compact />
               </div>
               <div style={{ display: 'flex', gap: 10 }}>
@@ -436,14 +448,7 @@ export default function Novedades({ perfil, turno, filtroInicial }) {
               <button onClick={() => setEditTarget(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', fontSize: 20, lineHeight: 1 }}>✕</button>
             </div>
             <form onSubmit={guardarEdicion} style={{ padding: 22, display: 'flex', flexDirection: 'column', gap: 18 }}>
-              {editForm.tipo === 'urgente' ? (
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', borderRadius: 10, background: 'var(--crit-bg)', border: '1px solid var(--crit-tx)' }}>
-                  <span style={{ fontFamily: 'Material Symbols Outlined', fontSize: 16, color: 'var(--crit-tx)' }}>{TIPO_NOVEDAD.urgente.icon}</span>
-                  <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--crit-tx)' }}>Urgente — registrada desde el botón de Emergencia</span>
-                </div>
-              ) : (
-                <ToggleIncidente activo={editForm.tipo === 'incidente'} onToggle={() => setEditForm(f => ({ ...f, tipo: f.tipo === 'incidente' ? 'informativo' : 'incidente' }))} />
-              )}
+              <SelectorTipo valor={editForm.tipo} onChange={t => setEditForm(f => ({ ...f, tipo: t }))} />
               <div>
                 <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>Descripción</label>
                 <textarea value={editForm.descripcion} onChange={e => setEditForm(f => ({ ...f, descripcion: e.target.value }))}
