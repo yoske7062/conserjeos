@@ -1,11 +1,8 @@
 'use client';
-import { useRouter } from 'next/navigation';
 import ProductPreview from './ProductPreview';
 import Reveal from './Reveal';
 
 export default function Hero() {
-  const router = useRouter();
-
   function goCta() {
     document.querySelector('#cta')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }

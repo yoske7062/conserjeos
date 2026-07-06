@@ -1,18 +1,6 @@
 import { useState } from 'react';
 import { supabase } from '../lib/supabase';
-import logoPortia from '../assets/logo_portia.png';
-
-function PortiaMark({ size = 34 }) {
-  return (
-    <img
-      src={logoPortia}
-      width={size}
-      height={size}
-      style={{ borderRadius: 8, flexShrink: 0, display: 'block' }}
-      alt="Portia"
-    />
-  );
-}
+import logoPortia from '../assets/logo_mark_coral.png';
 
 const ICONS = {
   home:   'home',
@@ -28,51 +16,44 @@ const ICONS = {
 };
 
 const NAV = [
-  { section: 'Principal', items: [
+  { section: 'principal', items: [
     { id: 'inicio',  label: 'Inicio',           icon: ICONS.home  },
     { id: 'turno',   label: 'Entrega de turno', icon: ICONS.clock },
   ]},
-  { section: 'Tu día', items: [
+  { section: 'dia', items: [
     { id: 'novedades',   label: 'Novedades',   icon: ICONS.bell   },
     { id: 'visitas',     label: 'Visitas',     icon: ICONS.people },
     { id: 'encomiendas', label: 'Encomiendas', icon: ICONS.box    },
     { id: 'tareas',      label: 'Tareas',      icon: ICONS.check  },
   ]},
-  { section: 'Edificio', items: [
+  { section: 'edificio', items: [
     { id: 'edificio', label: 'Ficha Edificio', icon: ICONS.grid },
     { id: 'ayuda',    label: 'Ayuda',          icon: ICONS.help },
   ]},
 ];
 
-function NavItem({ item, active, onClick }) {
-  const [hov, setHov] = useState(false);
-  const isActive = active;
+// Tooltip fixed compartido — un solo nodo, se reposiciona en cada hover en
+// vez de tener un tooltip propio por ítem (mismo patrón que Catalina Hub).
+function useRailTooltip() {
+  const [tip, setTip] = useState(null); // { label, top }
+  const show = (e, label) => {
+    const r = e.currentTarget.getBoundingClientRect();
+    setTip({ label, top: r.top + r.height / 2 });
+  };
+  const hide = () => setTip(null);
+  return { tip, show, hide };
+}
+
+function RailItem({ item, active, onClick, onShowTip, onHideTip }) {
   return (
     <button
+      className={`rail-item${active ? ' active' : ''}`}
       onClick={() => onClick(item.id)}
-      onMouseEnter={() => setHov(true)}
-      onMouseLeave={() => setHov(false)}
-      style={{
-        display: 'flex', alignItems: 'center', gap: 10,
-        padding: '7px 12px', borderRadius: 10, width: '100%',
-        fontSize: 13, fontWeight: isActive ? 600 : 500,
-        fontFamily: 'var(--font-body)',
-        color: isActive ? 'var(--sidebar-active-tx)' : hov ? 'var(--sidebar-tx-hi)' : 'var(--sidebar-tx)',
-        background: isActive ? 'var(--sidebar-active-bg)' : hov ? 'rgba(128,128,128,0.08)' : 'transparent',
-        border: 'none', cursor: 'pointer', textAlign: 'left', marginBottom: 1,
-        transition: 'background .12s, color .12s',
-        letterSpacing: '-0.01em',
-      }}
+      onMouseEnter={(e) => onShowTip(e, item.label)}
+      onMouseLeave={onHideTip}
+      title={item.label}
     >
-      <span style={{
-        fontFamily: 'Material Symbols Outlined', fontSize: 19,
-        color: isActive ? 'var(--sidebar-icon-active)' : hov ? 'var(--sidebar-tx-hi)' : 'var(--sidebar-icon)',
-        transition: 'color .12s',
-        lineHeight: 1,
-      }}>
-        {item.icon}
-      </span>
-      {item.label}
+      <span className="rail-icon">{item.icon}</span>
     </button>
   );
 }
@@ -80,111 +61,71 @@ function NavItem({ item, active, onClick }) {
 export default function Sidebar({ modulo, setModulo, perfil, turno, onAjustes }) {
   const nombre    = perfil?.nombre || perfil?.email?.split('@')[0] || 'Conserje';
   const iniciales = nombre.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
-  const edificio  = perfil?.edificios?.nombre || 'Edificio';
-  const turnoSince = turno
-    ? new Date(turno.inicio).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })
-    : null;
+  const { tip, show, hide } = useRailTooltip();
 
   return (
-    <aside style={{
-      position: 'fixed', left: 0, top: 0, width: 240, height: '100vh',
-      background: 'var(--sidebar-bg)',
-      borderRight: '1px solid var(--sidebar-line)',
-      display: 'flex', flexDirection: 'column',
-      zIndex: 50, overflowY: 'auto', overflowX: 'hidden',
-    }}>
+    <>
+      <aside className="rail">
+        {/* Drag region */}
+        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 28, WebkitAppRegion: 'drag' }} />
 
-      {/* Drag region */}
-      <div style={{ height: 28, flexShrink: 0, WebkitAppRegion: 'drag' }} />
-
-      {/* Brand */}
-      <div style={{
-        padding: '2px 16px 16px',
-        borderBottom: '1px solid var(--sidebar-line)',
-        display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0,
-      }}>
-        <PortiaMark />
-        <div>
-          <div style={{
-            fontFamily: 'var(--font-heading)',
-            fontSize: 15, fontWeight: 700,
-            color: 'var(--sidebar-tx-hi)', letterSpacing: '-0.3px', lineHeight: 1,
-          }}>Portia</div>
-          <div style={{
-            fontSize: 11, fontWeight: 500,
-            color: 'var(--sidebar-muted)', marginTop: 3,
-            letterSpacing: '0em',
-            whiteSpace: 'nowrap', overflow: 'hidden',
-            textOverflow: 'ellipsis', maxWidth: 155,
-            fontFamily: 'var(--font-body)',
-          }}>{edificio}</div>
-        </div>
-      </div>
-
-      {/* Navigation */}
-      <nav style={{ flex: 1, padding: '10px 10px 0', overflowY: 'auto' }}>
-        {NAV.map(({ section, items }) => (
-          <div key={section} style={{ marginBottom: 6 }}>
-            <div style={{
-              fontSize: 10, fontWeight: 700, color: 'var(--sidebar-muted)',
-              textTransform: 'uppercase', letterSpacing: '.7px',
-              padding: '8px 12px 4px',
-              fontFamily: 'var(--font-body)',
-            }}>{section}</div>
-            {items.map(item => (
-              <NavItem key={item.id} item={item} active={modulo === item.id} onClick={setModulo} />
-            ))}
+        {/* Brand */}
+        <div className="rail-logo">
+          <div className="rail-mark">
+            <img src={logoPortia} width={26} height={26} style={{ display: 'block', objectFit: 'contain' }} alt="Portia" />
           </div>
-        ))}
-      </nav>
+        </div>
 
-      {/* Footer */}
-      <div style={{ borderTop: '1px solid var(--sidebar-line)', padding: '12px 12px 14px', flexShrink: 0 }}>
-        {/* User */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 9, marginBottom: turno ? 10 : 8 }}>
+        {/* Navigation */}
+        <div className="rail-nav-list">
+          {NAV.map(({ section, items }) => (
+            <div key={section} className="rail-section">
+              <div className="rail-nav-list" style={{ gap: 5 }}>
+                {items.map(item => (
+                  <RailItem key={item.id} item={item} active={modulo === item.id} onClick={setModulo} onShowTip={show} onHideTip={hide} />
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div style={{ flex: 1 }} />
+
+        {/* Turno indicator — punto pulsante sobre el avatar en vez de badge de texto */}
+        <div style={{ position: 'relative', marginBottom: 10 }}
+          onMouseEnter={(e) => show(e, turno ? `Turno activo` : nombre)}
+          onMouseLeave={hide}
+        >
           <div style={{
-            width: 30, height: 30, borderRadius: '50%', flexShrink: 0,
-            background: 'var(--brand-navy)',
+            width: 36, height: 36, borderRadius: '50%',
+            background: 'var(--text)', color: 'var(--bg-base)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 11, fontWeight: 700, color: '#fff',
-            fontFamily: 'var(--font-body)',
+            fontSize: 12, fontWeight: 700,
           }}>{iniciales}</div>
-          <div style={{ minWidth: 0 }}>
-            <div style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--sidebar-tx-hi)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{nombre}</div>
-            <div style={{ fontSize: 10.5, color: 'var(--sidebar-muted)', marginTop: 1 }}>Conserje</div>
-          </div>
-        </div>
-
-        {/* Turno badge */}
-        {turno && (
-          <div style={{
-            display: 'flex', alignItems: 'center', gap: 6,
-            background: 'var(--ok-bg)', border: '1px solid var(--ok-border)',
-            borderRadius: 8, padding: '5px 10px', marginBottom: 8,
-            fontSize: 10.5, fontWeight: 600, color: 'var(--ok-tx)',
-            fontFamily: 'var(--font-body)',
-          }}>
+          {turno && (
             <div style={{
-              width: 6, height: 6, borderRadius: '50%',
-              background: 'var(--ok-tx)', flexShrink: 0,
+              position: 'absolute', bottom: -1, right: -1,
+              width: 10, height: 10, borderRadius: '50%',
+              background: 'var(--ok-tx)', border: '2px solid var(--sidebar-bg)',
               animation: 'pulse-neon 2s ease-in-out infinite',
             }} />
-            Turno activo · desde {turnoSince}
-          </div>
-        )}
+          )}
+        </div>
 
         {/* Ajustes + Logout */}
-        <NavItem
-          item={{ id: '__ajustes', label: 'Ajustes', icon: ICONS.gear }}
-          active={false}
-          onClick={onAjustes}
-        />
-        <NavItem
-          item={{ id: '__logout', label: 'Cerrar sesión', icon: ICONS.logout }}
-          active={false}
-          onClick={() => supabase.auth.signOut()}
-        />
-      </div>
-    </aside>
+        <div className="rail-section">
+          <div className="rail-nav-list" style={{ gap: 5 }}>
+            <RailItem item={{ id: '__ajustes', label: 'Ajustes', icon: ICONS.gear }} active={false} onClick={onAjustes} onShowTip={show} onHideTip={hide} />
+            <RailItem item={{ id: '__logout', label: 'Cerrar sesión', icon: ICONS.logout }} active={false} onClick={() => supabase.auth.signOut()} onShowTip={show} onHideTip={hide} />
+          </div>
+        </div>
+      </aside>
+
+      {tip && (
+        <div className="rail-tooltip visible" style={{ left: 96, top: tip.top }}>
+          {tip.label}
+        </div>
+      )}
+    </>
   );
 }

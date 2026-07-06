@@ -9,7 +9,7 @@ export default [
   { ignores: ['.next/**', 'node_modules/**'] },
   js.configs.recommended,
   {
-    files: ['app/**/*.{js,jsx}', 'lib/**/*.js', 'middleware.js'],
+    files: ['app/**/*.{js,jsx}', 'lib/**/*.js', 'components/**/*.{js,jsx}', 'middleware.js'],
     languageOptions: {
       ecmaVersion: 2023,
       sourceType: 'module',

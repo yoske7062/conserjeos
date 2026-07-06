@@ -16,7 +16,7 @@ export const border = {
 };
 
 export const text = {
-  primary: '#19181A',
+  primary: '#000000',
   secondary: '#6A6762',
   muted: '#B4B0A9',
   subtle: '#D4D2CE',

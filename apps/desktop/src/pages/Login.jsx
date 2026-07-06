@@ -1,20 +1,12 @@
 import { useState } from 'react';
 import { supabase } from '../lib/supabase';
-import logoPortia from '../assets/logo_portia.png';
+import logoMark from '../assets/logo_mark_coral.png';
 
-const NAVY   = '#0A1C40';
-const ORANGE = '#E6701E';
-const BLUE   = '#2471E7';
+const INK   = '#000000';
+const CORAL = '#F95C4B';
 const HEAD   = "'Sora', system-ui, sans-serif";
 const BODY   = "'DM Sans', -apple-system, sans-serif";
 const ICON   = 'Material Symbols Outlined';
-
-const FEATURES = [
-  { label: 'Novedades',   sub: 'Libro digital',   dot: ORANGE },
-  { label: 'Visitas',     sub: 'RUT validado',     dot: BLUE   },
-  { label: 'Encomiendas', sub: 'Alertas urgentes', dot: '#5BB3FD' },
-  { label: 'Tareas',      sub: 'Del administrador',dot: 'rgba(255,255,255,0.35)' },
-];
 
 export default function Login() {
   const [email,    setEmail]    = useState('');
@@ -33,7 +25,7 @@ export default function Login() {
   }
 
   return (
-    <div style={{ display: 'flex', height: '100vh', background: NAVY, fontFamily: BODY, position: 'relative' }}>
+    <div style={{ display: 'flex', height: '100vh', background: INK, fontFamily: BODY, position: 'relative' }}>
 
       {/* Drag strip — full width, no bloquea contenido */}
       <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 28, WebkitAppRegion: 'drag', zIndex: 10 }} />
@@ -47,9 +39,14 @@ export default function Login() {
       }}>
 
         {/* Logo */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 56 }}>
-          <img src={logoPortia} width={52} height={52} style={{ borderRadius: 12, display: 'block', flexShrink: 0 }} alt="Portia" />
-          <span style={{ fontFamily: HEAD, fontWeight: 700, fontSize: 26, letterSpacing: '0.08em', color: '#fff' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 64 }}>
+          <div style={{
+            width: 44, height: 44, borderRadius: '50%', background: '#fff', flexShrink: 0,
+            display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden',
+          }}>
+            <img src={logoMark} width={27} height={27} style={{ display: 'block', objectFit: 'contain' }} alt="Portia" />
+          </div>
+          <span style={{ fontFamily: HEAD, fontWeight: 700, fontSize: 22, letterSpacing: '0.08em', color: '#fff' }}>
             PORTIA
           </span>
         </div>
@@ -59,32 +56,15 @@ export default function Login() {
           <div style={{ fontFamily: HEAD, fontSize: 38, fontWeight: 700, color: '#fff', lineHeight: 1.1, letterSpacing: '-0.03em' }}>
             Tu edificio.
           </div>
-          <div style={{ fontFamily: HEAD, fontSize: 38, fontWeight: 700, color: ORANGE, lineHeight: 1.1, letterSpacing: '-0.03em' }}>
+          <div style={{ fontFamily: HEAD, fontSize: 38, fontWeight: 700, color: CORAL, lineHeight: 1.1, letterSpacing: '-0.03em' }}>
             En orden.
           </div>
         </div>
 
         {/* Tagline */}
-        <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.42)', lineHeight: 1.6, margin: '0 0 52px', fontWeight: 400 }}>
+        <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.42)', lineHeight: 1.6, margin: 0, fontWeight: 400 }}>
           Todo lo que necesita un conserje,<br/>en una sola pantalla.
         </p>
-
-        {/* Feature grid 2x2 */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-          {FEATURES.map(f => (
-            <div key={f.label} style={{
-              background: 'rgba(255,255,255,0.04)',
-              border: '1px solid rgba(255,255,255,0.07)',
-              borderRadius: 12, padding: '14px 16px',
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 4 }}>
-                <span style={{ width: 6, height: 6, borderRadius: '50%', background: f.dot, flexShrink: 0, display: 'inline-block' }} />
-                <span style={{ fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,0.88)', letterSpacing: '-0.01em' }}>{f.label}</span>
-              </div>
-              <div style={{ fontSize: 11.5, color: 'rgba(255,255,255,0.3)', fontWeight: 400, paddingLeft: 13 }}>{f.sub}</div>
-            </div>
-          ))}
-        </div>
 
         {/* Admin link */}
         <div style={{ marginTop: 'auto', paddingTop: 44 }}>
@@ -102,7 +82,7 @@ export default function Login() {
           <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(25,24,26,0.35)', marginBottom: 10 }}>
             Acceso conserje
           </p>
-          <h1 style={{ fontFamily: HEAD, fontSize: 28, fontWeight: 700, color: '#19181A', letterSpacing: '-0.03em', lineHeight: 1.1, marginBottom: 40 }}>
+          <h1 style={{ fontFamily: HEAD, fontSize: 28, fontWeight: 700, color: '#000000', letterSpacing: '-0.03em', lineHeight: 1.1, marginBottom: 40 }}>
             Iniciar turno
           </h1>
 
@@ -115,8 +95,8 @@ export default function Login() {
               <input
                 type="email" placeholder="conserje@edificio.cl" autoFocus required
                 value={email} onChange={e => setEmail(e.target.value)}
-                style={{ width: '100%', height: 48, padding: '0 14px', borderRadius: 12, background: '#fff', border: '1.5px solid rgba(25,24,26,0.12)', color: '#19181A', fontSize: 14, fontFamily: BODY, outline: 'none', boxSizing: 'border-box', transition: 'border-color .15s' }}
-                onFocus={e => e.target.style.borderColor = ORANGE}
+                style={{ width: '100%', height: 48, padding: '0 14px', borderRadius: 12, background: '#fff', border: '1.5px solid rgba(25,24,26,0.12)', color: '#000000', fontSize: 14, fontFamily: BODY, outline: 'none', boxSizing: 'border-box', transition: 'border-color .15s' }}
+                onFocus={e => e.target.style.borderColor = CORAL}
                 onBlur={e => e.target.style.borderColor = 'rgba(25,24,26,0.12)'}
               />
             </div>
@@ -129,8 +109,8 @@ export default function Login() {
                 <input
                   type={showPwd ? 'text' : 'password'} placeholder="••••••••" required
                   value={password} onChange={e => setPassword(e.target.value)}
-                  style={{ width: '100%', height: 48, padding: '0 46px 0 14px', borderRadius: 12, background: '#fff', border: '1.5px solid rgba(25,24,26,0.12)', color: '#19181A', fontSize: 14, fontFamily: BODY, outline: 'none', boxSizing: 'border-box', transition: 'border-color .15s' }}
-                  onFocus={e => e.target.style.borderColor = ORANGE}
+                  style={{ width: '100%', height: 48, padding: '0 46px 0 14px', borderRadius: 12, background: '#fff', border: '1.5px solid rgba(25,24,26,0.12)', color: '#000000', fontSize: 14, fontFamily: BODY, outline: 'none', boxSizing: 'border-box', transition: 'border-color .15s' }}
+                  onFocus={e => e.target.style.borderColor = CORAL}
                   onBlur={e => e.target.style.borderColor = 'rgba(25,24,26,0.12)'}
                 />
                 <button
@@ -152,7 +132,7 @@ export default function Login() {
             <button
               type="submit" disabled={loading}
               style={{
-                height: 50, background: ORANGE, color: '#fff', border: 'none',
+                height: 50, background: CORAL, color: '#fff', border: 'none',
                 borderRadius: 12, fontSize: 15, fontWeight: 700, fontFamily: BODY,
                 cursor: loading ? 'not-allowed' : 'pointer', marginTop: 4,
                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
@@ -182,7 +162,7 @@ export default function Login() {
         input::placeholder { color: rgba(25,24,26,0.28); }
         input:-webkit-autofill {
           -webkit-box-shadow: 0 0 0 1000px #fff inset;
-          -webkit-text-fill-color: #19181A;
+          -webkit-text-fill-color: #000000;
         }
       `}</style>
     </div>
