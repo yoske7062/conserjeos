@@ -413,7 +413,7 @@ function ProductDemo() {
             }} />
             <div key={active} className="demo-view" role="tabpanel" style={{ position: 'relative', zIndex: 1 }}>
               <div className="demo-frame">
-                <div style={{ background: T.bgCard, borderRadius: 14, overflow: 'hidden', border: `1px solid ${T.border}`, boxShadow: T.shadowWin }}>
+                <div style={{ background: T.bgCard, borderRadius: 14, overflow: 'hidden', border: `1px solid ${T.border}`, boxShadow: T.shadowWin, maxWidth: 480, margin: '0 auto' }}>
                   <img src={tab.shot} alt={`Portia — ${tab.label}`} style={{ display: 'block', width: '100%', height: 'auto' }} />
                 </div>
               </div>
@@ -967,7 +967,7 @@ export default function Landing() {
               </span>
             </FloatChip>
 
-            <div style={{ background: T.bgCard, borderRadius: 14, overflow: 'hidden', border: `1px solid ${T.border}`, boxShadow: T.shadowWin, position: 'relative', zIndex: 1 }}>
+            <div style={{ background: T.bgCard, borderRadius: 14, overflow: 'hidden', border: `1px solid ${T.border}`, boxShadow: T.shadowWin, position: 'relative', zIndex: 1, maxWidth: 480, margin: '0 auto' }}>
               <img src="/screenshots/inicio-final.png" alt="Portia — pantalla de inicio del conserje" style={{ display: 'block', width: '100%', height: 'auto' }} />
             </div>
             </div>
