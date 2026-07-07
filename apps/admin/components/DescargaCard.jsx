@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { getSupabase } from '../lib/supabase';
-import { crearSesionBillingPortal } from '../app/dashboard/actions';
+import { actualizarMetodoDePago } from '../app/dashboard/actions';
 
 const REPO = 'yoske7062/conserjeos';
 
@@ -18,7 +18,7 @@ export default function DescargaCard() {
   async function abrirBillingPortal() {
     setAbriendoPortal(true);
     setErrorPortal('');
-    const res = await crearSesionBillingPortal();
+    const res = await actualizarMetodoDePago();
     if (res.error) { setErrorPortal(res.error); setAbriendoPortal(false); return; }
     window.location.href = res.url;
   }
@@ -62,7 +62,7 @@ export default function DescargaCard() {
         </p>
         {errorPortal && <p style={{ fontSize: 12, color: '#C42B2B', marginBottom: 10 }}>{errorPortal}</p>}
         <button onClick={abrirBillingPortal} disabled={abriendoPortal} style={{ ...btnStyle, border: 'none', cursor: abriendoPortal ? 'not-allowed' : 'pointer', opacity: abriendoPortal ? 0.7 : 1 }}>
-          {abriendoPortal ? 'Abriendo…' : 'Gestionar suscripción'}
+          {abriendoPortal ? 'Abriendo…' : 'Actualizar método de pago'}
         </button>
       </div>
     );
@@ -84,7 +84,7 @@ export default function DescargaCard() {
           color: 'var(--text-secondary)', fontSize: 13, fontWeight: 600,
           cursor: abriendoPortal ? 'not-allowed' : 'pointer', opacity: abriendoPortal ? 0.7 : 1,
         }}>
-          {abriendoPortal ? 'Abriendo…' : 'Gestionar suscripción'}
+          {abriendoPortal ? 'Abriendo…' : 'Actualizar método de pago'}
         </button>
       </div>
     </div>
