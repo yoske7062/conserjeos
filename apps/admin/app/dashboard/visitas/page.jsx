@@ -2,13 +2,15 @@
 import { useState, useEffect, useCallback } from 'react';
 import { getSupabase } from '../../../lib/supabase';
 import { useRealtimeRefetch } from '../../../lib/useRealtimeRefetch';
+import { usePerfil } from '../../../lib/perfil-context';
 
 export default function VisitasPage() {
+  const perfil = usePerfil();
+  const eid = perfil.edificio_id;
   const [visitas, setVisitas] = useState([]);
   const [loading, setLoading] = useState(true);
   const [fecha, setFecha]     = useState(new Date().toISOString().slice(0, 10));
   const [solo, setSolo]       = useState('todas'); // 'todas' | 'activas'
-  const [eid, setEid]         = useState(null);
 
   const cargar = useCallback(async (edificioId) => {
     const supabase = getSupabase();
@@ -26,15 +28,8 @@ export default function VisitasPage() {
 
   useEffect(() => {
     setLoading(true);
-    async function init() {
-      const supabase = getSupabase();
-      const { data: { user } } = await supabase.auth.getUser();
-      const { data: perfil }   = await supabase.from('perfiles').select('edificio_id').eq('id', user.id).single();
-      setEid(perfil.edificio_id);
-      cargar(perfil.edificio_id);
-    }
-    init();
-  }, [fecha, solo, cargar]);
+    cargar(eid);
+  }, [fecha, solo, cargar, eid]);
 
   useRealtimeRefetch('visitas', eid, () => cargar(eid));
 

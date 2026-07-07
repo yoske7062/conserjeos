@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { getSupabase } from '../../lib/supabase';
+import { PerfilContext } from '../../lib/perfil-context';
 import Sidebar from '../../components/Sidebar';
 
 export default function DashboardLayout({ children }) {
@@ -29,11 +30,13 @@ export default function DashboardLayout({ children }) {
   );
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg-base)' }}>
-      <Sidebar perfil={perfil} />
-      <main style={{ marginLeft: 240, flex: 1, display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-        {children}
-      </main>
-    </div>
+    <PerfilContext.Provider value={perfil}>
+      <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg-base)' }}>
+        <Sidebar perfil={perfil} />
+        <main style={{ marginLeft: 240, flex: 1, display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+          {children}
+        </main>
+      </div>
+    </PerfilContext.Provider>
   );
 }

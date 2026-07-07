@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { getSupabase } from '../../../lib/supabase';
 import { useRealtimeRefetch } from '../../../lib/useRealtimeRefetch';
+import { usePerfil } from '../../../lib/perfil-context';
 
 const PRIORIDADES = ['baja', 'normal', 'alta'];
 const P_COLOR = { baja: '#636363', normal: '#3B9EFF', alta: '#F5A524' };
@@ -14,6 +15,8 @@ const E_STYLE = {
 const FORM_INIT = { titulo: '', descripcion: '', prioridad: 'normal', asignada_a: '', vence_at: '' };
 
 export default function TareasPage() {
+  const perfil = usePerfil();
+  const eid = perfil.edificio_id;
   const [tareas, setTareas]     = useState([]);
   const [conserjes, setConserjes] = useState([]);
   const [filtroE, setFiltroE]   = useState('pendiente');
@@ -21,19 +24,15 @@ export default function TareasPage() {
   const [modal, setModal]       = useState(false);
   const [form, setForm]         = useState(FORM_INIT);
   const [guardando, setGuardando] = useState(false);
-  const [eid, setEid]           = useState(null);
 
   useEffect(() => {
     async function init() {
       const supabase = getSupabase();
-      const { data: { user } } = await supabase.auth.getUser();
-      const { data: perfil }   = await supabase.from('perfiles').select('edificio_id').eq('id', user.id).single();
-      setEid(perfil.edificio_id);
-      const { data: cons } = await supabase.from('perfiles').select('id,nombre').eq('edificio_id', perfil.edificio_id).eq('rol', 'conserje').eq('activo', true);
+      const { data: cons } = await supabase.from('perfiles').select('id,nombre').eq('edificio_id', eid).eq('rol', 'conserje').eq('activo', true);
       setConserjes(cons ?? []);
     }
     init();
-  }, []);
+  }, [eid]);
 
   const cargar = useCallback(async () => {
     if (!eid) return;
@@ -57,7 +56,6 @@ export default function TareasPage() {
     e.preventDefault();
     setGuardando(true);
     const supabase = getSupabase();
-    const { data: { user } } = await supabase.auth.getUser();
     const { error } = await supabase.from('tareas').insert({
       edificio_id: eid,
       titulo:      form.titulo,
@@ -66,7 +64,7 @@ export default function TareasPage() {
       asignada_a:  form.asignada_a || null,
       vence_at:    form.vence_at ? new Date(form.vence_at).toISOString() : null,
       estado:      'pendiente',
-      creada_por:  user.id,
+      creada_por:  perfil.id,
     });
     setGuardando(false);
     if (error) return;
