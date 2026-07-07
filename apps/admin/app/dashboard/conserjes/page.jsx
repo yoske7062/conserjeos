@@ -2,8 +2,11 @@
 import { useState, useEffect } from 'react';
 import { getSupabase } from '../../../lib/supabase';
 import { invitarConserjeAction } from './actions';
+import { usePerfil } from '../../../lib/perfil-context';
 
 export default function ConserjesPage() {
+  const perfil = usePerfil();
+  const eid = perfil.edificio_id;
   const [conserjes, setConserjes] = useState([]);
   const [loading, setLoading]     = useState(true);
   const [modal, setModal]         = useState(false);
@@ -11,25 +14,20 @@ export default function ConserjesPage() {
   const [guardando, setGuardando] = useState(false);
   const [error, setError]         = useState('');
   const [successMsg, setSuccessMsg] = useState('');
-  const [eid, setEid]             = useState(null);
 
   useEffect(() => {
     async function cargar() {
       const supabase = getSupabase();
-      const { data: { user } } = await supabase.auth.getUser();
-      const { data: perfil }   = await supabase.from('perfiles').select('edificio_id').eq('id', user.id).single();
-      setEid(perfil.edificio_id);
-      
       const { data } = await supabase.from('perfiles')
         .select('id,nombre,email,activo,created_at')
-        .eq('edificio_id', perfil.edificio_id)
+        .eq('edificio_id', eid)
         .eq('rol', 'conserje')
         .order('nombre');
       setConserjes(data ?? []);
       setLoading(false);
     }
     cargar();
-  }, []);
+  }, [eid]);
 
   async function toggleActivo(id, activo) {
     const supabase = getSupabase();

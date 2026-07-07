@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { getSupabase } from '../../../lib/supabase';
 import { getSignedFotoUrl } from '../../../lib/fotos';
 import { useRealtimeRefetch } from '../../../lib/useRealtimeRefetch';
+import { usePerfil } from '../../../lib/perfil-context';
 
 const TIPO = {
   urgente:     { color: '#E5484D', label: 'Urgente',     icon: 'priority_high' },
@@ -18,10 +19,11 @@ const FILTROS = [
 ];
 
 export default function NovedadesPage() {
+  const perfil = usePerfil();
+  const eid = perfil.edificio_id;
   const [items, setItems]     = useState([]);
   const [filtro, setFiltro]   = useState('todos');
   const [loading, setLoading] = useState(true);
-  const [eid, setEid]         = useState(null);
 
   const cargar = useCallback(async (edificioId) => {
     const supabase = getSupabase();
@@ -38,15 +40,8 @@ export default function NovedadesPage() {
 
   useEffect(() => {
     setLoading(true);
-    async function init() {
-      const supabase = getSupabase();
-      const { data: { user } } = await supabase.auth.getUser();
-      const { data: perfil }   = await supabase.from('perfiles').select('edificio_id').eq('id', user.id).single();
-      setEid(perfil.edificio_id);
-      cargar(perfil.edificio_id);
-    }
-    init();
-  }, [filtro, cargar]);
+    cargar(eid);
+  }, [filtro, cargar, eid]);
 
   useRealtimeRefetch('novedades', eid, () => cargar(eid));
 

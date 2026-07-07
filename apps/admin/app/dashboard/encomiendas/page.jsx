@@ -2,12 +2,14 @@
 import { useState, useEffect, useCallback } from 'react';
 import { getSupabase } from '../../../lib/supabase';
 import { useRealtimeRefetch } from '../../../lib/useRealtimeRefetch';
+import { usePerfil } from '../../../lib/perfil-context';
 
 export default function EncomiendePage() {
+  const perfil = usePerfil();
+  const eid = perfil.edificio_id;
   const [items, setItems]     = useState([]);
   const [tab, setTab]         = useState('pendientes'); // pendientes | entregadas
   const [loading, setLoading] = useState(true);
-  const [eid, setEid]         = useState(null);
 
   const cargar = useCallback(async (edificioId) => {
     const supabase = getSupabase();
@@ -23,15 +25,8 @@ export default function EncomiendePage() {
 
   useEffect(() => {
     setLoading(true);
-    async function init() {
-      const supabase = getSupabase();
-      const { data: { user } } = await supabase.auth.getUser();
-      const { data: perfil }   = await supabase.from('perfiles').select('edificio_id').eq('id', user.id).single();
-      setEid(perfil.edificio_id);
-      cargar(perfil.edificio_id);
-    }
-    init();
-  }, [tab, cargar]);
+    cargar(eid);
+  }, [tab, cargar, eid]);
 
   useRealtimeRefetch('encomiendas', eid, () => cargar(eid));
 

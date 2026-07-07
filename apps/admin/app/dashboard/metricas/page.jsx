@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { getSupabase } from '../../../lib/supabase';
+import { usePerfil } from '../../../lib/perfil-context';
 
 function MetricCard({ icon, label, value, color, sub }) {
   return (
@@ -29,15 +30,14 @@ function formatearDuracion(ms) {
 }
 
 export default function MetricasPage() {
+  const perfil = usePerfil();
+  const eid = perfil.edificio_id;
   const [data, setData]       = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function cargar() {
       const supabase = getSupabase();
-      const { data: { user } } = await supabase.auth.getUser();
-      const { data: p } = await supabase.from('perfiles').select('edificio_id').eq('id', user.id).single();
-      const eid = p.edificio_id;
       const hace7dias = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
 
       const [novedadesRes, visitasRes, encomiendasRes, tareasRes] = await Promise.all([
@@ -75,7 +75,7 @@ export default function MetricasPage() {
       setLoading(false);
     }
     cargar();
-  }, []);
+  }, [eid]);
 
   if (loading) return (
     <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>

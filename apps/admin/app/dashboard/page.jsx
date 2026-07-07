@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
 import { getSupabase } from '../../lib/supabase';
+import { usePerfil } from '../../lib/perfil-context';
 import DescargaCard from '../../components/DescargaCard';
 
 function StatCard({ icon, label, value, color, sub }) {
@@ -25,6 +26,8 @@ const TIPO = {
 };
 
 export default function DashboardPage() {
+  const perfil = usePerfil();
+  const eid = perfil.edificio_id;
   const [stats, setStats]       = useState(null);
   const [novedades, setNovedades] = useState([]);
   const [turnos, setTurnos]     = useState([]);
@@ -36,9 +39,6 @@ export default function DashboardPage() {
     const supabase = getSupabase();
 
     async function cargar() {
-      const { data: { user } } = await supabase.auth.getUser();
-      const { data: perfil }   = await supabase.from('perfiles').select('edificio_id').eq('id', user.id).single();
-      const eid = perfil.edificio_id;
       const hoy = new Date(); hoy.setHours(0,0,0,0);
 
       const [v, e, t, n, tu] = await Promise.all([
@@ -86,7 +86,7 @@ export default function DashboardPage() {
       clearTimeout(debounceRef.current);
       if (channel) supabase.removeChannel(channel);
     };
-  }, []);
+  }, [eid]);
 
   if (loading) return (
     <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
