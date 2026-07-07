@@ -205,7 +205,6 @@ function LiveBackground({ dots = true, grid = true, mesh = true, glows = [] }) {
         <div key={i} aria-hidden="true" style={{
           position: 'absolute', pointerEvents: 'none',
           background: `radial-gradient(ellipse, ${g.c} 0%, transparent 62%)`,
-          animation: `glowDrift ${g.d || 14}s ease-in-out ${g.del || 0}s infinite ${g.rev ? 'reverse' : ''}`,
           ...g.pos,
         }} />
       ))}
@@ -729,7 +728,6 @@ function ProductDemo() {
             <div aria-hidden="true" style={{
               position: 'absolute', inset: '-8% -6%', zIndex: 0, pointerEvents: 'none',
               background: `radial-gradient(ellipse at 20% 80%, ${tab.halo} 0%, transparent 55%), radial-gradient(ellipse at 85% 15%, rgba(249,92,75,0.13) 0%, transparent 55%)`,
-              animation: 'glowDrift 12s ease-in-out infinite alternate',
               transition: 'background .6s ease',
             }} />
             <div key={active} className="demo-view" role="tabpanel" style={{ position: 'relative', zIndex: 1 }}>
@@ -923,7 +921,7 @@ function Comparison() {
             <div aria-hidden="true" style={{
               position: 'absolute', top: '-40%', right: '-30%', width: 400, height: 320,
               background: `radial-gradient(ellipse, rgba(249,92,75,0.28) 0%, transparent 65%)`,
-              animation: 'glowDrift 11s ease-in-out infinite', pointerEvents: 'none',
+              pointerEvents: 'none',
             }} />
             <div style={{ position: 'relative' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 22 }}>
@@ -1038,57 +1036,30 @@ export default function Landing() {
         .bg-mesh {
           position: absolute; inset: 0; pointer-events: none;
           background: linear-gradient(115deg, rgba(232,80,31,0.07), rgba(192,54,155,0.06) 35%, rgba(249,92,75,0.07) 68%, rgba(232,80,31,0.06));
-          background-size: 280% 280%;
-          animation: meshShift 17s ease-in-out infinite alternate;
         }
-        @keyframes meshShift { from { background-position: 0% 0%; } to { background-position: 100% 100%; } }
         .bg-grid {
           position: absolute; inset: -26px; pointer-events: none;
           background-image: radial-gradient(rgba(29,27,22,0.14) 1.2px, transparent 1.2px);
           background-size: 26px 26px;
           mask-image: radial-gradient(ellipse 78% 64% at 50% 32%, black 0%, transparent 70%);
           -webkit-mask-image: radial-gradient(ellipse 78% 64% at 50% 32%, black 0%, transparent 70%);
-          animation: gridPan 20s linear infinite;
         }
-        @keyframes gridPan { from { transform: translate(0,0); } to { transform: translate(26px,26px); } }
         .bg-dot-wrap {
           position: absolute; pointer-events: none;
           transform: translate(calc(var(--pmx, 0px) * var(--depth, 1)), calc(var(--pmy, 0px) * var(--depth, 1)));
           transition: transform .3s cubic-bezier(.16,1,.3,1);
         }
         .bg-dot {
-          display: block; border-radius: 50%; pointer-events: none;
-          animation-name: dotFloat; animation-timing-function: ease-in-out;
-          animation-iteration-count: infinite; animation-direction: alternate;
+          display: block; border-radius: 50%; pointer-events: none; opacity: .7;
         }
-        @keyframes dotFloat {
-          from { transform: translate(0,0) scale(1); opacity: .6; }
-          to   { transform: translate(14px,-30px) scale(1.3); opacity: 1; }
-        }
-        @keyframes glowDrift { 0%,100% { transform: translate(0,0) scale(1); } 50% { transform: translate(34px,20px) scale(1.08); } }
 
-        /* ── texto gradiente ── */
-        @keyframes gradShift { 0% { background-position: 0% 50%; } 100% { background-position: 300% 50%; } }
-        .grad-text {
-          background: linear-gradient(90deg, ${T.accent}, ${T.pink}, ${T.violet}, ${T.accent});
-          background-size: 300% 100%;
-          animation: gradShift 7s linear infinite;
-          -webkit-background-clip: text; background-clip: text;
-          -webkit-text-fill-color: transparent;
-        }
-        .grad-static {
-          background: linear-gradient(100deg, ${T.accent}, ${T.pink});
-          -webkit-background-clip: text; background-clip: text;
-          -webkit-text-fill-color: transparent;
+        /* ── texto de acento (color fijo, sin animación) ── */
+        .grad-text, .grad-static {
+          color: ${T.accent};
           display: inline-block;
         }
-        @supports not (-webkit-background-clip: text) {
-          .grad-text, .grad-static { background: none; color: ${T.accent}; -webkit-text-fill-color: currentColor; }
-        }
         .grad-strip {
-          background: linear-gradient(90deg, ${T.accent}, ${T.pink}, ${T.violet}, ${T.accent});
-          background-size: 300% 100%;
-          animation: gradShift 6s linear infinite;
+          background: ${T.accent};
         }
 
         /* ── botones gradiente con luz ── */
@@ -1170,8 +1141,6 @@ export default function Landing() {
         .demo-frame {
           padding: 3px; border-radius: 17px;
           background: linear-gradient(120deg, ${T.accent}, ${T.pink}, ${T.violet}, ${T.accent});
-          background-size: 300% 100%;
-          animation: gradShift 8s linear infinite;
         }
         .demo-tab { transform: translateX(0); transition: background .25s, border-color .25s, box-shadow .25s, transform .3s ${T.ease}; }
         .demo-tab-on { transform: translateX(4px); }
@@ -1196,8 +1165,7 @@ export default function Landing() {
 
         .float-chip { transition: transform .25s ${T.ease}, box-shadow .25s; cursor: default; }
         .float-chip:hover { transform: scale(1.08) rotate(0deg)!important; box-shadow: 0 8px 24px -8px rgba(29,27,22,0.3); }
-        @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .35; } }
-        .pulse-dot { animation: pulse 2.2s ease-in-out infinite; }
+        .pulse-dot { opacity: 1; }
 
         /* ── stats ── */
         .stat-card { transition: transform .3s ${T.ease}, box-shadow .3s, border-color .25s; }
@@ -1206,28 +1174,12 @@ export default function Landing() {
           background: linear-gradient(100deg, ${T.accent}, ${T.pink});
           -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
         }
-        .clock-min-hand { animation: clockTick 4.8s steps(4, end) infinite; transform: rotate(0deg); }
-        @keyframes clockTick { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .clock-min-hand { transform: rotate(0deg); }
         .mod-tile { transition: transform .2s ${T.ease}; }
         .stat-card:hover .mod-tile { transform: translateY(-3px) rotate(-4deg); }
         .stat-card:hover .mod-tile:nth-child(2n) { transform: translateY(-3px) rotate(4deg); }
-        .mod-tile-idle { animation: tileBob 3.2s ease-in-out infinite; }
-        @keyframes tileBob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
-        .stat-card:hover .mod-tile-idle { animation-play-state: paused; }
-        .flow-dot { animation: flowMove 2.4s ease-in-out infinite alternate; }
-        @keyframes flowMove { from { transform: translateX(0); } to { transform: translateX(45px); } }
-        .paper-strike line {
-          stroke-dasharray: 100; stroke-dashoffset: 100;
-          animation: strikeDraw 3.4s ${T.ease} infinite;
-        }
-        @keyframes strikeDraw {
-          0% { stroke-dashoffset: 100; }
-          30%, 70% { stroke-dashoffset: 0; }
-          100% { stroke-dashoffset: -100; }
-        }
-        .node-pulse-a { animation: nodePulse 2.4s ease-in-out infinite; }
-        .node-pulse-b { animation: nodePulse 2.4s ease-in-out 1.2s infinite; }
-        @keyframes nodePulse { 0%,100% { box-shadow: 0 0 0 0 rgba(249,92,75,0); } 50% { box-shadow: 0 0 0 5px rgba(249,92,75,0.16); } }
+        .flow-dot { transform: translateX(22px); }
+        .paper-strike line { stroke-dasharray: 100; stroke-dashoffset: 0; }
 
         .cmp-card { transition: transform .3s ${T.ease}, box-shadow .3s; }
         .cmp-card:hover { transform: translateY(-4px); box-shadow: ${T.shadowFloat}; }
@@ -1356,12 +1308,12 @@ export default function Landing() {
         <div aria-hidden="true" style={{
           position: 'absolute', top: '-30%', right: '-10%', width: 700, height: 520,
           background: 'radial-gradient(ellipse, rgba(249,92,75,0.22) 0%, transparent 62%)',
-          animation: 'glowDrift 14s ease-in-out infinite', pointerEvents: 'none',
+          pointerEvents: 'none',
         }} />
         <div aria-hidden="true" style={{
           position: 'absolute', bottom: '-35%', left: '-8%', width: 560, height: 440,
           background: 'radial-gradient(ellipse, rgba(192,54,155,0.14) 0%, transparent 62%)',
-          animation: 'glowDrift 18s ease-in-out 1.5s infinite reverse', pointerEvents: 'none',
+          pointerEvents: 'none',
         }} />
         <div className="pp" style={{ position: 'relative', maxWidth: 1180, margin: '0 auto', padding: '100px 40px 108px' }}>
           <div ref={stepsHead} style={{ marginBottom: 56, maxWidth: 560 }}>
