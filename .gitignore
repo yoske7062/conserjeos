@@ -8,6 +8,9 @@ dist/
 .next/
 out/
 build/
+# electron-builder usa apps/*/build/ para assets fuente (icon.png), no output
+!apps/monitor-desktop/build/
+!apps/monitor-desktop/build/icon.png
 
 # Electron builder
 release/
