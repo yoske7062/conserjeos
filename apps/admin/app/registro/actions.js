@@ -1,7 +1,9 @@
 'use server';
 
 import { headers } from 'next/headers';
-import { getStripe } from '../../lib/stripe';
+import { randomUUID } from 'crypto';
+import { crearCliente, registrarTarjeta } from '../../lib/flow';
+import { getSupabaseServiceRole } from '../../lib/supabase';
 
 export async function iniciarCheckout(formData) {
   const nombreEdificio = formData.get('nombreEdificio')?.toString().trim();
@@ -18,23 +20,28 @@ export async function iniciarCheckout(formData) {
     ?? `${h.get('x-forwarded-proto') ?? 'http'}://${h.get('host')}`;
 
   try {
-    const stripe = getStripe();
-    const session = await stripe.checkout.sessions.create({
-      mode: 'subscription',
-      line_items: [{ price: process.env.STRIPE_PRICE_ID_MENSUAL, quantity: 1 }],
-      customer_email: email,
-      // El webhook lee esto para crear el edificio + el admin — nunca confiar
-      // en datos que vengan del cliente después del pago, solo en esto.
-      metadata: { nombre_edificio: nombreEdificio, comuna: comuna || '', nombre_admin: nombreAdmin },
-      subscription_data: {
-        metadata: { nombre_edificio: nombreEdificio, comuna: comuna || '', nombre_admin: nombreAdmin },
-      },
-      success_url: `${origin}/registro/exito?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${origin}/registro`,
+    // externalId propio (no reutilizamos el email — un mismo admin podría
+    // registrar más de un edificio a futuro).
+    const cliente = await crearCliente({ name: nombreAdmin, email, externalId: randomUUID() });
+
+    const service = getSupabaseServiceRole();
+    const { error: insertError } = await service.from('registros_pendientes').insert({
+      flow_customer_id: cliente.customerId,
+      nombre_edificio: nombreEdificio,
+      comuna: comuna || null,
+      nombre_admin: nombreAdmin,
+      email,
     });
-    return { url: session.url };
+    if (insertError) throw insertError;
+
+    const registro = await registrarTarjeta({
+      customerId: cliente.customerId,
+      urlReturn: `${origin}/api/flow/callback`,
+    });
+
+    return { url: `${registro.url}?token=${registro.token}` };
   } catch (err) {
-    console.error('Error creando Checkout Session:', err);
+    console.error('Error iniciando registro de tarjeta en Flow:', err);
     return { error: 'No se pudo iniciar el pago. Intenta de nuevo en unos minutos.' };
   }
 }

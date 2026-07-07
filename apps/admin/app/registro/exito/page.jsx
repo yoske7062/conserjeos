@@ -1,8 +1,8 @@
 import Link from 'next/link';
 
-// El webhook de Stripe (no esta página) es quien crea el edificio + la
+// El callback de Flow (no esta página) es quien crea el edificio + la
 // cuenta admin — puede tardar unos segundos en llegar. Esta página solo
-// confirma que el pago se hizo, no que la cuenta ya existe.
+// confirma que el registro de tarjeta se hizo, no que la cuenta ya existe.
 export default function RegistroExitoPage() {
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg-base)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
