@@ -41,13 +41,13 @@ export default function Sidebar({ perfil }) {
         display: 'flex', flexDirection: 'column', alignItems: 'center',
         position: 'fixed', left: 0, top: 0, zIndex: 50, padding: '16px 0',
       }}>
-        <div style={{
+        <button onClick={() => router.push('/dashboard')} title="Ir al inicio" style={{
           width: 42, height: 42, borderRadius: '50%', flexShrink: 0, background: '#fff',
           display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '14px 0 20px',
-          boxShadow: '0 4px 14px -4px rgba(var(--brand-rgb),0.45)',
+          boxShadow: '0 4px 14px -4px rgba(var(--brand-rgb),0.45)', border: 'none', cursor: 'pointer', padding: 0,
         }}>
-          <span style={{ width: 22, height: 22, borderRadius: 6, background: 'var(--brand)', color: '#fff', fontSize: 12, fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>P</span>
-        </div>
+          <img src="/assets/logo_mark_coral.png" width={26} height={26} style={{ display: 'block', objectFit: 'contain' }} alt="Portia" />
+        </button>
 
         <nav style={{ display: 'flex', flexDirection: 'column', gap: 9, alignItems: 'center', width: '100%' }}>
           {NAV.map(({ href, icon, label }) => {

@@ -66,6 +66,31 @@ export default function Login() {
           Todo lo que necesita un conserje,<br/>en una sola pantalla.
         </p>
 
+        {/* Ilustración — edificio residencial, algunas ventanas encendidas */}
+        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 0 }}>
+          <svg width="220" height="260" viewBox="0 0 220 260" fill="none" aria-hidden="true">
+            <rect x="30" y="40" width="160" height="200" rx="4" stroke="rgba(255,255,255,0.14)" strokeWidth="2" />
+            <rect x="30" y="40" width="160" height="14" fill="rgba(255,255,255,0.06)" />
+            {Array.from({ length: 6 }).map((_, row) => (
+              Array.from({ length: 4 }).map((_, col) => {
+                const lit = (row === 1 && (col === 0 || col === 3)) || (row === 3 && col === 2) || (row === 4 && col === 1);
+                return (
+                  <rect
+                    key={`${row}-${col}`}
+                    x={46 + col * 33} y={68 + row * 27}
+                    width="20" height="16" rx="2"
+                    fill={lit ? CORAL : 'rgba(255,255,255,0.08)'}
+                    opacity={lit ? 0.9 : 1}
+                  />
+                );
+              })
+            ))}
+            <rect x="95" y="212" width="30" height="28" rx="2" fill="rgba(255,255,255,0.1)" />
+            <circle cx="120" cy="226" r="1.6" fill="rgba(0,0,0,0.4)" />
+            <line x1="0" y1="240" x2="220" y2="240" stroke="rgba(255,255,255,0.14)" strokeWidth="2" />
+          </svg>
+        </div>
+
         {/* Admin link */}
         <div style={{ marginTop: 'auto', paddingTop: 44 }}>
           <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.2)', margin: 0 }}>

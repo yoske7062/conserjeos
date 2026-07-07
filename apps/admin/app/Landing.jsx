@@ -90,12 +90,17 @@ function useTilt(maxX = 3.5, maxY = 5) {
 }
 
 /* ── LOGO ────────────────────────────────────────────────────────────────── */
-function PortiaMark({ size = 16, radius = 8 }) {
+// Mismo mark que la app real: círculo blanco + logo_mark_coral.png adentro
+// (apps/desktop/src/assets/logo_mark_coral.png) — no un ícono inventado.
+function PortiaMark({ size = 16 }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 28 28" fill="none" aria-hidden="true">
-      <rect width="28" height="28" rx={radius} fill={T.accent} />
-      <path d="M9 7h5.8c1.5 0 2.7.4 3.5 1.2.8.8 1.2 1.8 1.2 3.1s-.4 2.4-1.2 3.1c-.8.8-2 1.2-3.5 1.2H11.4V21H9V7zm2.4 6.6h3.2c.9 0 1.5-.2 2-.6.4-.4.6-.9.6-1.7s-.2-1.3-.6-1.7c-.4-.4-1.1-.6-2-.6h-3.2v4.6z" fill="#fff" />
-    </svg>
+    <span style={{
+      width: size, height: size, borderRadius: '50%', background: '#fff', flexShrink: 0,
+      display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden',
+      boxShadow: '0 2px 8px -2px rgba(217,67,13,0.35)',
+    }}>
+      <img src="/assets/logo_mark_coral.png" width={Math.round(size * 0.62)} height={Math.round(size * 0.62)} style={{ display: 'block', objectFit: 'contain' }} alt="" />
+    </span>
   );
 }
 function PortiaLogo({ dark = false, size = 30 }) {
