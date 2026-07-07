@@ -581,3 +581,11 @@ alter table public.registros_pendientes enable row level security;
 
 comment on column public.edificios.stripe_customer_id is 'Reutilizada para Flow customerId tras migrar de Stripe a Flow (Chile no soportado por Stripe).';
 comment on column public.edificios.stripe_subscription_id is 'Reutilizada para Flow subscriptionId.';
+
+-- Drift detectado 2026-07-06: la columna `tipo` de encomiendas estaba en este
+-- schema.sql desde el principio pero nunca se había aplicado a la base real
+-- (mismo patrón que el drift de la policy de fotos). Bloqueaba registrar
+-- cualquier encomienda en producción. Aplicado vía migración
+-- agregar_columna_tipo_encomiendas.
+alter table public.encomiendas add column if not exists tipo text not null default 'paquete'
+  check (tipo in ('paquete','comida','supermercado','otro'));

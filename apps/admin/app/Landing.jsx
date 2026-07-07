@@ -252,330 +252,14 @@ const MI = {
   ),
 };
 
-/* ── VENTANA DE LA APP (hover-interactiva) ───────────────────────────────── */
-const SIDE_ITEMS = [
-  { id: 'inicio', label: 'Inicio', icon: MI.home },
-  { id: 'turnos', label: 'Entrega de Turno', icon: MI.swap },
-  { id: 'novedades', label: 'Novedades', icon: MI.doc },
-  { id: 'visitas', label: 'Visitas', icon: MI.users },
-  { id: 'encomiendas', label: 'Encomiendas', icon: MI.box },
-  { id: 'tareas', label: 'Tareas', icon: MI.check },
-  { id: 'edificio', label: 'Edificio', icon: MI.bld },
-];
-
-// Réplica del rail circular real (apps/desktop/src/components/Sidebar.jsx +
-// index.css): sin barra de título ni semáforo — la app real no tiene chrome,
-// el rail es solo íconos en círculos, el activo se marca en negro sólido.
-function AppWindow({ active = 'inicio', minHeight = 420, children }) {
-  return (
-    <div style={{
-      position: 'relative', zIndex: 1,
-      background: T.bgCard, borderRadius: 14, overflow: 'hidden',
-      border: `1px solid ${T.border}`, boxShadow: T.shadowWin,
-    }}>
-      <div style={{ display: 'flex', minHeight }}>
-        <div style={{ width: 62, flexShrink: 0, background: T.app.side2, borderRight: `1px solid ${T.border}`, padding: '14px 0', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
-          <div style={{
-            width: 32, height: 32, borderRadius: '50%', background: '#fff', flexShrink: 0,
-            display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 8,
-            boxShadow: '0 4px 10px -3px rgba(217,67,13,0.4)',
-          }}>
-            <PortiaMark size={16} />
-          </div>
-          {SIDE_ITEMS.map(({ id, icon }) => {
-            const on = id === active;
-            return (
-              <span key={id} style={{
-                width: 30, height: 30, borderRadius: '50%', flexShrink: 0,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                background: on ? T.ink : 'transparent',
-                color: on ? T.bgCard : T.inkSub,
-              }}>{icon}</span>
-            );
-          })}
-        </div>
-        <div style={{ flex: 1, background: T.app.base, padding: 18, minWidth: 0 }}>
-          {children}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-const chip = (bg, tx) => ({ display: 'inline-flex', alignItems: 'center', gap: 4, background: bg, color: tx, fontSize: 9.5, fontWeight: 700, borderRadius: 100, padding: '3px 8px', letterSpacing: '0.02em' });
-const appCard = { background: T.app.card, borderRadius: 10, border: `1px solid ${T.app.border}`, boxShadow: '0 1px 2px rgba(0,0,0,.03)' };
-const appBtn = { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 11.5, fontWeight: 600, borderRadius: 8, padding: '8px 14px' };
-
-function ViewHeader({ title, sub, action }) {
-  return (
-    <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 12 }}>
-      <div>
-        <div style={{ fontSize: 14.5, fontWeight: 700, color: T.app.ink, letterSpacing: '-0.01em' }}>{title}</div>
-        {sub && <div style={{ fontSize: 11, color: T.app.sub, marginTop: 2 }}>{sub}</div>}
-      </div>
-      {action && <span className="aw-btn" style={{ ...appBtn, padding: '6px 12px', fontSize: 11 }}>{action}</span>}
-    </div>
-  );
-}
-
-/* ── INICIO EN VIVO ──────────────────────────────────────────────────────── */
-const LIVE_POOL = [
-  { t: 'María González ingresó', s: 'Visita · Depto 1204' },
-  { t: 'Encomienda Chilexpress', s: 'Perecible, marcada urgente · Depto 802' },
-  { t: 'Pedro Salinas ingresó', s: 'Visita · Depto 310' },
-  { t: 'Encomienda retirada', s: 'Firmada en pantalla · Depto 310' },
-  { t: 'Novedad registrada', s: 'Recarga de gas recibida' },
-  { t: 'Tarea completada', s: 'Ampolleta piso 5 · confirmada por el admin' },
-  { t: 'Técnico Movistar ingresó', s: 'Visita autorizada · Depto 1508' },
-];
-
-function LiveInicioView() {
-  const [feed, setFeed] = useState([
-    { ...LIVE_POOL[0], h: '14:28', id: 0 },
-    { ...LIVE_POOL[1], h: '14:26', id: 1 },
-    { ...LIVE_POOL[2], h: '14:21', id: 2 },
-  ]);
-  const [visitas, setVisitas] = useState(12);
-  const idx = useRef(3);
-
-  useEffect(() => {
-    if (REDUCED()) return;
-    const iv = setInterval(() => {
-      const item = LIVE_POOL[idx.current % LIVE_POOL.length];
-      const now = new Date();
-      const h = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-      setFeed(f => [{ ...item, h, id: Date.now() }, ...f].slice(0, 3));
-      if (item.t.includes('ingresó')) setVisitas(v => Math.min(v + 1, 19));
-      idx.current += 1;
-    }, 3400);
-    return () => clearInterval(iv);
-  }, []);
-
-  const modulos = [
-    { l: 'Visitas', s: `${visitas} activas hoy`, bg: '#FDE4DF', tx: '#C4432E', icon: MI.users },
-    { l: 'Encomiendas', s: '8 por retirar', bg: '#FBEFD9', tx: '#9A6B1E', icon: MI.box },
-    { l: 'Tareas', s: '2 pendientes', bg: '#EDEBE6', tx: '#4A4847', icon: MI.check },
-    { l: 'Novedades', s: '3 en el turno', bg: '#FDE4DF', tx: '#C4432E', icon: MI.doc },
-  ];
-
-  return (
-    <div>
-      {/* Header: saludo + wifi/emergencia/avatar, igual a la app real */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 16, flexWrap: 'wrap', gap: 8 }}>
-        <div>
-          <div style={{ fontSize: 17, fontWeight: 700, color: T.app.ink, letterSpacing: '-0.01em' }}>Buenas tardes, Luis.</div>
-          <div style={{ fontSize: 11, color: T.app.sub, marginTop: 2 }}>Miércoles 2 de julio</div>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <span style={{ width: 26, height: 26, borderRadius: '50%', background: '#fff', border: `1px solid ${T.app.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: T.app.mid }}>{MI.globe}</span>
-          <span style={{ height: 26, padding: '0 10px', borderRadius: 13, background: T.app.brand, color: '#fff', fontSize: 10.5, fontWeight: 700, display: 'flex', alignItems: 'center' }}>Emergencia</span>
-          <span style={{ width: 26, height: 26, borderRadius: '50%', background: T.ink, color: T.bgCard, fontSize: 10, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>LS</span>
-        </div>
-      </div>
-
-      <span className="aw-chip" style={{ ...chip(T.app.okBg, T.app.okTx), marginBottom: 14 }}>
-        <span className="pulse-dot" style={{ width: 5, height: 5, borderRadius: '50%', background: T.app.okTx, display: 'block' }} />
-        Turno activo desde 08:00
-      </span>
-
-      <div style={{ fontSize: 10, fontWeight: 700, color: T.app.sub, letterSpacing: '0.07em', textTransform: 'uppercase', margin: '4px 0 9px' }}>Tu día</div>
-      <div className="win-stats" style={{ display: 'grid', gridTemplateColumns: 'repeat(2,1fr)', gap: 10, marginBottom: 14 }}>
-        {modulos.map(({ l, s, bg, tx, icon }) => (
-          <div key={l} className="awc" style={{ ...appCard, padding: 13 }}>
-            <span style={{ width: 30, height: 30, borderRadius: 9, background: bg, color: tx, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 10 }}>{icon}</span>
-            <div style={{ fontSize: 13, fontWeight: 700, color: T.app.ink }}>{l}</div>
-            <div style={{ fontSize: 10.5, color: T.app.mid, marginTop: 2 }}>{s}</div>
-          </div>
-        ))}
-      </div>
-
-      <div className="awc" style={{ ...appCard, padding: 13, overflow: 'hidden' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 9 }}>
-          <span style={{ fontSize: 10, fontWeight: 700, color: T.app.sub, letterSpacing: '0.07em', textTransform: 'uppercase' }}>Actividad reciente</span>
-          <span style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 9.5, fontWeight: 700, color: T.app.okTx }}>
-            <span className="pulse-dot" style={{ width: 5, height: 5, borderRadius: '50%', background: T.app.okTx, display: 'block' }} />
-            EN VIVO
-          </span>
-        </div>
-        {feed.map(({ t, s, h, id }, i) => (
-          <div key={id} className={(i === 0 ? 'feed-in ' : '') + 'aw-row'} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 6px', margin: '0 -6px', borderBottom: i < feed.length - 1 ? `1px solid ${T.app.border}` : 'none' }}>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 11.5, fontWeight: 600, color: T.app.ink, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t}</div>
-              <div style={{ fontSize: 10, color: T.app.sub, marginTop: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{s}</div>
-            </div>
-            <span style={{ fontSize: 10, color: T.app.sub, fontVariantNumeric: 'tabular-nums', flexShrink: 0 }}>{h}</span>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-/* ── VISTAS DE MÓDULOS ───────────────────────────────────────────────────── */
-function VisitasView() {
-  return (
-    <div>
-      <ViewHeader title="Visitas" sub="Registro de hoy · 12 ingresos" action="+ Nueva visita" />
-      <div className="awc" style={{ ...appCard, padding: 14, marginBottom: 10 }}>
-        <div className="win-cols" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 10 }}>
-          <div>
-            <div style={{ fontSize: 10, fontWeight: 600, color: T.app.sub, marginBottom: 4 }}>RUT</div>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', border: `1.5px solid ${T.app.okTx}`, borderRadius: 8, padding: '8px 10px', background: '#fff' }}>
-              <span style={{ fontSize: 12, color: T.app.ink, fontVariantNumeric: 'tabular-nums' }}>12.345.678-5</span>
-              {MI.okSm(T.app.okTx)}
-            </div>
-            <div style={{ fontSize: 9.5, color: T.app.okTx, fontWeight: 600, marginTop: 3 }}>RUT válido</div>
-          </div>
-          <div>
-            <div style={{ fontSize: 10, fontWeight: 600, color: T.app.sub, marginBottom: 4 }}>Departamento</div>
-            <div style={{ border: `1px solid ${T.app.border}`, borderRadius: 8, padding: '8px 10px', background: '#fff', fontSize: 12, color: T.app.ink }}>1204</div>
-          </div>
-        </div>
-        <div style={{ marginBottom: 12 }}>
-          <div style={{ fontSize: 10, fontWeight: 600, color: T.app.sub, marginBottom: 4 }}>Nombre completo</div>
-          <div style={{ border: `1px solid ${T.app.border}`, borderRadius: 8, padding: '8px 10px', background: '#fff', fontSize: 12, color: T.app.ink }}>María González Rojas</div>
-        </div>
-        <span className="aw-btn" style={{ ...appBtn, width: '100%' }}>Registrar ingreso</span>
-      </div>
-      <div className="awc" style={{ ...appCard, padding: '4px 13px' }}>
-        {[
-          { n: 'Pedro Salinas', d: 'Depto 310', h: '13:52' },
-          { n: 'Técnico Movistar', d: 'Depto 1508 · autorizado por residente', h: '12:20' },
-        ].map(({ n, d, h }, i, a) => (
-          <div key={n} className="aw-row" style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 6px', margin: '0 -6px', borderBottom: i < a.length - 1 ? `1px solid ${T.app.border}` : 'none' }}>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 11.5, fontWeight: 600, color: T.app.ink }}>{n}</div>
-              <div style={{ fontSize: 10, color: T.app.sub, marginTop: 1 }}>{d}</div>
-            </div>
-            <span style={{ fontSize: 10, color: T.app.sub, fontVariantNumeric: 'tabular-nums' }}>{h}</span>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function EncomiendasView() {
-  return (
-    <div>
-      <ViewHeader title="Encomiendas" sub="8 por retirar · 23 entregadas esta semana" action="+ Registrar" />
-      <div className="awc" style={{ ...appCard, padding: 13, marginBottom: 10, borderLeft: `3px solid ${T.app.incident}` }}>
-        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8, marginBottom: 8 }}>
-          <div>
-            <div style={{ fontSize: 12, fontWeight: 700, color: T.app.ink }}>Chilexpress · Depto 802</div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 10, color: T.app.sub, marginTop: 3 }}>
-              {MI.camera} Recibida 14:11 · Foto adjunta
-            </div>
-          </div>
-          <span className="aw-chip" style={chip(T.app.critBg, T.app.critTx)}>Perecible · Urgente</span>
-        </div>
-        <span className="aw-btn-ghost" style={{ ...appBtn, background: 'transparent', color: T.app.brand, border: `1.5px solid ${T.app.brand}`, padding: '6px 12px', fontSize: 11 }}>Notificar al residente</span>
-      </div>
-      <div className="awc" style={{ ...appCard, padding: 13 }}>
-        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 }}>
-          <div>
-            <div style={{ fontSize: 12, fontWeight: 700, color: T.app.ink }}>Correos de Chile · Depto 310</div>
-            <div style={{ fontSize: 10, color: T.app.sub, marginTop: 3 }}>Recibida 09:40 · Notificada 09:41</div>
-          </div>
-          <span className="aw-chip" style={chip(T.app.okBg, T.app.okTx)}>
-            {MI.okSm(T.app.okTx)} Retirada · Firmada 18:22
-          </span>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function NovedadesView() {
-  return (
-    <div>
-      <ViewHeader title="Novedades" sub="El libro de novedades del edificio" action="+ Nueva" />
-      <div className="awc" style={{ ...appCard, padding: 13, marginBottom: 10, borderLeft: `3px solid ${T.app.critTx}` }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 7 }}>
-          <span className="aw-chip" style={chip(T.app.critBg, T.app.critTx)}>Urgente</span>
-          <span style={{ fontSize: 10, color: T.app.sub, fontVariantNumeric: 'tabular-nums' }}>02:14 · Turno noche</span>
-        </div>
-        <div style={{ fontSize: 12.5, fontWeight: 700, color: T.app.ink, marginBottom: 4 }}>Filtración de agua en el piso 3</div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 10, color: T.app.sub, marginBottom: 8 }}>
-          {MI.camera} 2 fotos · Administrador notificado al instante
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 9.5, color: T.app.sub, borderTop: `1px solid ${T.app.border}`, paddingTop: 8 }}>
-          {MI.lock} Registrado por Luis Soto · Este registro no se puede editar ni borrar
-        </div>
-      </div>
-      <div className="awc" style={{ ...appCard, padding: 13 }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ fontSize: 12, fontWeight: 600, color: T.app.ink }}>Se recibió la recarga de gas del edificio</div>
-          <span style={{ fontSize: 10, color: T.app.sub, fontVariantNumeric: 'tabular-nums' }}>09:12</span>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function TurnosView() {
-  return (
-    <div>
-      <ViewHeader title="Entrega de turno" sub="Turno día · Luis Soto · 08:00 a 20:00" />
-      <div className="awc" style={{ ...appCard, padding: 13, marginBottom: 10 }}>
-        <div style={{ fontSize: 10, fontWeight: 700, color: T.app.sub, letterSpacing: '0.07em', textTransform: 'uppercase', marginBottom: 10 }}>Resumen automático del turno</div>
-        <div style={{ display: 'flex', gap: 18 }}>
-          {[['12', 'visitas'], ['8', 'encomiendas'], ['1', 'novedad urgente']].map(([n, l]) => (
-            <div key={l}>
-              <span style={{ fontSize: 17, fontWeight: 700, color: T.app.ink, fontVariantNumeric: 'tabular-nums' }}>{n}</span>
-              <span style={{ fontSize: 10.5, color: T.app.mid, marginLeft: 5 }}>{l}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-      <div className="awc" style={{ ...appCard, padding: 13, marginBottom: 12 }}>
-        <div style={{ fontSize: 10, fontWeight: 700, color: T.app.sub, letterSpacing: '0.07em', textTransform: 'uppercase', marginBottom: 8 }}>Pendientes para el turno que entra</div>
-        {['Encomienda del depto 802 sin retirar', 'Confirmar visita técnica del ascensor'].map((t, i, a) => (
-          <div key={t} className="aw-row" style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 6px', margin: '0 -6px', borderBottom: i < a.length - 1 ? `1px solid ${T.app.border}` : 'none' }}>
-            <span className="aw-check" style={{ width: 13, height: 13, borderRadius: 4, border: `1.5px solid ${T.app.border}`, flexShrink: 0, display: 'block' }} />
-            <span style={{ fontSize: 11.5, color: T.app.mid }}>{t}</span>
-          </div>
-        ))}
-      </div>
-      <span className="aw-btn" style={{ ...appBtn, width: '100%' }}>Firmar y entregar turno</span>
-    </div>
-  );
-}
-
-function TareasView() {
-  return (
-    <div>
-      <ViewHeader title="Tareas" sub="2 pendientes · 1 completada hoy" />
-      {[
-        { done: false, t: 'Cambiar ampolleta del pasillo, piso 5', s: 'Asignada por administración · vence hoy' },
-        { done: false, t: 'Revisar citófono del depto 1204', s: 'Asignada hoy 10:02' },
-        { done: true, t: 'Regar el jardín de la entrada', s: 'Completada 11:30 · Confirmada por el administrador' },
-      ].map(({ done, t, s }) => (
-        <div key={t} className="awc" style={{ ...appCard, padding: '11px 13px', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 10, opacity: done ? 0.7 : 1 }}>
-          <span className="aw-check" style={{
-            width: 16, height: 16, borderRadius: 5, flexShrink: 0,
-            border: done ? 'none' : `1.5px solid ${T.app.border}`,
-            background: done ? T.app.okTx : '#fff',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-          }}>
-            {done && MI.okSm('#fff')}
-          </span>
-          <div>
-            <div style={{ fontSize: 11.5, fontWeight: 600, color: T.app.ink, textDecoration: done ? 'line-through' : 'none' }}>{t}</div>
-            <div style={{ fontSize: 10, color: T.app.sub, marginTop: 1 }}>{s}</div>
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
 /* ── DEMO INTERACTIVA ────────────────────────────────────────────────────── */
+// Capturas reales de apps/desktop corriendo (no mockups fabricados a mano —
+// se filman de nuevo si el diseño de la app cambia).
 const DEMO_TABS = [
   {
     id: 'visitas', label: 'Visitas', tag: 'RUT validado en vivo', icon: MI.users,
     halo: 'rgba(44,140,87,0.20)',
-    view: <VisitasView />,
+    shot: '/screenshots/visitas-final.png',
     steps: [
       'El conserje escribe el RUT y Portia lo valida al instante.',
       'Elige el departamento y registra el ingreso en dos toques.',
@@ -585,7 +269,7 @@ const DEMO_TABS = [
   {
     id: 'encomiendas', label: 'Encomiendas', tag: 'Nada se queda sin retirar', icon: MI.box,
     halo: 'rgba(201,138,27,0.22)',
-    view: <EncomiendasView />,
+    shot: '/screenshots/encomiendas-final.png',
     steps: [
       'Llega el paquete y se registra con foto en segundos.',
       'Si es perecible, Portia lo marca urgente automáticamente.',
@@ -595,7 +279,7 @@ const DEMO_TABS = [
   {
     id: 'novedades', label: 'Novedades', tag: 'El cuaderno, pero inmutable', icon: MI.doc,
     halo: 'rgba(232,80,31,0.20)',
-    view: <NovedadesView />,
+    shot: '/screenshots/novedades-final.png',
     steps: [
       'El conserje registra la novedad con foto y categoría.',
       'Las urgentes le llegan al administrador al instante.',
@@ -605,7 +289,7 @@ const DEMO_TABS = [
   {
     id: 'turnos', label: 'Turnos', tag: 'Traspaso sin lagunas', icon: MI.swap,
     halo: 'rgba(192,54,155,0.20)',
-    view: <TurnosView />,
+    shot: '/screenshots/turnos-final.png',
     steps: [
       'Al cerrar el turno, Portia arma el resumen sola.',
       'Los pendientes pasan automáticamente al turno que entra.',
@@ -615,7 +299,7 @@ const DEMO_TABS = [
   {
     id: 'tareas', label: 'Tareas', tag: 'Del panel a la pantalla del conserje', icon: MI.check,
     halo: 'rgba(249,92,75,0.22)',
-    view: <TareasView />,
+    shot: '/screenshots/tareas-final.png',
     steps: [
       'El administrador asigna la tarea desde el panel web.',
       'El conserje la ve en su pantalla y la ejecuta.',
@@ -724,9 +408,9 @@ function ProductDemo() {
             }} />
             <div key={active} className="demo-view" role="tabpanel" style={{ position: 'relative', zIndex: 1 }}>
               <div className="demo-frame">
-                <AppWindow active={active} minHeight={392}>
-                  {tab.view}
-                </AppWindow>
+                <div style={{ background: T.bgCard, borderRadius: 14, overflow: 'hidden', border: `1px solid ${T.border}`, boxShadow: T.shadowWin }}>
+                  <img src={tab.shot} alt={`Portia — ${tab.label}`} style={{ display: 'block', width: '100%', height: 'auto' }} />
+                </div>
               </div>
             </div>
             <div className="demo-steps" style={{ position: 'relative', zIndex: 1, display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 14, marginTop: 22 }}>
@@ -1278,9 +962,9 @@ export default function Landing() {
               </span>
             </FloatChip>
 
-            <AppWindow active="inicio" minHeight={400}>
-              <LiveInicioView />
-            </AppWindow>
+            <div style={{ background: T.bgCard, borderRadius: 14, overflow: 'hidden', border: `1px solid ${T.border}`, boxShadow: T.shadowWin, position: 'relative', zIndex: 1 }}>
+              <img src="/screenshots/inicio-final.png" alt="Portia — pantalla de inicio del conserje" style={{ display: 'block', width: '100%', height: 'auto' }} />
+            </div>
             </div>
           </div>
         </div>
