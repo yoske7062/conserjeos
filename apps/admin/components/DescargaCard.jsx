@@ -70,9 +70,11 @@ export default function DescargaCard() {
 
   return (
     <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 14, padding: '20px 22px', marginBottom: 24 }}>
-      <p style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)', marginBottom: 4 }}>Descargar Portia Desktop</p>
+      <p style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)', marginBottom: 4 }}>App para el computador de tu conserjería</p>
       <p style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 14 }}>
-        {assets ? `Versión ${assets.version} — instalala en el computador de conserjería.` : 'Buscando la última versión…'}
+        {assets
+          ? `Versión ${assets.version}. Esta es la app que usa el conserje para registrar visitas, encomiendas y novedades — descárgala tú e instálala en el computador de portería, no en el tuyo.`
+          : 'Buscando la última versión…'}
       </p>
       {errorPortal && <p style={{ fontSize: 12, color: '#C42B2B', marginBottom: 10 }}>{errorPortal}</p>}
       <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
