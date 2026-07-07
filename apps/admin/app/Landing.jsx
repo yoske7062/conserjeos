@@ -30,6 +30,7 @@ const T = {
   ease: 'cubic-bezier(.16,1,.3,1)',
   app: {
     side:   '#000000',
+    side2:  '#E4DED2',
     base:   '#E4DED2',
     card:   '#FFFFFF',
     brand:  '#F95C4B',
@@ -262,45 +263,36 @@ const SIDE_ITEMS = [
   { id: 'edificio', label: 'Edificio', icon: MI.bld },
 ];
 
-function AppWindow({ active = 'inicio', title = 'Portia · Conserjería Mirador del Parque', minHeight = 420, children }) {
+// Réplica del rail circular real (apps/desktop/src/components/Sidebar.jsx +
+// index.css): sin barra de título ni semáforo — la app real no tiene chrome,
+// el rail es solo íconos en círculos, el activo se marca en negro sólido.
+function AppWindow({ active = 'inicio', minHeight = 420, children }) {
   return (
     <div style={{
       position: 'relative', zIndex: 1,
       background: T.bgCard, borderRadius: 14, overflow: 'hidden',
       border: `1px solid ${T.border}`, boxShadow: T.shadowWin,
     }}>
-      <div style={{ height: 40, background: '#FAF8F3', borderBottom: `1px solid ${T.border}`, display: 'flex', alignItems: 'center', padding: '0 16px', position: 'relative' }}>
-        <div style={{ display: 'flex', gap: 7 }} aria-hidden="true">
-          <span className="tl-dot" style={{ width: 11, height: 11, borderRadius: '50%', background: '#FF5F57' }} />
-          <span className="tl-dot" style={{ width: 11, height: 11, borderRadius: '50%', background: '#FEBC2E' }} />
-          <span className="tl-dot" style={{ width: 11, height: 11, borderRadius: '50%', background: '#28C840' }} />
-        </div>
-        <span style={{ position: 'absolute', left: 0, right: 0, textAlign: 'center', fontSize: 12, color: T.inkSub, fontWeight: 500, pointerEvents: 'none' }}>{title}</span>
-      </div>
       <div style={{ display: 'flex', minHeight }}>
-        <div className="appwin-side" style={{ width: 170, flexShrink: 0, background: T.app.side, padding: '16px 10px', display: 'flex', flexDirection: 'column' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '2px 10px 16px' }}>
-            <PortiaMark size={18} />
-            <span style={{ fontSize: 12.5, fontWeight: 700, color: '#fff', letterSpacing: '-0.01em' }}>Portia</span>
+        <div style={{ width: 62, flexShrink: 0, background: T.app.side2, borderRight: `1px solid ${T.border}`, padding: '14px 0', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
+          <div style={{
+            width: 32, height: 32, borderRadius: '50%', background: '#fff', flexShrink: 0,
+            display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 8,
+            boxShadow: '0 4px 10px -3px rgba(217,67,13,0.4)',
+          }}>
+            <PortiaMark size={16} />
           </div>
-          {SIDE_ITEMS.map(({ id, label, icon }) => {
+          {SIDE_ITEMS.map(({ id, icon }) => {
             const on = id === active;
             return (
-              <div key={id} className={on ? 'aw-side-item aw-side-on' : 'aw-side-item'} style={{
-                display: 'flex', alignItems: 'center', gap: 9, padding: '7px 10px', borderRadius: 8,
-                background: on ? 'rgba(249,92,75,0.28)' : 'transparent',
-                color: on ? '#FFDCD3' : 'rgba(255,255,255,0.5)',
-                fontSize: 12, fontWeight: on ? 600 : 500, marginBottom: 1,
-              }}>
-                <span style={{ display: 'flex', flexShrink: 0 }}>{icon}</span>
-                {label}
-              </div>
+              <span key={id} style={{
+                width: 30, height: 30, borderRadius: '50%', flexShrink: 0,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                background: on ? T.ink : 'transparent',
+                color: on ? T.bgCard : T.inkSub,
+              }}>{icon}</span>
             );
           })}
-          <div style={{ marginTop: 'auto', padding: '10px 10px 2px', display: 'flex', alignItems: 'center', gap: 7 }}>
-            <span className="pulse-dot" style={{ width: 7, height: 7, borderRadius: '50%', background: '#34D399', display: 'block' }} />
-            <span style={{ fontSize: 10.5, color: 'rgba(255,255,255,0.45)' }}>Turno activo · Luis</span>
-          </div>
         </div>
         <div style={{ flex: 1, background: T.app.base, padding: 18, minWidth: 0 }}>
           {children}
@@ -359,61 +351,61 @@ function LiveInicioView() {
     return () => clearInterval(iv);
   }, []);
 
+  const modulos = [
+    { l: 'Visitas', s: `${visitas} activas hoy`, bg: '#FDE4DF', tx: '#C4432E', icon: MI.users },
+    { l: 'Encomiendas', s: '8 por retirar', bg: '#FBEFD9', tx: '#9A6B1E', icon: MI.box },
+    { l: 'Tareas', s: '2 pendientes', bg: '#EDEBE6', tx: '#4A4847', icon: MI.check },
+    { l: 'Novedades', s: '3 en el turno', bg: '#FDE4DF', tx: '#C4432E', icon: MI.doc },
+  ];
+
   return (
     <div>
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 14, flexWrap: 'wrap', gap: 8 }}>
+      {/* Header: saludo + wifi/emergencia/avatar, igual a la app real */}
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 16, flexWrap: 'wrap', gap: 8 }}>
         <div>
-          <div style={{ fontSize: 16, fontWeight: 700, color: T.app.ink, letterSpacing: '-0.01em' }}>Buenas tardes, Luis</div>
-          <div style={{ fontSize: 11, color: T.app.sub, marginTop: 2 }}>Miércoles 2 de julio · Edificio Mirador del Parque</div>
+          <div style={{ fontSize: 17, fontWeight: 700, color: T.app.ink, letterSpacing: '-0.01em' }}>Buenas tardes, Luis.</div>
+          <div style={{ fontSize: 11, color: T.app.sub, marginTop: 2 }}>Miércoles 2 de julio</div>
         </div>
-        <span className="aw-chip" style={chip(T.app.okBg, T.app.okTx)}>
-          <span className="pulse-dot" style={{ width: 5, height: 5, borderRadius: '50%', background: T.app.okTx, display: 'block' }} />
-          Turno activo desde 08:00
-        </span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <span style={{ width: 26, height: 26, borderRadius: '50%', background: '#fff', border: `1px solid ${T.app.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: T.app.mid }}>{MI.globe}</span>
+          <span style={{ height: 26, padding: '0 10px', borderRadius: 13, background: T.app.brand, color: '#fff', fontSize: 10.5, fontWeight: 700, display: 'flex', alignItems: 'center' }}>Emergencia</span>
+          <span style={{ width: 26, height: 26, borderRadius: '50%', background: T.ink, color: T.bgCard, fontSize: 10, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>LS</span>
+        </div>
       </div>
 
-      <div className="win-stats" style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 10, marginBottom: 14 }}>
-        {[
-          { n: visitas, l: 'Visitas hoy' },
-          { n: 8, l: 'Encomiendas por retirar' },
-          { n: 3, l: 'Novedades' },
-          { n: 2, l: 'Tareas pendientes' },
-        ].map(({ n, l }) => (
-          <div key={l} className="awc" style={{ ...appCard, padding: '12px 13px' }}>
-            <div style={{ fontSize: 21, fontWeight: 700, color: T.app.ink, lineHeight: 1, fontVariantNumeric: 'tabular-nums' }}>{n}</div>
-            <div style={{ fontSize: 10, color: T.app.mid, marginTop: 5, lineHeight: 1.35, fontWeight: 500 }}>{l}</div>
+      <span className="aw-chip" style={{ ...chip(T.app.okBg, T.app.okTx), marginBottom: 14 }}>
+        <span className="pulse-dot" style={{ width: 5, height: 5, borderRadius: '50%', background: T.app.okTx, display: 'block' }} />
+        Turno activo desde 08:00
+      </span>
+
+      <div style={{ fontSize: 10, fontWeight: 700, color: T.app.sub, letterSpacing: '0.07em', textTransform: 'uppercase', margin: '4px 0 9px' }}>Tu día</div>
+      <div className="win-stats" style={{ display: 'grid', gridTemplateColumns: 'repeat(2,1fr)', gap: 10, marginBottom: 14 }}>
+        {modulos.map(({ l, s, bg, tx, icon }) => (
+          <div key={l} className="awc" style={{ ...appCard, padding: 13 }}>
+            <span style={{ width: 30, height: 30, borderRadius: 9, background: bg, color: tx, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 10 }}>{icon}</span>
+            <div style={{ fontSize: 13, fontWeight: 700, color: T.app.ink }}>{l}</div>
+            <div style={{ fontSize: 10.5, color: T.app.mid, marginTop: 2 }}>{s}</div>
           </div>
         ))}
       </div>
 
-      <div className="win-cols" style={{ display: 'grid', gridTemplateColumns: '1.25fr 1fr', gap: 10 }}>
-        <div className="awc" style={{ ...appCard, padding: 13, overflow: 'hidden' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 9 }}>
-            <span style={{ fontSize: 10, fontWeight: 700, color: T.app.sub, letterSpacing: '0.07em', textTransform: 'uppercase' }}>Actividad reciente</span>
-            <span style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 9.5, fontWeight: 700, color: T.app.okTx }}>
-              <span className="pulse-dot" style={{ width: 5, height: 5, borderRadius: '50%', background: T.app.okTx, display: 'block' }} />
-              EN VIVO
-            </span>
+      <div className="awc" style={{ ...appCard, padding: 13, overflow: 'hidden' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 9 }}>
+          <span style={{ fontSize: 10, fontWeight: 700, color: T.app.sub, letterSpacing: '0.07em', textTransform: 'uppercase' }}>Actividad reciente</span>
+          <span style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 9.5, fontWeight: 700, color: T.app.okTx }}>
+            <span className="pulse-dot" style={{ width: 5, height: 5, borderRadius: '50%', background: T.app.okTx, display: 'block' }} />
+            EN VIVO
+          </span>
+        </div>
+        {feed.map(({ t, s, h, id }, i) => (
+          <div key={id} className={(i === 0 ? 'feed-in ' : '') + 'aw-row'} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 6px', margin: '0 -6px', borderBottom: i < feed.length - 1 ? `1px solid ${T.app.border}` : 'none' }}>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 11.5, fontWeight: 600, color: T.app.ink, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t}</div>
+              <div style={{ fontSize: 10, color: T.app.sub, marginTop: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{s}</div>
+            </div>
+            <span style={{ fontSize: 10, color: T.app.sub, fontVariantNumeric: 'tabular-nums', flexShrink: 0 }}>{h}</span>
           </div>
-          {feed.map(({ t, s, h, id }, i) => (
-            <div key={id} className={(i === 0 ? 'feed-in ' : '') + 'aw-row'} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 6px', margin: '0 -6px', borderBottom: i < feed.length - 1 ? `1px solid ${T.app.border}` : 'none' }}>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 11.5, fontWeight: 600, color: T.app.ink, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t}</div>
-                <div style={{ fontSize: 10, color: T.app.sub, marginTop: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{s}</div>
-              </div>
-              <span style={{ fontSize: 10, color: T.app.sub, fontVariantNumeric: 'tabular-nums', flexShrink: 0 }}>{h}</span>
-            </div>
-          ))}
-        </div>
-        <div className="awc" style={{ ...appCard, padding: 13 }}>
-          <div style={{ fontSize: 10, fontWeight: 700, color: T.app.sub, letterSpacing: '0.07em', textTransform: 'uppercase', marginBottom: 9 }}>Pendientes del turno</div>
-          {['Encomienda 802 sin retirar', 'Cambiar ampolleta piso 5', 'Visita técnica ascensor 16:00'].map((t, i, a) => (
-            <div key={t} className="aw-row" style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 6px', margin: '0 -6px', borderBottom: i < a.length - 1 ? `1px solid ${T.app.border}` : 'none' }}>
-              <span className="aw-check" style={{ width: 13, height: 13, borderRadius: 4, border: `1.5px solid ${T.app.border}`, flexShrink: 0, display: 'block' }} />
-              <span style={{ fontSize: 11, color: T.app.mid }}>{t}</span>
-            </div>
-          ))}
-        </div>
+        ))}
       </div>
     </div>
   );
@@ -982,32 +974,30 @@ function FloatChip({ style, delay = 0, children }) {
 }
 
 /* ── NAV ─────────────────────────────────────────────────────────────────── */
+// Banda sólida con presencia real (inspirado en nablus.cl) en vez de una
+// barra traslúcida delgada que se perdía contra el fondo.
 function Nav() {
   return (
-    <nav style={{
-      position: 'sticky', top: 0, zIndex: 100,
-      background: 'rgba(245,242,235,0.86)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
-      borderBottom: `1px solid ${T.border}`,
-    }}>
-      <div className="pp" style={{ maxWidth: 1180, margin: '0 auto', padding: '0 40px', height: 68, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+    <nav style={{ position: 'sticky', top: 0, zIndex: 100, background: T.ink }}>
+      <div className="pp" style={{ maxWidth: 1180, margin: '0 auto', padding: '0 40px', height: 76, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <Link href="/" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }} aria-label="Portia, inicio">
-          <PortiaLogo size={30} />
+          <PortiaLogo dark size={34} />
         </Link>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <div className="nav-links" style={{ display: 'flex', alignItems: 'center', gap: 2, marginRight: 8 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div className="nav-links" style={{ display: 'flex', alignItems: 'center', gap: 4, marginRight: 10 }}>
             {[['#producto', 'Producto'], ['#como', 'Cómo funciona']].map(([href, label]) => (
-              <a key={href} href={href} className="nav-link" style={{ fontFamily: T.font, fontSize: 15, fontWeight: 500, color: T.inkMid, textDecoration: 'none', padding: '8px 14px', borderRadius: 8 }}>
+              <a key={href} href={href} className="nav-link" style={{ fontFamily: T.font, fontSize: 15.5, fontWeight: 500, color: 'rgba(255,255,255,0.75)', textDecoration: 'none', padding: '9px 16px', borderRadius: 8 }}>
                 {label}
               </a>
             ))}
           </div>
-          <Link href="/login" className="btn-nav" style={{
-            fontFamily: T.font, fontSize: 15, fontWeight: 600, color: '#fff',
-            textDecoration: 'none', borderRadius: 10, padding: '10px 21px', display: 'inline-block',
+          <Link href="/login" style={{
+            fontFamily: T.font, fontSize: 15, fontWeight: 700, color: T.ink, background: '#fff',
+            textDecoration: 'none', borderRadius: 10, padding: '12px 24px', display: 'inline-block',
           }}>Entrar al panel</Link>
         </div>
       </div>
-      <div className="grad-strip" aria-hidden="true" style={{ height: 2, opacity: 0.5 }} />
+      <div className="grad-strip" aria-hidden="true" style={{ height: 3 }} />
     </nav>
   );
 }
@@ -1100,7 +1090,7 @@ export default function Landing() {
           box-shadow: 0 6px 18px -6px rgba(217,67,13,0.5);
         }
         .nav-link { transition: color .15s, background .15s, transform .15s; }
-        .nav-link:hover { color: ${T.ink}; background: rgba(29,27,22,0.05); transform: translateY(-1px); }
+        .nav-link:hover { color: #fff; background: rgba(255,255,255,0.1); transform: translateY(-1px); }
 
         /* ── ventana hover-interactiva ── */
         .aw-side-item { cursor: pointer; transition: background .18s, color .18s, transform .2s ${T.ease}; }
