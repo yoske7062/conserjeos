@@ -30,6 +30,7 @@ const T = {
   ease: 'cubic-bezier(.16,1,.3,1)',
   app: {
     side:   '#000000',
+    side2:  '#E4DED2',
     base:   '#E4DED2',
     card:   '#FFFFFF',
     brand:  '#F95C4B',
@@ -177,21 +178,21 @@ function CountUp({ end, suffix = '', duration = 1400 }) {
 /* ── FONDO VIVO: malla + grilla que panea + partículas ───────────────────── */
 const DOTS = [
   { x: '6%', y: '18%', s: 9, c: 'rgba(232,80,31,0.70)', d: 9, del: 0, z: 1.3 },
-  { x: '14%', y: '64%', s: 6, c: 'rgba(109,90,230,0.65)', d: 11, del: 1.2, z: 0.7 },
+  { x: '14%', y: '64%', s: 6, c: 'rgba(249,92,75,0.65)', d: 11, del: 1.2, z: 0.7 },
   { x: '22%', y: '32%', s: 7, c: 'rgba(192,54,155,0.60)', d: 8, del: 0.6, z: 1.0 },
   { x: '31%', y: '78%', s: 10, c: 'rgba(232,80,31,0.50)', d: 12, del: 2, z: 1.5 },
-  { x: '43%', y: '12%', s: 6, c: 'rgba(109,90,230,0.70)', d: 10, del: 0.3, z: 0.6 },
+  { x: '43%', y: '12%', s: 6, c: 'rgba(249,92,75,0.70)', d: 10, del: 0.3, z: 0.6 },
   { x: '55%', y: '70%', s: 8, c: 'rgba(192,54,155,0.60)', d: 9, del: 1.6, z: 1.1 },
   { x: '64%', y: '24%', s: 9, c: 'rgba(232,80,31,0.65)', d: 11, del: 0.9, z: 1.4 },
-  { x: '72%', y: '58%', s: 6, c: 'rgba(109,90,230,0.55)', d: 8, del: 2.4, z: 0.8 },
+  { x: '72%', y: '58%', s: 6, c: 'rgba(249,92,75,0.55)', d: 8, del: 2.4, z: 0.8 },
   { x: '81%', y: '16%', s: 7, c: 'rgba(192,54,155,0.70)', d: 10, del: 0.2, z: 1.2 },
   { x: '88%', y: '46%', s: 10, c: 'rgba(232,80,31,0.50)', d: 12, del: 1.4, z: 1.6 },
-  { x: '93%', y: '74%', s: 6, c: 'rgba(109,90,230,0.65)', d: 9, del: 0.7, z: 0.7 },
+  { x: '93%', y: '74%', s: 6, c: 'rgba(249,92,75,0.65)', d: 9, del: 0.7, z: 0.7 },
   { x: '48%', y: '42%', s: 5, c: 'rgba(29,27,22,0.40)', d: 13, del: 1.8, z: 0.5 },
   { x: '9%', y: '86%', s: 7, c: 'rgba(192,54,155,0.55)', d: 10, del: 2.2, z: 1.0 },
   { x: '77%', y: '86%', s: 9, c: 'rgba(232,80,31,0.60)', d: 11, del: 0.5, z: 1.3 },
   { x: '18%', y: '8%', s: 8, c: 'rgba(192,54,155,0.55)', d: 12, del: 1.1, z: 1.2 },
-  { x: '37%', y: '55%', s: 5, c: 'rgba(109,90,230,0.60)', d: 9, del: 2.8, z: 0.6 },
+  { x: '37%', y: '55%', s: 5, c: 'rgba(249,92,75,0.60)', d: 9, del: 2.8, z: 0.6 },
   { x: '60%', y: '90%', s: 7, c: 'rgba(232,80,31,0.55)', d: 10, del: 0.4, z: 0.9 },
   { x: '96%', y: '28%', s: 6, c: 'rgba(192,54,155,0.65)', d: 11, del: 1.9, z: 1.1 },
 ];
@@ -205,7 +206,6 @@ function LiveBackground({ dots = true, grid = true, mesh = true, glows = [] }) {
         <div key={i} aria-hidden="true" style={{
           position: 'absolute', pointerEvents: 'none',
           background: `radial-gradient(ellipse, ${g.c} 0%, transparent 62%)`,
-          animation: `glowDrift ${g.d || 14}s ease-in-out ${g.del || 0}s infinite ${g.rev ? 'reverse' : ''}`,
           ...g.pos,
         }} />
       ))}
@@ -252,339 +252,14 @@ const MI = {
   ),
 };
 
-/* ── VENTANA DE LA APP (hover-interactiva) ───────────────────────────────── */
-const SIDE_ITEMS = [
-  { id: 'inicio', label: 'Inicio', icon: MI.home },
-  { id: 'turnos', label: 'Entrega de Turno', icon: MI.swap },
-  { id: 'novedades', label: 'Novedades', icon: MI.doc },
-  { id: 'visitas', label: 'Visitas', icon: MI.users },
-  { id: 'encomiendas', label: 'Encomiendas', icon: MI.box },
-  { id: 'tareas', label: 'Tareas', icon: MI.check },
-  { id: 'edificio', label: 'Edificio', icon: MI.bld },
-];
-
-function AppWindow({ active = 'inicio', title = 'Portia · Conserjería Mirador del Parque', minHeight = 420, children }) {
-  return (
-    <div style={{
-      position: 'relative', zIndex: 1,
-      background: T.bgCard, borderRadius: 14, overflow: 'hidden',
-      border: `1px solid ${T.border}`, boxShadow: T.shadowWin,
-    }}>
-      <div style={{ height: 40, background: '#FAF8F3', borderBottom: `1px solid ${T.border}`, display: 'flex', alignItems: 'center', padding: '0 16px', position: 'relative' }}>
-        <div style={{ display: 'flex', gap: 7 }} aria-hidden="true">
-          <span className="tl-dot" style={{ width: 11, height: 11, borderRadius: '50%', background: '#FF5F57' }} />
-          <span className="tl-dot" style={{ width: 11, height: 11, borderRadius: '50%', background: '#FEBC2E' }} />
-          <span className="tl-dot" style={{ width: 11, height: 11, borderRadius: '50%', background: '#28C840' }} />
-        </div>
-        <span style={{ position: 'absolute', left: 0, right: 0, textAlign: 'center', fontSize: 12, color: T.inkSub, fontWeight: 500, pointerEvents: 'none' }}>{title}</span>
-      </div>
-      <div style={{ display: 'flex', minHeight }}>
-        <div className="appwin-side" style={{ width: 170, flexShrink: 0, background: T.app.side, padding: '16px 10px', display: 'flex', flexDirection: 'column' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '2px 10px 16px' }}>
-            <PortiaMark size={18} />
-            <span style={{ fontSize: 12.5, fontWeight: 700, color: '#fff', letterSpacing: '-0.01em' }}>Portia</span>
-          </div>
-          {SIDE_ITEMS.map(({ id, label, icon }) => {
-            const on = id === active;
-            return (
-              <div key={id} className={on ? 'aw-side-item aw-side-on' : 'aw-side-item'} style={{
-                display: 'flex', alignItems: 'center', gap: 9, padding: '7px 10px', borderRadius: 8,
-                background: on ? 'rgba(79,70,229,0.28)' : 'transparent',
-                color: on ? '#C7D2FE' : 'rgba(255,255,255,0.5)',
-                fontSize: 12, fontWeight: on ? 600 : 500, marginBottom: 1,
-              }}>
-                <span style={{ display: 'flex', flexShrink: 0 }}>{icon}</span>
-                {label}
-              </div>
-            );
-          })}
-          <div style={{ marginTop: 'auto', padding: '10px 10px 2px', display: 'flex', alignItems: 'center', gap: 7 }}>
-            <span className="pulse-dot" style={{ width: 7, height: 7, borderRadius: '50%', background: '#34D399', display: 'block' }} />
-            <span style={{ fontSize: 10.5, color: 'rgba(255,255,255,0.45)' }}>Turno activo · Luis</span>
-          </div>
-        </div>
-        <div style={{ flex: 1, background: T.app.base, padding: 18, minWidth: 0 }}>
-          {children}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-const chip = (bg, tx) => ({ display: 'inline-flex', alignItems: 'center', gap: 4, background: bg, color: tx, fontSize: 9.5, fontWeight: 700, borderRadius: 100, padding: '3px 8px', letterSpacing: '0.02em' });
-const appCard = { background: T.app.card, borderRadius: 10, border: `1px solid ${T.app.border}`, boxShadow: '0 1px 2px rgba(0,0,0,.03)' };
-const appBtn = { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 11.5, fontWeight: 600, borderRadius: 8, padding: '8px 14px' };
-
-function ViewHeader({ title, sub, action }) {
-  return (
-    <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 12 }}>
-      <div>
-        <div style={{ fontSize: 14.5, fontWeight: 700, color: T.app.ink, letterSpacing: '-0.01em' }}>{title}</div>
-        {sub && <div style={{ fontSize: 11, color: T.app.sub, marginTop: 2 }}>{sub}</div>}
-      </div>
-      {action && <span className="aw-btn" style={{ ...appBtn, padding: '6px 12px', fontSize: 11 }}>{action}</span>}
-    </div>
-  );
-}
-
-/* ── INICIO EN VIVO ──────────────────────────────────────────────────────── */
-const LIVE_POOL = [
-  { t: 'María González ingresó', s: 'Visita · Depto 1204' },
-  { t: 'Encomienda Chilexpress', s: 'Perecible, marcada urgente · Depto 802' },
-  { t: 'Pedro Salinas ingresó', s: 'Visita · Depto 310' },
-  { t: 'Encomienda retirada', s: 'Firmada en pantalla · Depto 310' },
-  { t: 'Novedad registrada', s: 'Recarga de gas recibida' },
-  { t: 'Tarea completada', s: 'Ampolleta piso 5 · confirmada por el admin' },
-  { t: 'Técnico Movistar ingresó', s: 'Visita autorizada · Depto 1508' },
-];
-
-function LiveInicioView() {
-  const [feed, setFeed] = useState([
-    { ...LIVE_POOL[0], h: '14:28', id: 0 },
-    { ...LIVE_POOL[1], h: '14:26', id: 1 },
-    { ...LIVE_POOL[2], h: '14:21', id: 2 },
-  ]);
-  const [visitas, setVisitas] = useState(12);
-  const idx = useRef(3);
-
-  useEffect(() => {
-    if (REDUCED()) return;
-    const iv = setInterval(() => {
-      const item = LIVE_POOL[idx.current % LIVE_POOL.length];
-      const now = new Date();
-      const h = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-      setFeed(f => [{ ...item, h, id: Date.now() }, ...f].slice(0, 3));
-      if (item.t.includes('ingresó')) setVisitas(v => Math.min(v + 1, 19));
-      idx.current += 1;
-    }, 3400);
-    return () => clearInterval(iv);
-  }, []);
-
-  return (
-    <div>
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 14, flexWrap: 'wrap', gap: 8 }}>
-        <div>
-          <div style={{ fontSize: 16, fontWeight: 700, color: T.app.ink, letterSpacing: '-0.01em' }}>Buenas tardes, Luis</div>
-          <div style={{ fontSize: 11, color: T.app.sub, marginTop: 2 }}>Miércoles 2 de julio · Edificio Mirador del Parque</div>
-        </div>
-        <span className="aw-chip" style={chip(T.app.okBg, T.app.okTx)}>
-          <span className="pulse-dot" style={{ width: 5, height: 5, borderRadius: '50%', background: T.app.okTx, display: 'block' }} />
-          Turno activo desde 08:00
-        </span>
-      </div>
-
-      <div className="win-stats" style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 10, marginBottom: 14 }}>
-        {[
-          { n: visitas, l: 'Visitas hoy' },
-          { n: 8, l: 'Encomiendas por retirar' },
-          { n: 3, l: 'Novedades' },
-          { n: 2, l: 'Tareas pendientes' },
-        ].map(({ n, l }) => (
-          <div key={l} className="awc" style={{ ...appCard, padding: '12px 13px' }}>
-            <div style={{ fontSize: 21, fontWeight: 700, color: T.app.ink, lineHeight: 1, fontVariantNumeric: 'tabular-nums' }}>{n}</div>
-            <div style={{ fontSize: 10, color: T.app.mid, marginTop: 5, lineHeight: 1.35, fontWeight: 500 }}>{l}</div>
-          </div>
-        ))}
-      </div>
-
-      <div className="win-cols" style={{ display: 'grid', gridTemplateColumns: '1.25fr 1fr', gap: 10 }}>
-        <div className="awc" style={{ ...appCard, padding: 13, overflow: 'hidden' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 9 }}>
-            <span style={{ fontSize: 10, fontWeight: 700, color: T.app.sub, letterSpacing: '0.07em', textTransform: 'uppercase' }}>Actividad reciente</span>
-            <span style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 9.5, fontWeight: 700, color: T.app.okTx }}>
-              <span className="pulse-dot" style={{ width: 5, height: 5, borderRadius: '50%', background: T.app.okTx, display: 'block' }} />
-              EN VIVO
-            </span>
-          </div>
-          {feed.map(({ t, s, h, id }, i) => (
-            <div key={id} className={(i === 0 ? 'feed-in ' : '') + 'aw-row'} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 6px', margin: '0 -6px', borderBottom: i < feed.length - 1 ? `1px solid ${T.app.border}` : 'none' }}>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 11.5, fontWeight: 600, color: T.app.ink, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t}</div>
-                <div style={{ fontSize: 10, color: T.app.sub, marginTop: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{s}</div>
-              </div>
-              <span style={{ fontSize: 10, color: T.app.sub, fontVariantNumeric: 'tabular-nums', flexShrink: 0 }}>{h}</span>
-            </div>
-          ))}
-        </div>
-        <div className="awc" style={{ ...appCard, padding: 13 }}>
-          <div style={{ fontSize: 10, fontWeight: 700, color: T.app.sub, letterSpacing: '0.07em', textTransform: 'uppercase', marginBottom: 9 }}>Pendientes del turno</div>
-          {['Encomienda 802 sin retirar', 'Cambiar ampolleta piso 5', 'Visita técnica ascensor 16:00'].map((t, i, a) => (
-            <div key={t} className="aw-row" style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 6px', margin: '0 -6px', borderBottom: i < a.length - 1 ? `1px solid ${T.app.border}` : 'none' }}>
-              <span className="aw-check" style={{ width: 13, height: 13, borderRadius: 4, border: `1.5px solid ${T.app.border}`, flexShrink: 0, display: 'block' }} />
-              <span style={{ fontSize: 11, color: T.app.mid }}>{t}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/* ── VISTAS DE MÓDULOS ───────────────────────────────────────────────────── */
-function VisitasView() {
-  return (
-    <div>
-      <ViewHeader title="Visitas" sub="Registro de hoy · 12 ingresos" action="+ Nueva visita" />
-      <div className="awc" style={{ ...appCard, padding: 14, marginBottom: 10 }}>
-        <div className="win-cols" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 10 }}>
-          <div>
-            <div style={{ fontSize: 10, fontWeight: 600, color: T.app.sub, marginBottom: 4 }}>RUT</div>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', border: `1.5px solid ${T.app.okTx}`, borderRadius: 8, padding: '8px 10px', background: '#fff' }}>
-              <span style={{ fontSize: 12, color: T.app.ink, fontVariantNumeric: 'tabular-nums' }}>12.345.678-5</span>
-              {MI.okSm(T.app.okTx)}
-            </div>
-            <div style={{ fontSize: 9.5, color: T.app.okTx, fontWeight: 600, marginTop: 3 }}>RUT válido</div>
-          </div>
-          <div>
-            <div style={{ fontSize: 10, fontWeight: 600, color: T.app.sub, marginBottom: 4 }}>Departamento</div>
-            <div style={{ border: `1px solid ${T.app.border}`, borderRadius: 8, padding: '8px 10px', background: '#fff', fontSize: 12, color: T.app.ink }}>1204</div>
-          </div>
-        </div>
-        <div style={{ marginBottom: 12 }}>
-          <div style={{ fontSize: 10, fontWeight: 600, color: T.app.sub, marginBottom: 4 }}>Nombre completo</div>
-          <div style={{ border: `1px solid ${T.app.border}`, borderRadius: 8, padding: '8px 10px', background: '#fff', fontSize: 12, color: T.app.ink }}>María González Rojas</div>
-        </div>
-        <span className="aw-btn" style={{ ...appBtn, width: '100%' }}>Registrar ingreso</span>
-      </div>
-      <div className="awc" style={{ ...appCard, padding: '4px 13px' }}>
-        {[
-          { n: 'Pedro Salinas', d: 'Depto 310', h: '13:52' },
-          { n: 'Técnico Movistar', d: 'Depto 1508 · autorizado por residente', h: '12:20' },
-        ].map(({ n, d, h }, i, a) => (
-          <div key={n} className="aw-row" style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 6px', margin: '0 -6px', borderBottom: i < a.length - 1 ? `1px solid ${T.app.border}` : 'none' }}>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 11.5, fontWeight: 600, color: T.app.ink }}>{n}</div>
-              <div style={{ fontSize: 10, color: T.app.sub, marginTop: 1 }}>{d}</div>
-            </div>
-            <span style={{ fontSize: 10, color: T.app.sub, fontVariantNumeric: 'tabular-nums' }}>{h}</span>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function EncomiendasView() {
-  return (
-    <div>
-      <ViewHeader title="Encomiendas" sub="8 por retirar · 23 entregadas esta semana" action="+ Registrar" />
-      <div className="awc" style={{ ...appCard, padding: 13, marginBottom: 10, borderLeft: `3px solid ${T.app.incident}` }}>
-        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8, marginBottom: 8 }}>
-          <div>
-            <div style={{ fontSize: 12, fontWeight: 700, color: T.app.ink }}>Chilexpress · Depto 802</div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 10, color: T.app.sub, marginTop: 3 }}>
-              {MI.camera} Recibida 14:11 · Foto adjunta
-            </div>
-          </div>
-          <span className="aw-chip" style={chip(T.app.critBg, T.app.critTx)}>Perecible · Urgente</span>
-        </div>
-        <span className="aw-btn-ghost" style={{ ...appBtn, background: 'transparent', color: T.app.brand, border: `1.5px solid ${T.app.brand}`, padding: '6px 12px', fontSize: 11 }}>Notificar al residente</span>
-      </div>
-      <div className="awc" style={{ ...appCard, padding: 13 }}>
-        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 }}>
-          <div>
-            <div style={{ fontSize: 12, fontWeight: 700, color: T.app.ink }}>Correos de Chile · Depto 310</div>
-            <div style={{ fontSize: 10, color: T.app.sub, marginTop: 3 }}>Recibida 09:40 · Notificada 09:41</div>
-          </div>
-          <span className="aw-chip" style={chip(T.app.okBg, T.app.okTx)}>
-            {MI.okSm(T.app.okTx)} Retirada · Firmada 18:22
-          </span>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function NovedadesView() {
-  return (
-    <div>
-      <ViewHeader title="Novedades" sub="El libro de novedades del edificio" action="+ Nueva" />
-      <div className="awc" style={{ ...appCard, padding: 13, marginBottom: 10, borderLeft: `3px solid ${T.app.critTx}` }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 7 }}>
-          <span className="aw-chip" style={chip(T.app.critBg, T.app.critTx)}>Urgente</span>
-          <span style={{ fontSize: 10, color: T.app.sub, fontVariantNumeric: 'tabular-nums' }}>02:14 · Turno noche</span>
-        </div>
-        <div style={{ fontSize: 12.5, fontWeight: 700, color: T.app.ink, marginBottom: 4 }}>Filtración de agua en el piso 3</div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 10, color: T.app.sub, marginBottom: 8 }}>
-          {MI.camera} 2 fotos · Administrador notificado al instante
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 9.5, color: T.app.sub, borderTop: `1px solid ${T.app.border}`, paddingTop: 8 }}>
-          {MI.lock} Registrado por Luis Soto · Este registro no se puede editar ni borrar
-        </div>
-      </div>
-      <div className="awc" style={{ ...appCard, padding: 13 }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ fontSize: 12, fontWeight: 600, color: T.app.ink }}>Se recibió la recarga de gas del edificio</div>
-          <span style={{ fontSize: 10, color: T.app.sub, fontVariantNumeric: 'tabular-nums' }}>09:12</span>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function TurnosView() {
-  return (
-    <div>
-      <ViewHeader title="Entrega de turno" sub="Turno día · Luis Soto · 08:00 a 20:00" />
-      <div className="awc" style={{ ...appCard, padding: 13, marginBottom: 10 }}>
-        <div style={{ fontSize: 10, fontWeight: 700, color: T.app.sub, letterSpacing: '0.07em', textTransform: 'uppercase', marginBottom: 10 }}>Resumen automático del turno</div>
-        <div style={{ display: 'flex', gap: 18 }}>
-          {[['12', 'visitas'], ['8', 'encomiendas'], ['1', 'novedad urgente']].map(([n, l]) => (
-            <div key={l}>
-              <span style={{ fontSize: 17, fontWeight: 700, color: T.app.ink, fontVariantNumeric: 'tabular-nums' }}>{n}</span>
-              <span style={{ fontSize: 10.5, color: T.app.mid, marginLeft: 5 }}>{l}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-      <div className="awc" style={{ ...appCard, padding: 13, marginBottom: 12 }}>
-        <div style={{ fontSize: 10, fontWeight: 700, color: T.app.sub, letterSpacing: '0.07em', textTransform: 'uppercase', marginBottom: 8 }}>Pendientes para el turno que entra</div>
-        {['Encomienda del depto 802 sin retirar', 'Confirmar visita técnica del ascensor'].map((t, i, a) => (
-          <div key={t} className="aw-row" style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 6px', margin: '0 -6px', borderBottom: i < a.length - 1 ? `1px solid ${T.app.border}` : 'none' }}>
-            <span className="aw-check" style={{ width: 13, height: 13, borderRadius: 4, border: `1.5px solid ${T.app.border}`, flexShrink: 0, display: 'block' }} />
-            <span style={{ fontSize: 11.5, color: T.app.mid }}>{t}</span>
-          </div>
-        ))}
-      </div>
-      <span className="aw-btn" style={{ ...appBtn, width: '100%' }}>Firmar y entregar turno</span>
-    </div>
-  );
-}
-
-function TareasView() {
-  return (
-    <div>
-      <ViewHeader title="Tareas" sub="2 pendientes · 1 completada hoy" />
-      {[
-        { done: false, t: 'Cambiar ampolleta del pasillo, piso 5', s: 'Asignada por administración · vence hoy' },
-        { done: false, t: 'Revisar citófono del depto 1204', s: 'Asignada hoy 10:02' },
-        { done: true, t: 'Regar el jardín de la entrada', s: 'Completada 11:30 · Confirmada por el administrador' },
-      ].map(({ done, t, s }) => (
-        <div key={t} className="awc" style={{ ...appCard, padding: '11px 13px', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 10, opacity: done ? 0.7 : 1 }}>
-          <span className="aw-check" style={{
-            width: 16, height: 16, borderRadius: 5, flexShrink: 0,
-            border: done ? 'none' : `1.5px solid ${T.app.border}`,
-            background: done ? T.app.okTx : '#fff',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-          }}>
-            {done && MI.okSm('#fff')}
-          </span>
-          <div>
-            <div style={{ fontSize: 11.5, fontWeight: 600, color: T.app.ink, textDecoration: done ? 'line-through' : 'none' }}>{t}</div>
-            <div style={{ fontSize: 10, color: T.app.sub, marginTop: 1 }}>{s}</div>
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
 /* ── DEMO INTERACTIVA ────────────────────────────────────────────────────── */
+// Capturas reales de apps/desktop corriendo (no mockups fabricados a mano —
+// se filman de nuevo si el diseño de la app cambia).
 const DEMO_TABS = [
   {
     id: 'visitas', label: 'Visitas', tag: 'RUT validado en vivo', icon: MI.users,
     halo: 'rgba(44,140,87,0.20)',
-    view: <VisitasView />,
+    shot: '/screenshots/visitas-final.png',
     steps: [
       'El conserje escribe el RUT y Portia lo valida al instante.',
       'Elige el departamento y registra el ingreso en dos toques.',
@@ -594,7 +269,7 @@ const DEMO_TABS = [
   {
     id: 'encomiendas', label: 'Encomiendas', tag: 'Nada se queda sin retirar', icon: MI.box,
     halo: 'rgba(201,138,27,0.22)',
-    view: <EncomiendasView />,
+    shot: '/screenshots/encomiendas-final.png',
     steps: [
       'Llega el paquete y se registra con foto en segundos.',
       'Si es perecible, Portia lo marca urgente automáticamente.',
@@ -604,7 +279,7 @@ const DEMO_TABS = [
   {
     id: 'novedades', label: 'Novedades', tag: 'El cuaderno, pero inmutable', icon: MI.doc,
     halo: 'rgba(232,80,31,0.20)',
-    view: <NovedadesView />,
+    shot: '/screenshots/novedades-final.png',
     steps: [
       'El conserje registra la novedad con foto y categoría.',
       'Las urgentes le llegan al administrador al instante.',
@@ -614,7 +289,7 @@ const DEMO_TABS = [
   {
     id: 'turnos', label: 'Turnos', tag: 'Traspaso sin lagunas', icon: MI.swap,
     halo: 'rgba(192,54,155,0.20)',
-    view: <TurnosView />,
+    shot: '/screenshots/turnos-final.png',
     steps: [
       'Al cerrar el turno, Portia arma el resumen sola.',
       'Los pendientes pasan automáticamente al turno que entra.',
@@ -623,8 +298,8 @@ const DEMO_TABS = [
   },
   {
     id: 'tareas', label: 'Tareas', tag: 'Del panel a la pantalla del conserje', icon: MI.check,
-    halo: 'rgba(109,90,230,0.22)',
-    view: <TareasView />,
+    halo: 'rgba(249,92,75,0.22)',
+    shot: '/screenshots/tareas-final.png',
     steps: [
       'El administrador asigna la tarea desde el panel web.',
       'El conserje la ve en su pantalla y la ejecuta.',
@@ -660,16 +335,16 @@ function ProductDemo() {
     <section id="producto" style={{ position: 'relative', overflow: 'hidden', background: T.bgPanel, borderTop: `1px solid ${T.border}`, borderBottom: `1px solid ${T.border}`, scrollMarginTop: 80 }}>
       <LiveBackground mesh={false} grid={false} glows={[
         { c: 'rgba(232,80,31,0.07)', pos: { top: '-12%', right: '-8%', width: 620, height: 420 }, d: 15 },
-        { c: 'rgba(109,90,230,0.06)', pos: { bottom: '-16%', left: '-6%', width: 540, height: 400 }, d: 18, rev: true },
+        { c: 'rgba(249,92,75,0.06)', pos: { bottom: '-16%', left: '-6%', width: 540, height: 400 }, d: 18, rev: true },
       ]} />
       <div className="pp" style={{ position: 'relative', maxWidth: 1180, margin: '0 auto', padding: '100px 40px 110px' }}>
         <div ref={headRef} style={{ maxWidth: 680, marginBottom: 56, display: 'flex', gap: 22, alignItems: 'flex-start' }}>
           <span className="section-badge" aria-hidden="true" style={{
-            width: 56, height: 56, borderRadius: 16, flexShrink: 0,
+            width: 56, height: 56, borderRadius: '50%', flexShrink: 0,
             background: `linear-gradient(135deg, ${T.accent}, ${T.pink})`, color: '#fff',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             boxShadow: '0 8px 22px -6px rgba(217,67,13,0.5)',
-          }}>{MI.monitor}</span>
+          }}><span style={{ transform: 'scale(1.8)' }}>{MI.check}</span></span>
           <div>
             <div className="grad-static" style={{ fontSize: 15.5, fontWeight: 800, marginBottom: 10, letterSpacing: '0.01em' }}>LA SOLUCIÓN</div>
             <h2 style={{ fontSize: 'clamp(36px,4.4vw,58px)', fontWeight: 800, letterSpacing: '-0.03em', lineHeight: 1.03, color: T.ink, margin: '0 0 18px' }}>
@@ -728,15 +403,14 @@ function ProductDemo() {
             {/* halo ambiente que cambia de color según el módulo activo */}
             <div aria-hidden="true" style={{
               position: 'absolute', inset: '-8% -6%', zIndex: 0, pointerEvents: 'none',
-              background: `radial-gradient(ellipse at 20% 80%, ${tab.halo} 0%, transparent 55%), radial-gradient(ellipse at 85% 15%, rgba(109,90,230,0.13) 0%, transparent 55%)`,
-              animation: 'glowDrift 12s ease-in-out infinite alternate',
+              background: `radial-gradient(ellipse at 20% 80%, ${tab.halo} 0%, transparent 55%), radial-gradient(ellipse at 85% 15%, rgba(249,92,75,0.13) 0%, transparent 55%)`,
               transition: 'background .6s ease',
             }} />
             <div key={active} className="demo-view" role="tabpanel" style={{ position: 'relative', zIndex: 1 }}>
               <div className="demo-frame">
-                <AppWindow active={active} minHeight={392}>
-                  {tab.view}
-                </AppWindow>
+                <div style={{ background: T.bgCard, borderRadius: 14, overflow: 'hidden', border: `1px solid ${T.border}`, boxShadow: T.shadowWin }}>
+                  <img src={tab.shot} alt={`Portia — ${tab.label}`} style={{ display: 'block', width: '100%', height: 'auto' }} />
+                </div>
               </div>
             </div>
             <div className="demo-steps" style={{ position: 'relative', zIndex: 1, display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 14, marginTop: 22 }}>
@@ -811,7 +485,7 @@ function StatCards() {
             [`linear-gradient(130deg, ${T.accent}, #F0793F)`, MI.doc],
             ['linear-gradient(130deg, #2C8C57, #55B380)', MI.users],
             ['linear-gradient(130deg, #C98A1B, #E7B04C)', MI.box],
-            [`linear-gradient(130deg, ${T.violet}, #8F7BFA)`, MI.check],
+            [`linear-gradient(130deg, ${T.violet}, #FF9478)`, MI.check],
             [`linear-gradient(130deg, ${T.pink}, #DE62C0)`, MI.swap],
             ['linear-gradient(130deg, #1D1B16, #45413A)', MI.monitor],
           ].map(([grad, icon], i) => (
@@ -851,11 +525,11 @@ function StatCards() {
         </div>
         <div style={{ fontSize: 15, color: T.inkMid, margin: '9px 0 16px', fontWeight: 500 }}>plataforma, dos mundos</div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
-          <span className="node-pulse-a" style={{ width: 34, height: 34, borderRadius: 9, background: T.app.side, color: '#C7D2FE', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{MI.monitor}</span>
+          <span className="node-pulse-a" style={{ width: 34, height: 34, borderRadius: 9, background: T.app.side, color: '#FFDCD3', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{MI.monitor}</span>
           <span className="flow-track" aria-hidden="true" style={{ position: 'relative', flex: 1, maxWidth: 52, height: 2.5, borderRadius: 2, background: `linear-gradient(90deg, ${T.violet}, ${T.accent})`, display: 'block' }}>
-            <span className="flow-dot" style={{ position: 'absolute', top: -2.2, left: 0, width: 7, height: 7, borderRadius: '50%', background: '#fff', border: `1.5px solid ${T.violet}`, boxShadow: '0 0 8px rgba(109,90,230,0.55)' }} />
+            <span className="flow-dot" style={{ position: 'absolute', top: -2.2, left: 0, width: 7, height: 7, borderRadius: '50%', background: '#fff', border: `1.5px solid ${T.violet}`, boxShadow: '0 0 8px rgba(249,92,75,0.55)' }} />
           </span>
-          <span className="node-pulse-b" style={{ width: 34, height: 34, borderRadius: 9, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: `linear-gradient(130deg, ${T.violet}, #8F7BFA)`, color: '#fff' }}>{MI.globe}</span>
+          <span className="node-pulse-b" style={{ width: 34, height: 34, borderRadius: 9, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: `linear-gradient(130deg, ${T.violet}, #FF9478)`, color: '#fff' }}>{MI.globe}</span>
         </div>
         <div style={{ fontSize: 13, color: T.inkSub, marginTop: 14 }}>Conserje en la app, admin en la web</div>
       </div>
@@ -890,11 +564,11 @@ function Comparison() {
       <div className="pp" style={{ position: 'relative', maxWidth: 1180, margin: '0 auto', padding: '104px 40px 100px' }}>
         <div ref={stmtRef} style={{ maxWidth: 900, marginBottom: 60, display: 'flex', gap: 22, alignItems: 'flex-start' }}>
           <span className="section-badge" aria-hidden="true" style={{
-            width: 56, height: 56, borderRadius: 16, flexShrink: 0,
+            width: 56, height: 56, borderRadius: '50%', flexShrink: 0,
             background: T.bgDark, color: '#FF8A6B',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             boxShadow: '0 8px 22px -6px rgba(23,21,31,0.35)',
-          }}>{MI.book}</span>
+          }}><span style={{ transform: 'scale(1.8)' }}>{MI.bld}</span></span>
           <div>
             <div className="grad-static" style={{ fontSize: 15.5, fontWeight: 800, marginBottom: 10, letterSpacing: '0.01em' }}>EL PROBLEMA</div>
             <p style={{ fontSize: 'clamp(30px,4vw,50px)', fontWeight: 700, lineHeight: 1.16, letterSpacing: '-0.025em', color: T.ink, margin: '0 0 14px' }}>
@@ -922,8 +596,8 @@ function Comparison() {
             <div className="grad-strip" aria-hidden="true" style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3 }} />
             <div aria-hidden="true" style={{
               position: 'absolute', top: '-40%', right: '-30%', width: 400, height: 320,
-              background: `radial-gradient(ellipse, rgba(109,90,230,0.28) 0%, transparent 65%)`,
-              animation: 'glowDrift 11s ease-in-out infinite', pointerEvents: 'none',
+              background: `radial-gradient(ellipse, rgba(249,92,75,0.28) 0%, transparent 65%)`,
+              pointerEvents: 'none',
             }} />
             <div style={{ position: 'relative' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 22 }}>
@@ -947,14 +621,35 @@ function Comparison() {
 }
 
 /* ── CHIP FLOTANTE ───────────────────────────────────────────────────────── */
-function FloatChip({ style, dur = 6, delay = 0, children }) {
+// Antes tenían un bucle infinito de translateY que se veía roto/tembloroso
+// (y a veces quedaban tapando el mockup en pantallas angostas). Ahora es una
+// sola aparición al entrar en viewport, sin loop.
+function FloatChip({ style, delay = 0, children }) {
+  const ref = useRef(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || REDUCED()) return;
+    const tilt = style?.['--tilt'] ?? '0deg';
+    el.style.opacity = '0';
+    el.style.transform = `translateY(14px) rotate(${tilt})`;
+    el.style.transition = `opacity .6s ${delay}s ${T.ease}, transform .6s ${delay}s ${T.ease}`;
+    const obs = new IntersectionObserver(([e]) => {
+      if (e.isIntersecting) {
+        el.style.opacity = '1';
+        el.style.transform = `translateY(0) rotate(${tilt})`;
+        obs.disconnect();
+      }
+    }, { threshold: 0.05 });
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, [delay, style]);
+
   return (
-    <div className="float-chip" aria-hidden="true" style={{
+    <div ref={ref} className="float-chip" aria-hidden="true" style={{
       position: 'absolute', zIndex: 2,
       background: T.bgCard, border: `1px solid ${T.border}`, borderRadius: 12,
       boxShadow: T.shadowFloat, padding: '10px 14px 10px 10px',
       display: 'flex', alignItems: 'center', gap: 9,
-      animation: `floatY ${dur}s ease-in-out ${delay}s infinite`,
       ...style,
     }}>
       {children}
@@ -963,32 +658,30 @@ function FloatChip({ style, dur = 6, delay = 0, children }) {
 }
 
 /* ── NAV ─────────────────────────────────────────────────────────────────── */
+// Banda sólida con presencia real (inspirado en nablus.cl) en vez de una
+// barra traslúcida delgada que se perdía contra el fondo.
 function Nav() {
   return (
-    <nav style={{
-      position: 'sticky', top: 0, zIndex: 100,
-      background: 'rgba(245,242,235,0.86)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
-      borderBottom: `1px solid ${T.border}`,
-    }}>
-      <div className="pp" style={{ maxWidth: 1180, margin: '0 auto', padding: '0 40px', height: 68, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+    <nav style={{ position: 'sticky', top: 0, zIndex: 100, background: T.ink }}>
+      <div className="pp" style={{ maxWidth: 1180, margin: '0 auto', padding: '0 40px', height: 76, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <Link href="/" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }} aria-label="Portia, inicio">
-          <PortiaLogo size={30} />
+          <PortiaLogo dark size={34} />
         </Link>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <div className="nav-links" style={{ display: 'flex', alignItems: 'center', gap: 2, marginRight: 8 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div className="nav-links" style={{ display: 'flex', alignItems: 'center', gap: 4, marginRight: 10 }}>
             {[['#producto', 'Producto'], ['#como', 'Cómo funciona']].map(([href, label]) => (
-              <a key={href} href={href} className="nav-link" style={{ fontFamily: T.font, fontSize: 15, fontWeight: 500, color: T.inkMid, textDecoration: 'none', padding: '8px 14px', borderRadius: 8 }}>
+              <a key={href} href={href} className="nav-link" style={{ fontFamily: T.font, fontSize: 15.5, fontWeight: 500, color: 'rgba(255,255,255,0.75)', textDecoration: 'none', padding: '9px 16px', borderRadius: 8 }}>
                 {label}
               </a>
             ))}
           </div>
-          <Link href="/login" className="btn-nav" style={{
-            fontFamily: T.font, fontSize: 15, fontWeight: 600, color: '#fff',
-            textDecoration: 'none', borderRadius: 10, padding: '10px 21px', display: 'inline-block',
+          <Link href="/login" style={{
+            fontFamily: T.font, fontSize: 15, fontWeight: 700, color: T.ink, background: '#fff',
+            textDecoration: 'none', borderRadius: 10, padding: '12px 24px', display: 'inline-block',
           }}>Entrar al panel</Link>
         </div>
       </div>
-      <div className="grad-strip" aria-hidden="true" style={{ height: 2, opacity: 0.5 }} />
+      <div className="grad-strip" aria-hidden="true" style={{ height: 3 }} />
     </nav>
   );
 }
@@ -1016,58 +709,31 @@ export default function Landing() {
         /* ── fondo vivo ── */
         .bg-mesh {
           position: absolute; inset: 0; pointer-events: none;
-          background: linear-gradient(115deg, rgba(232,80,31,0.07), rgba(192,54,155,0.06) 35%, rgba(109,90,230,0.07) 68%, rgba(232,80,31,0.06));
-          background-size: 280% 280%;
-          animation: meshShift 17s ease-in-out infinite alternate;
+          background: linear-gradient(115deg, rgba(232,80,31,0.07), rgba(192,54,155,0.06) 35%, rgba(249,92,75,0.07) 68%, rgba(232,80,31,0.06));
         }
-        @keyframes meshShift { from { background-position: 0% 0%; } to { background-position: 100% 100%; } }
         .bg-grid {
           position: absolute; inset: -26px; pointer-events: none;
           background-image: radial-gradient(rgba(29,27,22,0.14) 1.2px, transparent 1.2px);
           background-size: 26px 26px;
           mask-image: radial-gradient(ellipse 78% 64% at 50% 32%, black 0%, transparent 70%);
           -webkit-mask-image: radial-gradient(ellipse 78% 64% at 50% 32%, black 0%, transparent 70%);
-          animation: gridPan 20s linear infinite;
         }
-        @keyframes gridPan { from { transform: translate(0,0); } to { transform: translate(26px,26px); } }
         .bg-dot-wrap {
           position: absolute; pointer-events: none;
           transform: translate(calc(var(--pmx, 0px) * var(--depth, 1)), calc(var(--pmy, 0px) * var(--depth, 1)));
           transition: transform .3s cubic-bezier(.16,1,.3,1);
         }
         .bg-dot {
-          display: block; border-radius: 50%; pointer-events: none;
-          animation-name: dotFloat; animation-timing-function: ease-in-out;
-          animation-iteration-count: infinite; animation-direction: alternate;
+          display: block; border-radius: 50%; pointer-events: none; opacity: .7;
         }
-        @keyframes dotFloat {
-          from { transform: translate(0,0) scale(1); opacity: .6; }
-          to   { transform: translate(14px,-30px) scale(1.3); opacity: 1; }
-        }
-        @keyframes glowDrift { 0%,100% { transform: translate(0,0) scale(1); } 50% { transform: translate(34px,20px) scale(1.08); } }
 
-        /* ── texto gradiente ── */
-        @keyframes gradShift { 0% { background-position: 0% 50%; } 100% { background-position: 300% 50%; } }
-        .grad-text {
-          background: linear-gradient(90deg, ${T.accent}, ${T.pink}, ${T.violet}, ${T.accent});
-          background-size: 300% 100%;
-          animation: gradShift 7s linear infinite;
-          -webkit-background-clip: text; background-clip: text;
-          -webkit-text-fill-color: transparent;
-        }
-        .grad-static {
-          background: linear-gradient(100deg, ${T.accent}, ${T.pink});
-          -webkit-background-clip: text; background-clip: text;
-          -webkit-text-fill-color: transparent;
+        /* ── texto de acento (color fijo, sin animación) ── */
+        .grad-text, .grad-static {
+          color: ${T.accent};
           display: inline-block;
         }
-        @supports not (-webkit-background-clip: text) {
-          .grad-text, .grad-static { background: none; color: ${T.accent}; -webkit-text-fill-color: currentColor; }
-        }
         .grad-strip {
-          background: linear-gradient(90deg, ${T.accent}, ${T.pink}, ${T.violet}, ${T.accent});
-          background-size: 300% 100%;
-          animation: gradShift 6s linear infinite;
+          background: ${T.accent};
         }
 
         /* ── botones gradiente con luz ── */
@@ -1108,29 +774,29 @@ export default function Landing() {
           box-shadow: 0 6px 18px -6px rgba(217,67,13,0.5);
         }
         .nav-link { transition: color .15s, background .15s, transform .15s; }
-        .nav-link:hover { color: ${T.ink}; background: rgba(29,27,22,0.05); transform: translateY(-1px); }
+        .nav-link:hover { color: #fff; background: rgba(255,255,255,0.1); transform: translateY(-1px); }
 
         /* ── ventana hover-interactiva ── */
         .aw-side-item { cursor: pointer; transition: background .18s, color .18s, transform .2s ${T.ease}; }
         .aw-side-item:hover { background: rgba(255,255,255,0.08)!important; color: #fff!important; transform: translateX(3px); }
-        .aw-side-on:hover { background: rgba(79,70,229,0.4)!important; color: #E0E7FF!important; }
+        .aw-side-on:hover { background: rgba(249,92,75,0.4)!important; color: #FFDCD3!important; }
         .awc { transition: transform .25s ${T.ease}, box-shadow .25s, border-color .2s; }
         .awc:hover { transform: translateY(-3px); box-shadow: 0 10px 24px -10px rgba(17,17,17,0.2); border-color: #C7C5E8!important; }
         .aw-row { transition: background .15s, transform .18s ${T.ease}; cursor: default; }
-        .aw-row:hover { background: rgba(79,70,229,0.06); transform: translateX(2px); }
+        .aw-row:hover { background: rgba(249,92,75,0.06); transform: translateX(2px); }
         .aw-check { transition: border-color .18s, transform .18s, box-shadow .2s; }
-        .aw-row:hover .aw-check { border-color: ${T.app.brand}; transform: scale(1.15); box-shadow: 0 0 0 3px rgba(79,70,229,0.12); }
+        .aw-row:hover .aw-check { border-color: ${T.app.brand}; transform: scale(1.15); box-shadow: 0 0 0 3px rgba(249,92,75,0.12); }
         .aw-chip { transition: transform .18s ${T.ease}; }
         .aw-chip:hover { transform: scale(1.07); }
         .aw-btn {
           position: relative; overflow: hidden; cursor: pointer;
-          background: linear-gradient(110deg, ${T.app.brand}, ${T.violet} 55%, #8F7BFA);
+          background: linear-gradient(110deg, ${T.app.brand}, ${T.violet} 55%, #FF9478);
           background-size: 165% 100%;
           transition: background-position .4s ${T.ease}, transform .2s, box-shadow .25s;
         }
         .aw-btn:hover {
           background-position: 95% 0; transform: translateY(-1.5px);
-          box-shadow: 0 6px 16px -5px rgba(79,70,229,0.55);
+          box-shadow: 0 6px 16px -5px rgba(249,92,75,0.55);
         }
         .aw-btn::after {
           content: ''; position: absolute; top: 0; bottom: 0; left: -70%; width: 45%;
@@ -1139,7 +805,7 @@ export default function Landing() {
         }
         .aw-btn:hover::after { left: 125%; }
         .aw-btn-ghost { cursor: pointer; transition: background .2s, color .2s, transform .2s; }
-        .aw-btn-ghost:hover { background: rgba(79,70,229,0.09)!important; transform: translateY(-1px); }
+        .aw-btn-ghost:hover { background: rgba(249,92,75,0.09)!important; transform: translateY(-1px); }
         .tl-dot { transition: transform .15s; }
         .tl-dot:hover { transform: scale(1.3); }
 
@@ -1149,8 +815,6 @@ export default function Landing() {
         .demo-frame {
           padding: 3px; border-radius: 17px;
           background: linear-gradient(120deg, ${T.accent}, ${T.pink}, ${T.violet}, ${T.accent});
-          background-size: 300% 100%;
-          animation: gradShift 8s linear infinite;
         }
         .demo-tab { transform: translateX(0); transition: background .25s, border-color .25s, box-shadow .25s, transform .3s ${T.ease}; }
         .demo-tab-on { transform: translateX(4px); }
@@ -1173,11 +837,9 @@ export default function Landing() {
         }
         .feed-in { animation: feedIn .9s ${T.ease}; }
 
-        @keyframes floatY { 0%,100% { transform: translateY(0) rotate(var(--tilt, 0deg)); } 50% { transform: translateY(-10px) rotate(var(--tilt, 0deg)); } }
         .float-chip { transition: transform .25s ${T.ease}, box-shadow .25s; cursor: default; }
-        .float-chip:hover { animation-play-state: paused; transform: scale(1.08) rotate(0deg)!important; box-shadow: 0 8px 24px -8px rgba(29,27,22,0.3); }
-        @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .35; } }
-        .pulse-dot { animation: pulse 2.2s ease-in-out infinite; }
+        .float-chip:hover { transform: scale(1.08) rotate(0deg)!important; box-shadow: 0 8px 24px -8px rgba(29,27,22,0.3); }
+        .pulse-dot { opacity: 1; }
 
         /* ── stats ── */
         .stat-card { transition: transform .3s ${T.ease}, box-shadow .3s, border-color .25s; }
@@ -1186,28 +848,12 @@ export default function Landing() {
           background: linear-gradient(100deg, ${T.accent}, ${T.pink});
           -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
         }
-        .clock-min-hand { animation: clockTick 4.8s steps(4, end) infinite; transform: rotate(0deg); }
-        @keyframes clockTick { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .clock-min-hand { transform: rotate(0deg); }
         .mod-tile { transition: transform .2s ${T.ease}; }
         .stat-card:hover .mod-tile { transform: translateY(-3px) rotate(-4deg); }
         .stat-card:hover .mod-tile:nth-child(2n) { transform: translateY(-3px) rotate(4deg); }
-        .mod-tile-idle { animation: tileBob 3.2s ease-in-out infinite; }
-        @keyframes tileBob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
-        .stat-card:hover .mod-tile-idle { animation-play-state: paused; }
-        .flow-dot { animation: flowMove 2.4s ease-in-out infinite alternate; }
-        @keyframes flowMove { from { transform: translateX(0); } to { transform: translateX(45px); } }
-        .paper-strike line {
-          stroke-dasharray: 100; stroke-dashoffset: 100;
-          animation: strikeDraw 3.4s ${T.ease} infinite;
-        }
-        @keyframes strikeDraw {
-          0% { stroke-dashoffset: 100; }
-          30%, 70% { stroke-dashoffset: 0; }
-          100% { stroke-dashoffset: -100; }
-        }
-        .node-pulse-a { animation: nodePulse 2.4s ease-in-out infinite; }
-        .node-pulse-b { animation: nodePulse 2.4s ease-in-out 1.2s infinite; }
-        @keyframes nodePulse { 0%,100% { box-shadow: 0 0 0 0 rgba(109,90,230,0); } 50% { box-shadow: 0 0 0 5px rgba(109,90,230,0.16); } }
+        .flow-dot { transform: translateX(22px); }
+        .paper-strike line { stroke-dasharray: 100; stroke-dashoffset: 0; }
 
         .cmp-card { transition: transform .3s ${T.ease}, box-shadow .3s; }
         .cmp-card:hover { transform: translateY(-4px); box-shadow: ${T.shadowFloat}; }
@@ -1255,7 +901,7 @@ export default function Landing() {
       <section ref={heroPar.ref} onMouseMove={heroPar.onMouseMove} onMouseLeave={heroPar.onMouseLeave} style={{ position: 'relative', overflow: 'hidden' }}>
         <LiveBackground glows={[
           { c: 'rgba(232,80,31,0.14)', pos: { top: '-16%', left: '50%', marginLeft: -460, width: 920, height: 480 }, d: 13 },
-          { c: 'rgba(109,90,230,0.11)', pos: { top: '22%', right: '-14%', width: 560, height: 460 }, d: 17, del: 1, rev: true },
+          { c: 'rgba(249,92,75,0.11)', pos: { top: '22%', right: '-14%', width: 560, height: 460 }, d: 17, del: 1, rev: true },
           { c: 'rgba(192,54,155,0.09)', pos: { top: '46%', left: '-10%', width: 480, height: 400 }, d: 15, del: 2 },
         ]} />
 
@@ -1307,7 +953,7 @@ export default function Landing() {
               </span>
             </FloatChip>
             <FloatChip style={{ bottom: '14%', right: -70, '--tilt': '-2deg' }} dur={7} delay={1.6}>
-              <span style={{ width: 30, height: 30, borderRadius: 9, background: 'rgba(79,70,229,0.10)', color: T.app.brand, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <span style={{ width: 30, height: 30, borderRadius: 9, background: 'rgba(249,92,75,0.10)', color: T.app.brand, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                 {MI.swap}
               </span>
               <span>
@@ -1316,9 +962,9 @@ export default function Landing() {
               </span>
             </FloatChip>
 
-            <AppWindow active="inicio" minHeight={400}>
-              <LiveInicioView />
-            </AppWindow>
+            <div style={{ background: T.bgCard, borderRadius: 14, overflow: 'hidden', border: `1px solid ${T.border}`, boxShadow: T.shadowWin, position: 'relative', zIndex: 1 }}>
+              <img src="/screenshots/inicio-final.png" alt="Portia — pantalla de inicio del conserje" style={{ display: 'block', width: '100%', height: 'auto' }} />
+            </div>
             </div>
           </div>
         </div>
@@ -1335,13 +981,13 @@ export default function Landing() {
         <div className="grad-strip" aria-hidden="true" style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, opacity: 0.85 }} />
         <div aria-hidden="true" style={{
           position: 'absolute', top: '-30%', right: '-10%', width: 700, height: 520,
-          background: 'radial-gradient(ellipse, rgba(109,90,230,0.22) 0%, transparent 62%)',
-          animation: 'glowDrift 14s ease-in-out infinite', pointerEvents: 'none',
+          background: 'radial-gradient(ellipse, rgba(249,92,75,0.22) 0%, transparent 62%)',
+          pointerEvents: 'none',
         }} />
         <div aria-hidden="true" style={{
           position: 'absolute', bottom: '-35%', left: '-8%', width: 560, height: 440,
           background: 'radial-gradient(ellipse, rgba(192,54,155,0.14) 0%, transparent 62%)',
-          animation: 'glowDrift 18s ease-in-out 1.5s infinite reverse', pointerEvents: 'none',
+          pointerEvents: 'none',
         }} />
         <div className="pp" style={{ position: 'relative', maxWidth: 1180, margin: '0 auto', padding: '100px 40px 108px' }}>
           <div ref={stepsHead} style={{ marginBottom: 56, maxWidth: 560 }}>

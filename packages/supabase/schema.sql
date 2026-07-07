@@ -560,3 +560,32 @@ alter function public.mi_rol() set search_path = public;
 alter function public.cleanup_orphan_fotos() set search_path = public;
 revoke execute on function public.cleanup_orphan_fotos() from anon, authenticated, public;
 grant execute on function public.cleanup_orphan_fotos() to postgres, service_role;
+
+-- ─── TABLA: registros_pendientes (signup vía Flow) ──────────────
+-- Puente entre customer/register de Flow (que solo devuelve customerId) y
+-- los datos del formulario de /registro. El callback de Flow la usa para
+-- crear el edificio + admin una vez que el registro de tarjeta se confirma.
+create table if not exists public.registros_pendientes (
+  id                uuid primary key default gen_random_uuid(),
+  flow_customer_id  text unique not null,
+  nombre_edificio   text not null,
+  comuna            text,
+  nombre_admin      text not null,
+  email             text not null,
+  procesado         boolean not null default false,
+  created_at        timestamptz not null default now()
+);
+
+alter table public.registros_pendientes enable row level security;
+-- Solo el backend (service role) toca esta tabla — nunca se expone al cliente.
+
+comment on column public.edificios.stripe_customer_id is 'Reutilizada para Flow customerId tras migrar de Stripe a Flow (Chile no soportado por Stripe).';
+comment on column public.edificios.stripe_subscription_id is 'Reutilizada para Flow subscriptionId.';
+
+-- Drift detectado 2026-07-06: la columna `tipo` de encomiendas estaba en este
+-- schema.sql desde el principio pero nunca se había aplicado a la base real
+-- (mismo patrón que el drift de la policy de fotos). Bloqueaba registrar
+-- cualquier encomienda en producción. Aplicado vía migración
+-- agregar_columna_tipo_encomiendas.
+alter table public.encomiendas add column if not exists tipo text not null default 'paquete'
+  check (tipo in ('paquete','comida','supermercado','otro'));

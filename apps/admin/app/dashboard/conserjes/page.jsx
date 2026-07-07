@@ -39,6 +39,16 @@ export default function ConserjesPage() {
     }
   }
 
+  async function renombrar(id, nombreActual) {
+    const nuevo = window.prompt('Nuevo nombre:', nombreActual);
+    if (!nuevo || nuevo === nombreActual) return;
+    const supabase = getSupabase();
+    const { error } = await supabase.from('perfiles').update({ nombre: nuevo }).eq('id', id);
+    if (!error) {
+      setConserjes(prev => prev.map(c => c.id === id ? { ...c, nombre: nuevo } : c));
+    }
+  }
+
   async function enviarInvitacion(e) {
     e.preventDefault();
     setError('');
@@ -165,6 +175,14 @@ export default function ConserjesPage() {
                       </span>
                     </td>
                     <td style={{ ...tableBodyCellSt, textAlign: 'right' }}>
+                      <button onClick={() => renombrar(c.id, c.nombre)} style={{
+                        fontSize: 12, padding: '5px 12px', borderRadius: 6, marginRight: 8,
+                        background: 'transparent', border: '1px solid var(--border)',
+                        color: 'var(--text-secondary)', cursor: 'pointer', fontFamily: 'inherit',
+                        transition: 'all 120ms'
+                      }}>
+                        Renombrar
+                      </button>
                       <button onClick={() => toggleActivo(c.id, c.activo)} style={{
                         fontSize: 12, padding: '5px 12px', borderRadius: 6,
                         background: 'transparent', border: '1px solid var(--border)',
