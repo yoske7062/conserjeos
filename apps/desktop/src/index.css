@@ -2,6 +2,12 @@
    Portia Design System · Warm White + Deep Navy
    ═══════════════════════════════════════════════════════════════════════════ */
 
+* { box-sizing: border-box; }
+html, body, #root {
+  margin: 0; padding: 0;
+  width: 100%; height: 100%;
+}
+
 :root {
   /* ── Surfaces ────────────────────────────────────────────────── */
   --bg-base:          #F6F4F1;

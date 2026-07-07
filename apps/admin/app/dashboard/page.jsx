@@ -68,8 +68,15 @@ export default function DashboardPage() {
         setStats({ visitas: vCount.count ?? 0, encomiendas: eCount.count ?? 0, tareas: tCount.count ?? 0 });
       }
 
+      // React StrictMode monta el efecto dos veces en dev — sin esto, la
+      // segunda pasada reutiliza el canal ya suscrito y explota al llamar
+      // .on() sobre algo que ya hizo .subscribe().
+      const nombreCanal = `dashboard-novedades-${eid}`;
+      const previo = supabase.getChannels().find(c => c.topic === `realtime:${nombreCanal}`);
+      if (previo) supabase.removeChannel(previo);
+
       channel = supabase
-        .channel(`dashboard-novedades-${eid}`)
+        .channel(nombreCanal)
         .on(
           'postgres_changes',
           { event: 'INSERT', schema: 'public', table: 'novedades', filter: `edificio_id=eq.${eid}` },

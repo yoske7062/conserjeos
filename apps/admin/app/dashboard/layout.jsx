@@ -33,7 +33,7 @@ export default function DashboardLayout({ children }) {
     <PerfilContext.Provider value={perfil}>
       <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg-base)' }}>
         <Sidebar perfil={perfil} />
-        <main style={{ marginLeft: 240, flex: 1, display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+        <main style={{ marginLeft: 84, flex: 1, display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
           {children}
         </main>
       </div>
