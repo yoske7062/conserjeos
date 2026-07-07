@@ -1,4 +1,5 @@
 'use client';
+import { useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { getSupabase } from '../lib/supabase';
 
@@ -12,12 +13,20 @@ const NAV = [
   { href: '/dashboard/metricas',    icon: 'monitoring',   label: 'Métricas'      },
 ];
 
+// Mismo rail circular que apps/desktop/src/components/Sidebar.jsx —
+// solo íconos, tooltip fijo al hover, activo = círculo negro sólido.
 export default function Sidebar({ perfil }) {
   const pathname  = usePathname();
   const router    = useRouter();
   const nombre    = perfil?.nombre || 'Admin';
-  const edificio  = perfil?.edificios?.nombre || 'Edificio';
   const iniciales = nombre.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
+  const [tip, setTip] = useState(null); // { label, top }
+
+  function showTip(e, label) {
+    const r = e.currentTarget.getBoundingClientRect();
+    setTip({ label, top: r.top + r.height / 2 });
+  }
+  function hideTip() { setTip(null); }
 
   async function signOut() {
     await getSupabase().auth.signOut();
@@ -25,75 +34,77 @@ export default function Sidebar({ perfil }) {
   }
 
   return (
-    <aside style={{
-      position: 'fixed', left: 0, top: 0, width: 240, height: '100vh',
-      background: 'var(--bg-surface-high)', borderRight: '1px solid var(--border)',
-      display: 'flex', flexDirection: 'column', zIndex: 50, padding: '20px 12px',
-    }}>
-      {/* Header — mismo mark cuadrado coral que la app real y la landing */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '4px 10px', marginBottom: 24 }}>
-        <span style={{
-          width: 28, height: 28, borderRadius: 8, flexShrink: 0, background: 'var(--brand)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          color: '#fff', fontSize: 14, fontWeight: 800,
-        }}>P</span>
-        <div>
-          <p style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)', letterSpacing: '-0.01em', lineHeight: 1.1 }}>Portia</p>
-          <p style={{ fontSize: 10.5, color: 'var(--text-muted)' }}>Panel de administración</p>
+    <>
+      <aside style={{
+        width: 84, height: '100vh', flexShrink: 0,
+        background: 'var(--bg-surface-high)', borderRight: '1px solid var(--border)',
+        display: 'flex', flexDirection: 'column', alignItems: 'center',
+        position: 'fixed', left: 0, top: 0, zIndex: 50, padding: '16px 0',
+      }}>
+        <div style={{
+          width: 42, height: 42, borderRadius: '50%', flexShrink: 0, background: '#fff',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '14px 0 20px',
+          boxShadow: '0 4px 14px -4px rgba(var(--brand-rgb),0.45)',
+        }}>
+          <span style={{ width: 22, height: 22, borderRadius: 6, background: 'var(--brand)', color: '#fff', fontSize: 12, fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>P</span>
         </div>
-      </div>
 
-      {/* Nav */}
-      <nav style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
-        <p style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-subtle)', textTransform: 'uppercase', letterSpacing: '0.1em', padding: '8px 10px 6px' }}>
-          {edificio}
-        </p>
-        {NAV.map(({ href, icon, label }) => {
-          const active = href === '/dashboard' ? pathname === '/dashboard' : pathname.startsWith(href);
-          return (
-            <button key={href} onClick={() => router.push(href)} style={{
-              display: 'flex', alignItems: 'center', gap: 12, minHeight: 42,
-              padding: '0 12px', borderRadius: 10, width: '100%', textAlign: 'left',
-              fontSize: 14, fontWeight: active ? 600 : 500,
-              color: active ? '#fff' : 'var(--text-secondary)',
-              background: active ? 'var(--text)' : 'transparent',
-              border: 'none', cursor: 'pointer', transition: 'all 120ms',
-            }}
-            onMouseEnter={e => { if (!active) { e.currentTarget.style.background = 'rgba(0,0,0,0.05)'; e.currentTarget.style.color = 'var(--text)'; }}}
-            onMouseLeave={e => { if (!active) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-secondary)'; }}}
-            >
-              <span style={{ fontFamily: 'Material Symbols Outlined', fontSize: 20, color: active ? '#fff' : 'inherit' }}>{icon}</span>
-              {label}
-            </button>
-          );
-        })}
-      </nav>
+        <nav style={{ display: 'flex', flexDirection: 'column', gap: 9, alignItems: 'center', width: '100%' }}>
+          {NAV.map(({ href, icon, label }) => {
+            const active = href === '/dashboard' ? pathname === '/dashboard' : pathname.startsWith(href);
+            return (
+              <button key={href} onClick={() => router.push(href)}
+                onMouseEnter={e => showTip(e, label)} onMouseLeave={hideTip}
+                title={label}
+                style={{
+                  width: 44, height: 44, flexShrink: 0, borderRadius: '50%',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  background: active ? 'var(--text)' : 'transparent',
+                  color: active ? 'var(--bg-base)' : 'var(--text-muted)',
+                  border: 'none', cursor: 'pointer', transition: 'background .16s, color .16s, transform .12s',
+                }}
+              >
+                <span style={{ fontFamily: 'Material Symbols Outlined', fontSize: 20 }}>{icon}</span>
+              </button>
+            );
+          })}
+        </nav>
 
-      {/* Footer */}
-      <div style={{ borderTop: '1px solid var(--border)', paddingTop: 12 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 8px', marginBottom: 4 }}>
-          <div style={{
-            width: 32, height: 32, borderRadius: '50%', flexShrink: 0,
-            background: 'var(--text)', display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 12, fontWeight: 700, color: 'var(--bg-base)',
+        <div style={{ flex: 1 }} />
+
+        <div
+          onMouseEnter={e => showTip(e, nombre)} onMouseLeave={hideTip}
+          style={{
+            width: 36, height: 36, borderRadius: '50%', flexShrink: 0, marginBottom: 10,
+            background: 'var(--text)', color: 'var(--bg-base)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: 12, fontWeight: 700,
           }}>{iniciales}</div>
-          <div style={{ minWidth: 0 }}>
-            <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{nombre}</p>
-            <p style={{ fontSize: 11, color: 'var(--text-muted)' }}>Administrador</p>
-          </div>
-        </div>
-        <button onClick={signOut} style={{
-          display: 'flex', alignItems: 'center', gap: 10, width: '100%', minHeight: 42,
-          padding: '0 12px', borderRadius: 10, background: 'transparent',
-          border: 'none', cursor: 'pointer', color: 'var(--text-muted)', fontSize: 14, fontFamily: 'inherit',
-        }}
-        onMouseEnter={e => { e.currentTarget.style.background = 'rgba(0,0,0,0.05)'; e.currentTarget.style.color = 'var(--text)'; }}
-        onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-muted)'; }}
+
+        <button onClick={signOut}
+          onMouseEnter={e => showTip(e, 'Cerrar sesión')} onMouseLeave={hideTip}
+          style={{
+            width: 44, height: 44, borderRadius: '50%', flexShrink: 0,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            background: 'transparent', color: 'var(--text-muted)',
+            border: 'none', cursor: 'pointer',
+          }}
         >
-          <span style={{ fontFamily: 'Material Symbols Outlined', fontSize: 18 }}>logout</span>
-          Cerrar sesión
+          <span style={{ fontFamily: 'Material Symbols Outlined', fontSize: 19 }}>logout</span>
         </button>
-      </div>
-    </aside>
+      </aside>
+
+      {tip && (
+        <div style={{
+          position: 'fixed', left: 96, top: tip.top, transform: 'translateY(-50%)',
+          background: 'var(--bg-surface)', color: 'var(--text)', border: '1px solid var(--border)',
+          fontSize: 12, fontWeight: 600, letterSpacing: '-0.01em', whiteSpace: 'nowrap',
+          padding: '6px 12px', borderRadius: 9, pointerEvents: 'none', zIndex: 99997,
+          boxShadow: 'var(--shadow)',
+        }}>
+          {tip.label}
+        </div>
+      )}
+    </>
   );
 }
